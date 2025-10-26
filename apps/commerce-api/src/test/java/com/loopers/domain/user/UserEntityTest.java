@@ -27,91 +27,41 @@ class UserEntityTest {
         Assertions.assertThat(userEntity.getBirthdate()).isEqualTo(LocalDate.parse(birthdate));
     }
 
+
     @DisplayName("ID가 영문 및 숫자 10자 초과시 생성 실패")
     @Test
     void createUserEntity_fail_when_username_exceeds_10_characters() {
-        // Given
-        String username = "testuser123121331"; // 11자
-        String email = "test@example.com";
-        String birthdate = "1990-01-01";
-
-        // When & Then
-        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, email, birthdate);
-
-        // Then
-        Assertions.assertThatThrownBy(() -> UserEntity.createUserEntity(userRegisterRequest)).isInstanceOf(
-                IllegalArgumentException.class
-        );
+        assertUserCreationFails("testuser123121331", "test@example.com", "1990-01-01");
     }
 
     @DisplayName("ID가 영문 및 숫자가 아닌 문자 포함시 생성 실패")
     @Test
     void createUserEntity_fail_when_username_contains_invalid_characters() {
-        // Given
-        String username = "test@user"; // 특수문자 포함
-        String email = "test@example.com";
-        String birthdate = "1990-01-01";
-
-        // When & Then
-        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, email, birthdate);
-
-
-        // Then
-        Assertions.assertThatThrownBy(() -> UserEntity.createUserEntity(userRegisterRequest)).isInstanceOf(
-                IllegalArgumentException.class
-        );
-
+        assertUserCreationFails("test@user", "test@example.com", "1990-01-01");
     }
 
     @DisplayName("이메일이 올바른 형식이 아닐 때 생성 실패")
     @Test
     void createUserEntity_fail_when_email_format_invalid() {
-        // Given
-        String username = "testuser";
-        String email = "invalid-email"; // 잘못된 형식
-        String birthdate = "1990-01-01";
-
-        // When & Then
-        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, email, birthdate);
-
-
-        // Then
-        Assertions.assertThatThrownBy(() -> UserEntity.createUserEntity(userRegisterRequest)).isInstanceOf(
-                IllegalArgumentException.class
-        );
+        assertUserCreationFails("testuser", "invalid-email", "1990-01-01");
     }
 
     @DisplayName("생년월일이 null일 때 생성 실패")
     @Test
     void createUserEntity_fail_when_birthdate_is_null() {
-        // Given
-        String username = "testuser";
-        String email = "test@example.com";
-        String birthdate = null;
-
-        // When & Then
-        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, email, birthdate);
-
-        // Then
-        Assertions.assertThatThrownBy(() -> UserEntity.createUserEntity(userRegisterRequest)).isInstanceOf(
-                IllegalArgumentException.class
-        );
+        assertUserCreationFails("testuser", "test@example.com", null);
     }
 
-    @DisplayName("생년월일이 yyyy-MM-dd 일때 생성 실패")
+    @DisplayName("생년월일이 yyyy-MM-dd 형식이 아닐 때 생성 실패")
     @Test
     void createUserEntity_fail_when_birthdate_format_invalid() {
-        // Given
-        String username = "testuser";
-        String email = "test@example.com";
-        String birthdate = "1990/01/01";
+        assertUserCreationFails("testuser", "test@example.com", "1990/01/01");
+    }
 
-        // When & Then
-        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, email, birthdate);
+    private void assertUserCreationFails(String username, String email, String birthdate) {
+        UserRegisterRequest request = new UserRegisterRequest(username, email, birthdate);
 
-        // Then
-        Assertions.assertThatThrownBy(() -> UserEntity.createUserEntity(userRegisterRequest)).isInstanceOf(
-                IllegalArgumentException.class
-        );
+        Assertions.assertThatThrownBy(() -> UserEntity.createUserEntity(request))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }
