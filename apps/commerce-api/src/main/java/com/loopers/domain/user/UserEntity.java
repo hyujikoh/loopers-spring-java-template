@@ -4,10 +4,7 @@ import java.time.LocalDate;
 
 import com.loopers.domain.BaseEntity;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -18,6 +15,7 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "users")
+@Getter
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -32,7 +30,7 @@ public class UserEntity extends BaseEntity {
         return UserEntity.builder()
                 .username(request.username())
                 .email(request.email())
-                .birthdate(request.birthdate())
+                .birthdate(LocalDate.parse(request.birthdate()))
                 .build();
     }
 }

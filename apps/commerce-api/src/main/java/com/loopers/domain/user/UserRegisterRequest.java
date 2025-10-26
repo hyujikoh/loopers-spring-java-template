@@ -9,6 +9,6 @@ import java.time.LocalDate;
 public record UserRegisterRequest(
     String username,
     String email,
-    LocalDate birthdate
+    String birthdate
 ) {
 }
