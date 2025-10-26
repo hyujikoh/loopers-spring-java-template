@@ -27,41 +27,56 @@ class UserEntityTest {
         Assertions.assertThat(userEntity.getBirthdate()).isEqualTo(LocalDate.parse(birthdate));
     }
 
-
     @DisplayName("ID가 영문 및 숫자 10자 초과시 생성 실패")
     @Test
     void createUserEntity_fail_when_username_exceeds_10_characters() {
-        assertUserCreationFails("testuser123121331", "test@example.com", "1990-01-01");
+        assertUserCreationFailsWithMessage(
+                "testuser123", "test@example.com", "1990-01-01",
+                "사용자명은 영문 및 숫자 10자 이내여야 합니다."
+        );
     }
 
     @DisplayName("ID가 영문 및 숫자가 아닌 문자 포함시 생성 실패")
     @Test
     void createUserEntity_fail_when_username_contains_invalid_characters() {
-        assertUserCreationFails("test@user", "test@example.com", "1990-01-01");
+        assertUserCreationFailsWithMessage(
+                "test@user", "test@example.com", "1990-01-01",
+                "사용자명은 영문 및 숫자 10자 이내여야 합니다."
+        );
     }
 
     @DisplayName("이메일이 올바른 형식이 아닐 때 생성 실패")
     @Test
     void createUserEntity_fail_when_email_format_invalid() {
-        assertUserCreationFails("testuser", "invalid-email", "1990-01-01");
+        assertUserCreationFailsWithMessage(
+                "testuser", "invalid-email", "1990-01-01",
+                "올바른 형식의 이메일 주소여야 합니다."
+        );
     }
 
     @DisplayName("생년월일이 null일 때 생성 실패")
     @Test
     void createUserEntity_fail_when_birthdate_is_null() {
-        assertUserCreationFails("testuser", "test@example.com", null);
+        assertUserCreationFailsWithMessage(
+                "testuser", "test@example.com", null,
+                "생년월일은 필수 입력값입니다."
+        );
     }
 
     @DisplayName("생년월일이 yyyy-MM-dd 형식이 아닐 때 생성 실패")
     @Test
     void createUserEntity_fail_when_birthdate_format_invalid() {
-        assertUserCreationFails("testuser", "test@example.com", "1990/01/01");
+        assertUserCreationFailsWithMessage(
+                "testuser", "test@example.com", "1990/01/01",
+                "올바른 날짜 형식이어야 합니다."
+        );
     }
 
-    private void assertUserCreationFails(String username, String email, String birthdate) {
+    private void assertUserCreationFailsWithMessage(String username, String email, String birthdate, String expectedMessage) {
         UserRegisterRequest request = new UserRegisterRequest(username, email, birthdate);
 
         Assertions.assertThatThrownBy(() -> UserEntity.createUserEntity(request))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(expectedMessage);
     }
 }
