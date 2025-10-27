@@ -59,4 +59,22 @@ public class UserServiceIntegrationTest {
         Assertions.assertThat(registerUser.getCreatedAt()).isNotNull();
         Assertions.assertThat(registerUser.getDeletedAt()).isNull();
     }
+
+    @DisplayName("이미 가입된 ID 로 회원가입 시도 시, 실패한다.")
+    @org.junit.jupiter.api.Test
+    void register_2_try_fail() {
+        // given
+
+        UserRegisterRequest userRegisterRequest = new UserRegisterRequest("testuser", "dvum0045@gmali.com", "1990-01-01");
+
+        UserRegisterRequest user2RegisterRequest = new UserRegisterRequest("testuser", "dvum0046@gmali.com", "1990-01-03");
+
+        // when
+        userService.register(userRegisterRequest);
+
+        Assertions.assertThatThrownBy(() -> userService.register(user2RegisterRequest))
+                .isInstanceOf(IllegalArgumentException.class);
+
+
+    }
 }
