@@ -2,15 +2,11 @@ package com.loopers.domain.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.Mockito.*;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -78,10 +74,24 @@ public class UserServiceIntegrationTest {
     }
 
 
+    /**
+     * 요청 생성 헬퍼 메서드
+     *
+     * @param username
+     * @param email
+     * @param birthdate
+     * @return
+     */
     private UserRegisterRequest createUserRegisterRequest(String username, String email, String birthdate) {
         return new UserRegisterRequest(username, email, birthdate);
     }
 
+    /**
+     * 저장된 UserEntity 검증 헬퍼 메서드
+     *
+     * @param actual
+     * @param expected
+     */
     private void assertUserEntity(UserEntity actual, UserRegisterRequest expected) {
         assertThat(actual.getId()).isNotNull();
         assertThat(actual.getUsername()).isEqualTo(expected.username());

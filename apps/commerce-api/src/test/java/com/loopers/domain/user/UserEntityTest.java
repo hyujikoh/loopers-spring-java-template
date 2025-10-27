@@ -72,6 +72,13 @@ class UserEntityTest {
         );
     }
 
+    /**
+     * 사용자 생성 실패 및 메시지 검증 헬퍼 메서드
+     * @param username
+     * @param email
+     * @param birthdate
+     * @param expectedMessage
+     */
     private void assertUserCreationFailsWithMessage(String username, String email, String birthdate, String expectedMessage) {
         UserRegisterRequest request = new UserRegisterRequest(username, email, birthdate);
 
