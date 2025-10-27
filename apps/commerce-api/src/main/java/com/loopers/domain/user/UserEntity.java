@@ -20,9 +20,7 @@ import jakarta.validation.Valid;
 @Entity
 @Table(name = "users")
 @Getter
-@Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserEntity extends BaseEntity {
 
     @Column(unique = true)
@@ -59,12 +57,34 @@ public class UserEntity extends BaseEntity {
                     e.getMessage() : "올바른 날짜 형식이어야 합니다.");
         }
 
-        return UserEntity.builder()
-                .username(request.username())
-                .email(request.email())
-                .birthdate(LocalDate.parse(request.birthdate()))
-                .gender(request.gender())
-                .build();
+        return new UserEntity(
+                request.username(),
+                request.email(),
+                LocalDate.parse(request.birthdate()),
+                request.gender());
+    }
+
+    private UserEntity(String username, String email, LocalDate birthdate, Gender gender) {
+        if (Objects.isNull(username) || username.trim().isEmpty()) {
+            throw new IllegalArgumentException("사용자명은 필수값입니다.");
+        }
+        if (Objects.isNull(email) || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("이메일은 필수값입니다.");
+        }
+        if (Objects.isNull(birthdate)) {
+            throw new IllegalArgumentException("생년월일은 필수값입니다.");
+        }
+        if (Objects.isNull(gender)) {
+            throw new IllegalArgumentException("성별은 필수값입니다.");
+        }
+        if (birthdate.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("생년월일은 현재 날짜보다 이후일 수 없습니다.");
+        }
+
+        this.username = username;
+        this.email = email;
+        this.birthdate = birthdate;
+        this.gender = gender;
     }
 
 
