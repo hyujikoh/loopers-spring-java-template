@@ -6,6 +6,7 @@ import com.loopers.domain.BaseEntity;
 
 import lombok.*;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.validation.Valid;
@@ -21,6 +22,8 @@ import jakarta.validation.Valid;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserEntity extends BaseEntity {
+
+    @Column(unique = true)
     private String username;
 
     private String email;
