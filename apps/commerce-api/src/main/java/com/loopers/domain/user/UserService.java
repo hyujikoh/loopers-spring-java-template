@@ -5,6 +5,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
+import jakarta.validation.Valid;
+
 /**
  * @author hyunjikoh
  * @since 2025. 10. 27.
@@ -15,7 +17,7 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional
-    public UserEntity register(UserRegisterRequest userRegisterRequest) {
+    public UserEntity register(@Valid UserRegisterRequest userRegisterRequest) {
         userRepository.findByUsername(userRegisterRequest.username())
             .ifPresent(user -> {
                 throw new IllegalArgumentException("이미 존재하는 사용자 이름입니다: " + userRegisterRequest.username());
