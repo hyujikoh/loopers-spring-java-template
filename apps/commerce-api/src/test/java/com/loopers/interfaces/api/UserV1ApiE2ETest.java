@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -17,6 +18,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.loopers.domain.user.Gender;
 import com.loopers.domain.user.UserRegisterRequest;
 import com.loopers.infrastructure.user.UserJpaRepository;
 import com.loopers.interfaces.api.user.UserV1Dtos;
@@ -49,7 +51,7 @@ public class UserV1ApiE2ETest {
         databaseCleanUp.truncateAllTables();
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     @DisplayName("회원 가입이 성공할 경우, 생성된 유저 정보를 응답으로 반환한다.")
     void register_success() {
     	// given
@@ -57,7 +59,7 @@ public class UserV1ApiE2ETest {
         String email = "dvum0045@gmail.com";
         String birthdate = "1990-01-01";
 
-        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, email, birthdate);
+        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, email, birthdate, Gender.FEMALE);
 
         // act
         ParameterizedTypeReference<ApiResponse<UserV1Dtos.UserRegisterResponse>> responseType = new ParameterizedTypeReference<>() {};
@@ -71,6 +73,29 @@ public class UserV1ApiE2ETest {
                 () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo(username),
                 () -> assertThat(Objects.requireNonNull(response.getBody()).data().email()).isEqualTo(email),
                 () -> assertThat(Objects.requireNonNull(response.getBody()).data().birthdate()).isEqualTo(birthdate)
+        );
+    }
+
+    @org.junit.jupiter.api.Test
+    @DisplayName("회원 가입 시에 성별이 없을 경우, 400 Bad Request 응답을 반환한다.")
+    void register_fail_no_gender() {
+        // given
+        String username = "testuser";
+        String email = "dvum0045@gmail.com";
+        String birthdate = "1990-01-01";
+        Gender gender = null;
+
+        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, email, birthdate, gender);
+
+        // act
+        ParameterizedTypeReference<ApiResponse<UserV1Dtos.UserRegisterResponse>> responseType = new ParameterizedTypeReference<>() {};
+        ResponseEntity<ApiResponse<UserV1Dtos.UserRegisterResponse>> response =
+                testRestTemplate.exchange("/api/v1/users", HttpMethod.POST, new HttpEntity<>(userRegisterRequest), responseType);
+
+    	// then
+        assertAll(
+                () -> assertTrue(response.getStatusCode().is4xxClientError()),
+                () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST)
         );
     }
 }

@@ -1,6 +1,7 @@
 package com.loopers.domain.user;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 import com.loopers.domain.BaseEntity;
 
@@ -8,6 +9,7 @@ import lombok.*;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.validation.Valid;
 
@@ -30,17 +32,25 @@ public class UserEntity extends BaseEntity {
 
     private LocalDate birthdate;
 
+    @Enumerated
+    @Column(length = 10, nullable = false)
+    private Gender gender;
+
     public static UserEntity createUserEntity(@Valid UserRegisterRequest request) {
-        if (request.username() == null || !request.username().matches("^[A-Za-z0-9]{1,10}$")) {
+        if (Objects.isNull(request.username()) || !request.username().matches("^[A-Za-z0-9]{1,10}$")) {
             throw new IllegalArgumentException("사용자명은 영문 및 숫자 10자 이내여야 합니다.");
         }
 
-        if (request.email() == null || !request.email().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+        if (Objects.isNull(request.email()) || !request.email().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             throw new IllegalArgumentException("올바른 형식의 이메일 주소여야 합니다.");
         }
 
+        if(Objects.isNull(request.gender())) {
+            throw new IllegalArgumentException("성별은 필수 입력값입니다.");
+        }
+
         try {
-            if (request.birthdate() == null) {
+            if (Objects.isNull(request.birthdate())) {
                 throw new IllegalArgumentException("생년월일은 필수 입력값입니다.");
             }
             LocalDate.parse(request.birthdate());
@@ -53,6 +63,7 @@ public class UserEntity extends BaseEntity {
                 .username(request.username())
                 .email(request.email())
                 .birthdate(LocalDate.parse(request.birthdate()))
+                .gender(request.gender())
                 .build();
     }
 
