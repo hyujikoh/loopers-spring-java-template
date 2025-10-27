@@ -83,7 +83,7 @@ public class UserServiceIntegrationTest {
      * @return
      */
     private UserRegisterRequest createUserRegisterRequest(String username, String email, String birthdate) {
-        return new UserRegisterRequest(username, email, birthdate);
+        return new UserRegisterRequest(username, email, birthdate, Gender.MALE);
     }
 
     /**
