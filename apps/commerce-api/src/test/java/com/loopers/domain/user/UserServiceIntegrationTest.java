@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.loopers.utils.DatabaseCleanUp;
 
@@ -63,6 +64,19 @@ public class UserServiceIntegrationTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("이미 존재하는 사용자 이름입니다");
     }
+
+    @DisplayName("이미 가입된 사용자명으로 저장 시도시 실패한다.")
+    @Test
+    void save_fail_when_username_already_exists() {
+        // given
+        UserRegisterRequest existingUser = createUserRegisterRequest("testuser", "existing@email.com", "1990-01-01");
+        userRepository.save(UserEntity.createUserEntity(existingUser));
+
+        UserRegisterRequest duplicateUser = createUserRegisterRequest("testuser", "new@email.com", "1990-01-02");
+        Assertions.assertThatThrownBy(() -> userRepository.save(UserEntity.createUserEntity(duplicateUser)))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
 
     private UserRegisterRequest createUserRegisterRequest(String username, String email, String birthdate) {
         return new UserRegisterRequest(username, email, birthdate);
