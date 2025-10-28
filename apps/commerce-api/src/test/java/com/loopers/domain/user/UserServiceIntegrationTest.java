@@ -96,21 +96,40 @@ public class UserServiceIntegrationTest {
 
 
     @Test
-    @DisplayName("사용자 아이디로 사용자 정보를 조회한다. (spy 검증)")
-    void getUserInfo() {
+    @DisplayName("사용자 아이디로 사용자 정보를 조회한다.")
+    void get_user_by_username_success() {
         // given
-        UserRegisterRequest req = createUserRegisterRequest("testuser", "existing@email.com", "1990-01-01");
-        UserEntity baseUser = userRepository.save(UserEntity.createUserEntity(req));
+        UserRegisterRequest req = createUserRegisterRequest("testuser", "test@email.com", "1990-01-01");
+        UserEntity savedUser = userRepository.save(UserEntity.createUserEntity(req));
 
         // when
-        UserEntity userByUsername = userService.getUserByUsername(baseUser.getUsername());
+        UserEntity foundUser = userService.getUserByUsername(savedUser.getUsername());
 
         // then
-        verify(userRepository, times(1)).findByUsername(baseUser.getUsername());
-        assertThat(userByUsername).isNotNull();
-        assertThat(userByUsername.getUsername()).isEqualTo(baseUser.getUsername());
-        assertThat(userByUsername.getId()).isEqualTo(baseUser.getId());
+        verify(userRepository, times(1)).findByUsername(foundUser.getUsername());
+        assertThat(foundUser).isNotNull();
+        assertThat(foundUser.getUsername()).isEqualTo(savedUser.getUsername());
+        assertThat(foundUser.getEmail()).isEqualTo(savedUser.getEmail());
+        assertThat(foundUser.getBirthdate()).isEqualTo(savedUser.getBirthdate());
+        assertThat(foundUser.getId()).isEqualTo(savedUser.getId());
     }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자 아이디로 조회시 null을 반환한다.")
+    void get_user_by_username_returnNull_whenUserNotFound() {
+        // given
+        String nonExistentUsername = "nonexistent";
+
+        // when
+        UserEntity result = userService.getUserByUsername(nonExistentUsername);
+
+        // then
+        assertThat(result).isNull();
+    }
+
+
+
+
 
 
     /**
