@@ -2,7 +2,9 @@ package com.loopers.domain.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.loopers.utils.DatabaseCleanUp;
 
@@ -46,7 +49,7 @@ public class UserServiceIntegrationTest {
         UserEntity result = userService.register(request);
 
         // then
-        assertUserEntity(result, request);
+        assertUserEntityByRequest(result, request);
         verify(userRepository).save(any(UserEntity.class));
     }
 
@@ -61,7 +64,7 @@ public class UserServiceIntegrationTest {
         UserEntity result = userService.register(request);
 
         // then
-        assertUserEntity(result, request);
+        assertUserEntityByRequest(result, request);
     }
 
     @DisplayName("이미 가입된 사용자명으로 회원가입 시도 시 실패한다.")
@@ -92,6 +95,24 @@ public class UserServiceIntegrationTest {
     }
 
 
+    @Test
+    @DisplayName("사용자 아이디로 사용자 정보를 조회한다. (spy 검증)")
+    void getUserInfo() {
+        // given
+        UserRegisterRequest req = createUserRegisterRequest("testuser", "existing@email.com", "1990-01-01");
+        UserEntity baseUser = userRepository.save(UserEntity.createUserEntity(req));
+
+        // when
+        UserEntity userByUsername = userService.getUserByUsername(baseUser.getUsername());
+
+        // then
+        verify(userRepository, times(1)).findByUsername(baseUser.getUsername());
+        assertThat(userByUsername).isNotNull();
+        assertThat(userByUsername.getUsername()).isEqualTo(baseUser.getUsername());
+        assertThat(userByUsername.getId()).isEqualTo(baseUser.getId());
+    }
+
+
     /**
      * 요청 생성 헬퍼 메서드
      *
@@ -110,7 +131,7 @@ public class UserServiceIntegrationTest {
      * @param actual
      * @param expected
      */
-    private void assertUserEntity(UserEntity actual, UserRegisterRequest expected) {
+    private void assertUserEntityByRequest(UserEntity actual, UserRegisterRequest expected) {
         assertThat(actual.getId()).isNotNull();
         assertThat(actual.getUsername()).isEqualTo(expected.username());
         assertThat(actual.getEmail()).isEqualTo(expected.email());
