@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.loopers.utils.DatabaseCleanUp;
 
@@ -126,11 +125,6 @@ public class UserServiceIntegrationTest {
         // then
         assertThat(result).isNull();
     }
-
-
-
-
-
 
     /**
      * 요청 생성 헬퍼 메서드
