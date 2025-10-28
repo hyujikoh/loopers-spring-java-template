@@ -2,6 +2,7 @@ package com.loopers.domain.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import com.loopers.utils.DatabaseCleanUp;
@@ -22,7 +24,7 @@ public class UserServiceIntegrationTest {
     @Autowired
     private UserService userService;
 
-    @Autowired
+    @SpyBean
     private UserRepository userRepository;
 
     @Autowired
@@ -32,6 +34,22 @@ public class UserServiceIntegrationTest {
     void tearDown() {
         databaseCleanUp.truncateAllTables();
     }
+
+
+    @DisplayName("회원 가입시 User 저장이 수행된다. (spy 검증)")
+    @Test
+    void register_spy_success() {
+        // given
+        UserRegisterRequest request = createUserRegisterRequest("testuser", "test@email.com", "1990-01-01");
+
+        // when
+        UserEntity result = userService.register(request);
+
+        // then
+        assertUserEntity(result, request);
+        verify(userRepository).save(any(UserEntity.class));
+    }
+
 
     @DisplayName("회원 가입시 User 저장이 수행된다.")
     @Test
