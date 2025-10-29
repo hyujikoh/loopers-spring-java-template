@@ -1,6 +1,7 @@
 package com.loopers.domain.point;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 import com.loopers.domain.BaseEntity;
 import com.loopers.domain.user.UserEntity;
@@ -21,7 +22,7 @@ import jakarta.validation.constraints.Min;
 @Table(name = "points")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Point extends BaseEntity {
+public class PointEntity extends BaseEntity {
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private UserEntity user;
 
@@ -29,13 +30,14 @@ public class Point extends BaseEntity {
     @Column(precision = 9, scale = 2, nullable = false)
     private BigDecimal amount;
 
-    public Point(UserEntity user, BigDecimal amount) {
+    public PointEntity(UserEntity user) {
+        Objects.requireNonNull(user, "사용자는 null 일 수 없습니다.");
         this.user = user;
-        this.amount = amount;
+        this.amount = BigDecimal.ZERO;
     }
 
-    public static Point createPointEntity(UserEntity user) {
-        return  new Point(user, BigDecimal.ZERO);
+    public static PointEntity createPointEntity(UserEntity user) {
+        return  new PointEntity(user);
 
     }
 }
