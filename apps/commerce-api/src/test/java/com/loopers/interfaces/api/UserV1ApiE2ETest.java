@@ -35,7 +35,6 @@ import com.loopers.utils.DatabaseCleanUp;
 public class UserV1ApiE2ETest {
 
     private final TestRestTemplate testRestTemplate;
-    private final UserJpaRepository userJpaRepository;
     private final DatabaseCleanUp databaseCleanUp;
     @Autowired
     private UserRepository userRepository;
@@ -43,11 +42,9 @@ public class UserV1ApiE2ETest {
     @Autowired
     public UserV1ApiE2ETest(
             TestRestTemplate testRestTemplate,
-            UserJpaRepository userJpaRepository,
             DatabaseCleanUp databaseCleanUp
     ) {
         this.testRestTemplate = testRestTemplate;
-        this.userJpaRepository = userJpaRepository;
         this.databaseCleanUp = databaseCleanUp;
     }
 
