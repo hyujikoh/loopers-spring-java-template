@@ -21,9 +21,6 @@ import com.loopers.utils.DatabaseCleanUp;
 public class PointServiceIntegrationTest {
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private PointService pointService;
 
     @Autowired
@@ -38,7 +35,7 @@ public class PointServiceIntegrationTest {
     }
 
     @org.junit.jupiter.api.Test
-    @DisplayName("등록된 사용자의 포인트 조회를 성공한다.")
+    @DisplayName("사용자 등록 시 포인트가 자동으로 생성및 포인트 조회 여부를 확인한다.")
     void get_exist_user_point_amount() {
         // given
         UserRegisterRequest request = createUserRegisterRequest("testuser", "existing@email.com", "1990-01-01");

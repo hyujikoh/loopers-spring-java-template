@@ -27,6 +27,6 @@ public class PointRepositoryImpl implements PointRepository {
 
     @Override
     public PointEntity findByUsername(String username) {
-        return pointJpaRepository.findByUser_Username(username).orElse(null);
+        return pointJpaRepository.findByUsername(username).orElse(null);
     }
 }

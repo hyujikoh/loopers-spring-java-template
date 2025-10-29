@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 public class PointService {
     private final PointRepository pointRepository;
 
+    @Transactional(readOnly = true)
     public PointEntity getByUsername(String username) {
         return pointRepository.findByUsername(username);
     }
