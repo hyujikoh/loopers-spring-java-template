@@ -2,7 +2,9 @@ package com.loopers.domain.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -46,7 +48,7 @@ public class UserServiceIntegrationTest {
         UserEntity result = userService.register(request);
 
         // then
-        assertUserEntity(result, request);
+        assertUserEntityByRequest(result, request);
         verify(userRepository).save(any(UserEntity.class));
     }
 
@@ -61,7 +63,7 @@ public class UserServiceIntegrationTest {
         UserEntity result = userService.register(request);
 
         // then
-        assertUserEntity(result, request);
+        assertUserEntityByRequest(result, request);
     }
 
     @DisplayName("이미 가입된 사용자명으로 회원가입 시도 시 실패한다.")
@@ -92,6 +94,38 @@ public class UserServiceIntegrationTest {
     }
 
 
+    @Test
+    @DisplayName("사용자 아이디로 사용자 정보를 조회한다.")
+    void get_user_by_username_success() {
+        // given
+        UserRegisterRequest req = createUserRegisterRequest("testuser", "test@email.com", "1990-01-01");
+        UserEntity savedUser = userRepository.save(UserEntity.createUserEntity(req));
+
+        // when
+        UserEntity foundUser = userService.getUserByUsername(savedUser.getUsername());
+
+        // then
+        verify(userRepository, times(1)).findByUsername(foundUser.getUsername());
+        assertThat(foundUser).isNotNull();
+        assertThat(foundUser.getUsername()).isEqualTo(savedUser.getUsername());
+        assertThat(foundUser.getEmail()).isEqualTo(savedUser.getEmail());
+        assertThat(foundUser.getBirthdate()).isEqualTo(savedUser.getBirthdate());
+        assertThat(foundUser.getId()).isEqualTo(savedUser.getId());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 사용자 아이디로 조회시 null을 반환한다.")
+    void get_user_by_username_returnNull_whenUserNotFound() {
+        // given
+        String nonExistentUsername = "nonexistent";
+
+        // when
+        UserEntity result = userService.getUserByUsername(nonExistentUsername);
+
+        // then
+        assertThat(result).isNull();
+    }
+
     /**
      * 요청 생성 헬퍼 메서드
      *
@@ -110,7 +144,7 @@ public class UserServiceIntegrationTest {
      * @param actual
      * @param expected
      */
-    private void assertUserEntity(UserEntity actual, UserRegisterRequest expected) {
+    private void assertUserEntityByRequest(UserEntity actual, UserRegisterRequest expected) {
         assertThat(actual.getId()).isNotNull();
         assertThat(actual.getUsername()).isEqualTo(expected.username());
         assertThat(actual.getEmail()).isEqualTo(expected.email());
