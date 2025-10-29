@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class UserEntityTest {
     @DisplayName("User 객체 생성 성공 테스트")
     @Test
-    void register_success() {
+    void create_user_entity_success() {
         String username = "testuser";
         String email = "dvum0045@gmali.com";
         String birthdate = "1990-01-01";
@@ -31,7 +31,7 @@ class UserEntityTest {
 
     @DisplayName("ID가 영문 및 숫자 10자 초과시 생성 실패")
     @Test
-    void createUserEntity_fail_when_username_exceeds_10_characters() {
+    void create_user_entity_fail_when_username_exceeds_10_characters() {
         assertUserCreationFailsWithMessage(
                 "testuser123", "test@example.com", "1990-01-01", Gender.MALE,
                 "사용자명은 영문 및 숫자 10자 이내여야 합니다."
@@ -40,7 +40,7 @@ class UserEntityTest {
 
     @DisplayName("ID가 영문 및 숫자가 아닌 문자 포함시 생성 실패")
     @Test
-    void createUserEntity_fail_when_username_contains_invalid_characters() {
+    void create_user_entity_fail_when_username_contains_invalid_characters() {
         assertUserCreationFailsWithMessage(
                 "test@user", "test@example.com", "1990-01-01", Gender.MALE,
                 "사용자명은 영문 및 숫자 10자 이내여야 합니다."
@@ -49,7 +49,7 @@ class UserEntityTest {
 
     @DisplayName("이메일이 올바른 형식이 아닐 때 생성 실패")
     @Test
-    void createUserEntity_fail_when_email_format_invalid() {
+    void create_user_entity_fail_when_email_format_invalid() {
         assertUserCreationFailsWithMessage(
                 "testuser", "invalid-email", "1990-01-01", Gender.MALE,
                 "올바른 형식의 이메일 주소여야 합니다."
@@ -58,7 +58,7 @@ class UserEntityTest {
 
     @DisplayName("생년월일이 null일 때 생성 실패")
     @Test
-    void createUserEntity_fail_when_birthdate_is_null() {
+    void create_user_entity_fail_when_birthdate_is_null() {
         assertUserCreationFailsWithMessage(
                 "testuser", "test@example.com", null, Gender.MALE,
                 "생년월일은 필수 입력값입니다."
@@ -67,7 +67,7 @@ class UserEntityTest {
 
     @DisplayName("생년월일이 yyyy-MM-dd 형식이 아닐 때 생성 실패")
     @Test
-    void createUserEntity_fail_when_birthdate_format_invalid() {
+    void create_user_entity_fail_when_birthdate_format_invalid() {
         assertUserCreationFailsWithMessage(
                 "testuser", "test@example.com", "1990/01/01", Gender.MALE,
                 "올바른 날짜 형식이어야 합니다."
@@ -76,7 +76,7 @@ class UserEntityTest {
 
     @DisplayName("성별이 null일 때 생성 실패")
     @Test
-    void createUserEntity_fail_when_gender_is_null() {
+    void create_user_entity_fail_when_gender_is_null() {
         assertUserCreationFailsWithMessage(
                 "testuser", "test@example.com", "1990/01/01", null,
                 "성별은 필수 입력값입니다."

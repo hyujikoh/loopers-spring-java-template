@@ -40,7 +40,7 @@ public class UserServiceIntegrationTest {
 
     @DisplayName("회원 가입시 User 저장이 수행된다. (spy 검증)")
     @Test
-    void register_spy_success() {
+    void register_user_with_spy_verification() {
         // given
         UserDomainCreateRequest request = createUserRegisterRequest("testuser", "test@email.com", "1990-01-01");
 
@@ -55,7 +55,7 @@ public class UserServiceIntegrationTest {
 
     @DisplayName("회원 가입시 User 저장이 수행된다.")
     @Test
-    void register_success() {
+    void register_user_success() {
         // given
         UserDomainCreateRequest request = createUserRegisterRequest("testuser", "test@email.com", "1990-01-01");
 
@@ -68,7 +68,7 @@ public class UserServiceIntegrationTest {
 
     @DisplayName("이미 가입된 사용자명으로 회원가입 시도 시 실패한다.")
     @Test
-    void register_fail_when_username_already_exists() {
+    void register_user_fail_when_username_already_exists() {
         // given
         UserDomainCreateRequest existingUser = createUserRegisterRequest("testuser", "existing@email.com", "1990-01-01");
         userRepository.save(UserEntity.createUserEntity(existingUser));
@@ -83,7 +83,7 @@ public class UserServiceIntegrationTest {
 
     @DisplayName("이미 가입된 사용자명으로 저장 시도시 실패한다.")
     @Test
-    void save_fail_when_username_already_exists() {
+    void save_user_fail_when_username_already_exists() {
         // given
         UserDomainCreateRequest existingUser = createUserRegisterRequest("testuser", "existing@email.com", "1990-01-01");
         userRepository.save(UserEntity.createUserEntity(existingUser));
@@ -115,7 +115,7 @@ public class UserServiceIntegrationTest {
 
     @Test
     @DisplayName("존재하지 않는 사용자 아이디로 조회시 null을 반환한다.")
-    void get_user_by_username_returnNull_whenUserNotFound() {
+    void get_user_by_username_return_null_when_not_found() {
         // given
         String nonExistentUsername = "nonexistent";
 

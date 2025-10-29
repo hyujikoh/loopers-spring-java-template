@@ -50,7 +50,7 @@ public class PointV1E2ETest {
 
     @Test
     @DisplayName("X-USER-ID_헤더를_기준으로_사용자의_포인트_조회를_성공한다")
-    void X_USER_ID_헤더를_기준으로_사용자의_포인트_조회를_성공한다() {
+    void get_user_point_by_header_success() {
         // given
         String username = "testuser";
         String email = "dvum0045@gmail.com";
@@ -83,7 +83,7 @@ public class PointV1E2ETest {
 
     @Test
     @DisplayName("X_USER_ID_헤더가_없을_경우_400_Bad_Request_응답을_반환한다")
-    void X_USER_ID_헤더가_없을_경우_400_Bad_Request_응답을_반환한다() {
+    void get_user_point_fail_when_header_missing() {
         // when
         ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointInfoResponse>> responseType =
                 new ParameterizedTypeReference<>() {

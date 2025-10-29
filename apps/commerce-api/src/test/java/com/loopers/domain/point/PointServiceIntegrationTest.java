@@ -36,7 +36,7 @@ public class PointServiceIntegrationTest {
 
     @org.junit.jupiter.api.Test
     @DisplayName("사용자 등록 시 포인트가 자동으로 생성및 포인트 조회 여부를 확인한다.")
-    void get_exist_user_point_amount() {
+    void get_point_when_user_exists() {
         // given
         UserRegisterCommand req =
                 new UserRegisterCommand("testuser", "existing@email.com", "1990-01-01", Gender.FEMALE);
@@ -53,7 +53,7 @@ public class PointServiceIntegrationTest {
 
     @org.junit.jupiter.api.Test
     @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, null 이 반환된다.")
-    void no_exist_user_null() {
+    void get_point_return_null_when_user_not_exists() {
         // when
         PointEntity point = pointService.getByUsername("nonexistentuser");
 

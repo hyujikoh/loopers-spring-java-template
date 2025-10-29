@@ -54,7 +54,7 @@ public class UserV1ApiE2ETest {
 
     @Test
     @DisplayName("올바른_API_요청으로_회원가입이_성공하면_생성된_사용자_정보를_응답한다")
-    void 올바른_API_요청으로_회원가입이_성공하면_생성된_사용자_정보를_응답한다() {
+    void register_user_success() {
         // given
         String username = "testuser";
         String email = "dvum0045@gmail.com";
@@ -79,7 +79,7 @@ public class UserV1ApiE2ETest {
 
     @Test
     @DisplayName("성별이_null인_회원가입_요청시_400_Bad_Request_응답을_반환한다")
-    void 성별이_null인_회원가입_요청시_400_Bad_Request_응답을_반환한다() {
+    void register_user_fail_when_gender_is_null() {
         // given
         String username = "testuser";
         String email = "dvum0045@gmail.com";
@@ -103,7 +103,7 @@ public class UserV1ApiE2ETest {
 
     @Test
     @DisplayName("등록된_사용자명으로_사용자_조회시_사용자_정보를_응답한다")
-    void 등록된_사용자명으로_사용자_조회시_사용자_정보를_응답한다() {
+    void get_user_by_username_success() {
         // given
         String username = "testuser";
         String email = "dvum0045@gmail.com";
@@ -133,7 +133,7 @@ public class UserV1ApiE2ETest {
 
     @Test
     @DisplayName("존재하지_않는_사용자명으로_조회시_404_Not_Found_응답을_반환한다")
-    void 존재하지_않는_사용자명으로_조회시_404_Not_Found_응답을_반환한다() {
+    void get_user_by_username_fail_when_not_found() {
         // given
         String username = "nonExistentUser";
 
