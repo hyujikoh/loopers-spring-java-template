@@ -3,6 +3,7 @@ package com.loopers.application.user;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.point.PointService;
@@ -18,13 +19,15 @@ import jakarta.validation.constraints.NotNull;
 
 @RequiredArgsConstructor
 @Component
+@Transactional(readOnly = true)
 public class UserFacade {
     private final UserService userService;
     private final PointService pointService;
 
-    public UserInfo registerUser(UserRegisterRequest request) {
+    @Transactional
+    public UserInfo registerUser(UserRegisterCommand command) {
         // 회원 가입
-        UserEntity register = userService.register(request);
+        UserEntity register = userService.register(command.toDomainRequest());
 
         // 신규 회원 포인트 생성
         pointService.createPointForNewUser(register);
@@ -32,8 +35,7 @@ public class UserFacade {
     }
 
     public UserInfo getUserByUsername(@NotNull String username) {
-        return Optional.ofNullable(userService.getUserByUsername(username))
-                .map(UserInfo::from)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "user not found for username: " + username));
+        UserEntity userEntity = userService.getUserByUsername(username);
+        return UserInfo.from(userEntity);
     }
 }

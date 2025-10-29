@@ -19,4 +19,7 @@ public record UserRegisterRequest(
         @NotNull
         Gender gender
 ) {
+    public static UserRegisterRequest of(String username, String email, String birthdate, Gender gender) {
+        return new UserRegisterRequest(username, email, birthdate, gender);
+    }
 }
