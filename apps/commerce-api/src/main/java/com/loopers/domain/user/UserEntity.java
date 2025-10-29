@@ -34,7 +34,7 @@ public class UserEntity extends BaseEntity {
     @Column(length = 10, nullable = false)
     private Gender gender;
 
-    public static UserEntity createUserEntity(@Valid UserRegisterRequest request) {
+    public static UserEntity createUserEntity(@Valid UserDomainCreateRequest request) {
         if (Objects.isNull(request.username()) || !request.username().matches("^[A-Za-z0-9]{1,10}$")) {
             throw new IllegalArgumentException("사용자명은 영문 및 숫자 10자 이내여야 합니다.");
         }

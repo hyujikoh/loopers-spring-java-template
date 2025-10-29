@@ -5,10 +5,8 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.user.UserEntity;
-import com.loopers.domain.user.UserRegisterRequest;
 import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
@@ -35,7 +33,8 @@ public class UserFacade {
     }
 
     public UserInfo getUserByUsername(@NotNull String username) {
-        UserEntity userEntity = userService.getUserByUsername(username);
-        return UserInfo.from(userEntity);
+        return Optional.ofNullable(userService.getUserByUsername(username))
+                .map(UserInfo::from)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "user not found for username: " + username));
     }
 }

@@ -42,7 +42,7 @@ public class UserServiceIntegrationTest {
     @Test
     void register_spy_success() {
         // given
-        UserRegisterRequest request = createUserRegisterRequest("testuser", "test@email.com", "1990-01-01");
+        UserDomainCreateRequest request = createUserRegisterRequest("testuser", "test@email.com", "1990-01-01");
 
         // when
         UserEntity result = userService.register(request);
@@ -57,7 +57,7 @@ public class UserServiceIntegrationTest {
     @Test
     void register_success() {
         // given
-        UserRegisterRequest request = createUserRegisterRequest("testuser", "test@email.com", "1990-01-01");
+        UserDomainCreateRequest request = createUserRegisterRequest("testuser", "test@email.com", "1990-01-01");
 
         // when
         UserEntity result = userService.register(request);
@@ -70,10 +70,10 @@ public class UserServiceIntegrationTest {
     @Test
     void register_fail_when_username_already_exists() {
         // given
-        UserRegisterRequest existingUser = createUserRegisterRequest("testuser", "existing@email.com", "1990-01-01");
+        UserDomainCreateRequest existingUser = createUserRegisterRequest("testuser", "existing@email.com", "1990-01-01");
         userRepository.save(UserEntity.createUserEntity(existingUser));
 
-        UserRegisterRequest duplicateUser = createUserRegisterRequest("testuser", "new@email.com", "1990-01-02");
+        UserDomainCreateRequest duplicateUser = createUserRegisterRequest("testuser", "new@email.com", "1990-01-02");
 
         // when & then
         assertThatThrownBy(() -> userService.register(duplicateUser))
@@ -85,10 +85,10 @@ public class UserServiceIntegrationTest {
     @Test
     void save_fail_when_username_already_exists() {
         // given
-        UserRegisterRequest existingUser = createUserRegisterRequest("testuser", "existing@email.com", "1990-01-01");
+        UserDomainCreateRequest existingUser = createUserRegisterRequest("testuser", "existing@email.com", "1990-01-01");
         userRepository.save(UserEntity.createUserEntity(existingUser));
 
-        UserRegisterRequest duplicateUser = createUserRegisterRequest("testuser", "new@email.com", "1990-01-02");
+        UserDomainCreateRequest duplicateUser = createUserRegisterRequest("testuser", "new@email.com", "1990-01-02");
         Assertions.assertThatThrownBy(() -> userRepository.save(UserEntity.createUserEntity(duplicateUser)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
@@ -98,7 +98,7 @@ public class UserServiceIntegrationTest {
     @DisplayName("사용자 아이디로 사용자 정보를 조회한다.")
     void get_user_by_username_success() {
         // given
-        UserRegisterRequest req = createUserRegisterRequest("testuser", "test@email.com", "1990-01-01");
+        UserDomainCreateRequest req = createUserRegisterRequest("testuser", "test@email.com", "1990-01-01");
         UserEntity savedUser = userRepository.save(UserEntity.createUserEntity(req));
 
         // when
@@ -134,8 +134,8 @@ public class UserServiceIntegrationTest {
      * @param birthdate
      * @return
      */
-    private UserRegisterRequest createUserRegisterRequest(String username, String email, String birthdate) {
-        return new UserRegisterRequest(username, email, birthdate, Gender.MALE);
+    private UserDomainCreateRequest createUserRegisterRequest(String username, String email, String birthdate) {
+        return new UserDomainCreateRequest(username, email, birthdate, Gender.MALE);
     }
 
     /**
@@ -144,7 +144,7 @@ public class UserServiceIntegrationTest {
      * @param actual
      * @param expected
      */
-    private void assertUserEntityByRequest(UserEntity actual, UserRegisterRequest expected) {
+    private void assertUserEntityByRequest(UserEntity actual, UserDomainCreateRequest expected) {
         assertThat(actual.getId()).isNotNull();
         assertThat(actual.getUsername()).isEqualTo(expected.username());
         assertThat(actual.getEmail()).isEqualTo(expected.email());

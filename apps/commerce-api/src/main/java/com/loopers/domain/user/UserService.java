@@ -17,7 +17,7 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional
-    public UserEntity register(@Valid UserRegisterRequest userRegisterRequest) {
+    public UserEntity register(@Valid UserDomainCreateRequest userRegisterRequest) {
         userRepository.findByUsername(userRegisterRequest.username())
             .ifPresent(user -> {
                 throw new IllegalArgumentException("이미 존재하는 사용자 이름입니다: " + userRegisterRequest.username());

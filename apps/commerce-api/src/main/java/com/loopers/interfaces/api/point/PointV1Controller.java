@@ -3,14 +3,9 @@ package com.loopers.interfaces.api.point;
 import org.springframework.web.bind.annotation.*;
 
 import com.loopers.application.point.PointFacade;
-import com.loopers.application.user.UserFacade;
-import com.loopers.application.user.UserInfo;
-import com.loopers.domain.user.UserRegisterRequest;
 import com.loopers.interfaces.api.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
-
-import jakarta.validation.Valid;
 
 /**
  * @author hyunjikoh

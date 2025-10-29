@@ -8,9 +8,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
+import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.user.Gender;
-import com.loopers.domain.user.UserRegisterRequest;
-import com.loopers.domain.user.UserRepository;
+import com.loopers.domain.user.UserDomainCreateRequest;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**
@@ -38,8 +38,9 @@ public class PointServiceIntegrationTest {
     @DisplayName("사용자 등록 시 포인트가 자동으로 생성및 포인트 조회 여부를 확인한다.")
     void get_exist_user_point_amount() {
         // given
-        UserRegisterRequest request = createUserRegisterRequest("testuser", "existing@email.com", "1990-01-01");
-        UserInfo userInfo = userFacade.registerUser(request);
+        UserRegisterCommand req =
+                new UserRegisterCommand("testuser", "existing@email.com", "1990-01-01", Gender.FEMALE);
+        UserInfo userInfo = userFacade.registerUser(req);
 
         // when
         PointEntity point = pointService.getByUsername(userInfo.username());
@@ -60,8 +61,8 @@ public class PointServiceIntegrationTest {
         Assertions.assertThat(point).isNull();
     }
 
-    private UserRegisterRequest createUserRegisterRequest(String username, String email, String birthdate) {
-        return new UserRegisterRequest(username, email, birthdate, Gender.MALE);
+    private UserDomainCreateRequest createUserRegisterRequest(String username, String email, String birthdate) {
+        return new UserDomainCreateRequest(username, email, birthdate, Gender.MALE);
     }
 
 }

@@ -1,7 +1,7 @@
 package com.loopers.application.user;
 
 import com.loopers.domain.user.Gender;
-import com.loopers.domain.user.UserRegisterRequest;
+import com.loopers.domain.user.UserDomainCreateRequest;
 
 public record UserRegisterCommand(
         String username,
@@ -13,7 +13,7 @@ public record UserRegisterCommand(
         return new UserRegisterCommand(username, email, birthdate, gender);
     }
 
-    public UserRegisterRequest toDomainRequest() {
-        return UserRegisterRequest.of(username, email, birthdate, gender);
+    public UserDomainCreateRequest toDomainRequest() {
+        return UserDomainCreateRequest.of(username, email, birthdate, gender);
     }
 }

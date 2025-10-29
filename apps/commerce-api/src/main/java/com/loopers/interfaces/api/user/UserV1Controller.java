@@ -18,11 +18,10 @@ import jakarta.validation.Valid;
 @RequiredArgsConstructor
 @RestController
 @Validated
-@RequestMapping("/api/v1/users")
 public class UserV1Controller {
     private final UserFacade userFacade;
 
-    @PostMapping
+    @PostMapping("/api/v1/users")
     public ApiResponse<UserV1Dtos.UserRegisterResponse> register(@RequestBody @Valid UserV1Dtos.UserRegisterRequest request) {
         UserInfo userInfo = userFacade.registerUser(request.toCommand());
         return ApiResponse.success(UserV1Dtos.UserRegisterResponse.from(userInfo));

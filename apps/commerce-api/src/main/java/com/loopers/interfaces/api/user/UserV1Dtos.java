@@ -33,13 +33,17 @@ public class UserV1Dtos {
     public record UserRegisterResponse(
             Long id,
             String username,
-            String email
+            String email,
+            LocalDate birth,
+            Gender gender
     ) {
         public static UserRegisterResponse from(UserInfo userInfo) {
             return new UserRegisterResponse(
                     userInfo.id(),
                     userInfo.username(),
-                    userInfo.email()
+                    userInfo.email(),
+                    userInfo.birthdate(),
+                    userInfo.gender()
             );
         }
     }

@@ -16,11 +16,9 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
 import com.loopers.application.user.UserFacade;
+import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.user.Gender;
-import com.loopers.domain.user.UserRegisterRequest;
-import com.loopers.domain.user.UserRepository;
 import com.loopers.interfaces.api.point.PointV1Dtos;
-import com.loopers.interfaces.api.user.UserV1Dtos;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**
@@ -51,50 +49,49 @@ public class PointV1E2ETest {
     }
 
     @Test
-    @DisplayName("X-USER-ID 헤더를 기준으로 사용자의 포인트 조회를 성공한다.")
-    void get_user_point_success() {
-
+    @DisplayName("X-USER-ID_헤더를_기준으로_사용자의_포인트_조회를_성공한다")
+    void X_USER_ID_헤더를_기준으로_사용자의_포인트_조회를_성공한다() {
         // given
         String username = "testuser";
         String email = "dvum0045@gmail.com";
         String birthdate = "1990-01-01";
-        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, email, birthdate, Gender.FEMALE);
+        UserRegisterCommand userRegisterCommand = UserRegisterCommand.of(username, email, birthdate, Gender.FEMALE);
 
-        userFacade.registerUser(userRegisterRequest);
+        userFacade.registerUser(userRegisterCommand);
 
-        // given
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-USER-ID", "testuser");
 
-        // act
-        ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointInfoResponse>> responseType = new ParameterizedTypeReference<>() {
-        };
+        // when
+        ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointInfoResponse>> responseType =
+                new ParameterizedTypeReference<>() {
+                };
         ResponseEntity<ApiResponse<PointV1Dtos.PointInfoResponse>> response =
-                testRestTemplate.exchange("/api/v1/points", HttpMethod.GET, new HttpEntity<>(null, headers), responseType);
+                testRestTemplate.exchange("/api/v1/points", HttpMethod.GET, new HttpEntity<>(null, headers),
+                        responseType);
 
-        // assert
+        // then
         assertAll(
                 () -> assertTrue(response.getStatusCode().is2xxSuccessful()),
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
                 () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo(username),
-                () -> {
-                    assertThat(Objects.requireNonNull(response.getBody()).data().currentPointAmount()).isEqualTo(BigDecimal.ZERO.setScale(2));
-                }
+                () -> assertThat(Objects.requireNonNull(response.getBody()).data().currentPointAmount()).isEqualTo(
+                        BigDecimal.ZERO.setScale(2))
         );
     }
 
 
     @Test
-    @DisplayName("X-USER-ID 헤더가 없을 경우 400 Bad Request 응답을 반환한다.")
-    void getUserPoint_success() {
-
-        // act
-        ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointInfoResponse>> responseType = new ParameterizedTypeReference<>() {
-        };
+    @DisplayName("X_USER_ID_헤더가_없을_경우_400_Bad_Request_응답을_반환한다")
+    void X_USER_ID_헤더가_없을_경우_400_Bad_Request_응답을_반환한다() {
+        // when
+        ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointInfoResponse>> responseType =
+                new ParameterizedTypeReference<>() {
+                };
         ResponseEntity<ApiResponse<PointV1Dtos.PointInfoResponse>> response =
                 testRestTemplate.exchange("/api/v1/points", HttpMethod.GET, new HttpEntity<>(null, null), responseType);
 
-        // assert
+        // then
         assertAll(
                 () -> assertTrue(response.getStatusCode().is4xxClientError()),
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST)

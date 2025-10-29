@@ -19,7 +19,7 @@ class UserEntityTest {
         String birthdate = "1990-01-01";
         Gender gender = Gender.MALE;
 
-        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, email, birthdate, gender);
+        UserDomainCreateRequest userRegisterRequest = new UserDomainCreateRequest(username, email, birthdate, gender);
 
         UserEntity userEntity = UserEntity.createUserEntity(userRegisterRequest);
 
@@ -92,7 +92,7 @@ class UserEntityTest {
      * @param expectedMessage
      */
     private void assertUserCreationFailsWithMessage(String username, String email, String birthdate, Gender gender, String expectedMessage) {
-        UserRegisterRequest request = new UserRegisterRequest(username, email, birthdate, gender);
+        UserDomainCreateRequest request = new UserDomainCreateRequest(username, email, birthdate, gender);
 
         Assertions.assertThatThrownBy(() -> UserEntity.createUserEntity(request))
                 .isInstanceOf(IllegalArgumentException.class)
