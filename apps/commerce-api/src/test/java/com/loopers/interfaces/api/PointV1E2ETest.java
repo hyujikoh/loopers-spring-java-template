@@ -3,7 +3,6 @@ package com.loopers.interfaces.api;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.math.BigDecimal;
 import java.util.Objects;
 
 import org.junit.jupiter.api.AfterEach;
@@ -17,7 +16,7 @@ import org.springframework.http.*;
 
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserRegisterCommand;
-import com.loopers.domain.user.Gender;
+import com.loopers.fixtures.PointTestFixture;
 import com.loopers.interfaces.api.point.PointV1Dtos;
 import com.loopers.utils.DatabaseCleanUp;
 
@@ -52,15 +51,10 @@ public class PointV1E2ETest {
     @DisplayName("X-USER-ID_헤더를_기준으로_사용자의_포인트_조회를_성공한다")
     void get_user_point_by_header_success() {
         // given
-        String username = "testuser";
-        String email = "dvum0045@gmail.com";
-        String birthdate = "1990-01-01";
-        UserRegisterCommand userRegisterCommand = UserRegisterCommand.of(username, email, birthdate, Gender.FEMALE);
-
+        UserRegisterCommand userRegisterCommand = PointTestFixture.TestUser.createCommandOf();
         userFacade.registerUser(userRegisterCommand);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-USER-ID", "testuser");
+        HttpHeaders headers = PointTestFixture.createUserIdHeaders(PointTestFixture.TestUser.USERNAME);
 
         // when
         ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointInfoResponse>> responseType =
@@ -74,9 +68,8 @@ public class PointV1E2ETest {
         assertAll(
                 () -> assertTrue(response.getStatusCode().is2xxSuccessful()),
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
-                () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo(username),
-                () -> assertThat(Objects.requireNonNull(response.getBody()).data().currentPointAmount()).isEqualTo(
-                        BigDecimal.ZERO.setScale(2))
+                () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo(PointTestFixture.TestUser.USERNAME),
+                () -> assertThat(Objects.requireNonNull(response.getBody()).data().currentPointAmount()).isEqualTo(PointTestFixture.DEFAULT_POINT_AMOUNT)
         );
     }
 

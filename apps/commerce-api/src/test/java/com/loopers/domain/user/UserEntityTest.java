@@ -3,6 +3,8 @@ package com.loopers.domain.user;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.loopers.fixtures.UserTestFixture;
+
 /**
  * @author hyunjikoh
  * @since 2025. 10. 26.

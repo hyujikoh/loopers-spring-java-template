@@ -20,7 +20,7 @@ import org.springframework.http.ResponseEntity;
 import com.loopers.domain.user.Gender;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserRepository;
-import com.loopers.domain.user.UserTestFixture;
+import com.loopers.fixtures.UserTestFixture;
 import com.loopers.interfaces.api.user.UserV1Dtos;
 import com.loopers.utils.DatabaseCleanUp;
 

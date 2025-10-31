@@ -1,9 +1,12 @@
-package com.loopers.domain.user;
+package com.loopers.fixtures;
 
 import java.time.LocalDate;
 
 import org.assertj.core.api.Assertions;
 
+import com.loopers.domain.user.Gender;
+import com.loopers.domain.user.UserDomainCreateRequest;
+import com.loopers.domain.user.UserEntity;
 import com.loopers.interfaces.api.user.UserV1Dtos;
 
 /**
