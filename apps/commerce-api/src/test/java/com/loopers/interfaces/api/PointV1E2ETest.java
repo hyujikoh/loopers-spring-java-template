@@ -18,9 +18,7 @@ import org.springframework.http.*;
 import com.loopers.application.user.UserFacade;
 import com.loopers.domain.user.Gender;
 import com.loopers.domain.user.UserRegisterRequest;
-import com.loopers.domain.user.UserRepository;
 import com.loopers.interfaces.api.point.PointV1Dtos;
-import com.loopers.interfaces.api.user.UserV1Dtos;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**
@@ -86,7 +84,7 @@ public class PointV1E2ETest {
 
     @Test
     @DisplayName("X-USER-ID 헤더가 없을 경우 400 Bad Request 응답을 반환한다.")
-    void getUserPoint_success() {
+    void get_user_point_without_header_fails() {
 
         // act
         ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointInfoResponse>> responseType = new ParameterizedTypeReference<>() {
@@ -98,6 +96,60 @@ public class PointV1E2ETest {
         assertAll(
                 () -> assertTrue(response.getStatusCode().is4xxClientError()),
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST)
+        );
+    }
+
+    @Test
+    @DisplayName("존재하는 유저가 1000원을 충전할 경우, 충전된 보유 총량을 응답으로 반환한다.")
+    void charge_1000_returns_total_amount() {
+        // given
+        String username = "testuser";
+        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, "test@email.com", "1990-01-01", Gender.MALE);
+        userFacade.registerUser(userRegisterRequest);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-USER-ID", username);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        PointV1Dtos.PointChargeRequest chargeRequest = new PointV1Dtos.PointChargeRequest(new BigDecimal("1000"));
+
+        // when
+        ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointChargeResponse>> responseType = new ParameterizedTypeReference<>() {
+        };
+        ResponseEntity<ApiResponse<PointV1Dtos.PointChargeResponse>> response =
+                testRestTemplate.exchange("/api/v1/points/charge", HttpMethod.POST, 
+                        new HttpEntity<>(chargeRequest, headers), responseType);
+
+        // then
+        assertAll(
+                () -> assertTrue(response.getStatusCode().is2xxSuccessful()),
+                () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
+                () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo(username),
+                () -> assertThat(Objects.requireNonNull(response.getBody()).data().totalAmount()).isEqualByComparingTo(new BigDecimal("1000.00"))
+        );
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 유저로 요청할 경우, 404 Not Found 응답을 반환한다.")
+    void charge_with_nonexistent_user_returns_404() {
+        // given
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-USER-ID", "nonexistentuser");
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        PointV1Dtos.PointChargeRequest chargeRequest = new PointV1Dtos.PointChargeRequest(new BigDecimal("1000"));
+
+        // when
+        ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointChargeResponse>> responseType = new ParameterizedTypeReference<>() {
+        };
+        ResponseEntity<ApiResponse<PointV1Dtos.PointChargeResponse>> response =
+                testRestTemplate.exchange("/api/v1/points/charge", HttpMethod.POST, 
+                        new HttpEntity<>(chargeRequest, headers), responseType);
+
+        // then
+        assertAll(
+                () -> assertTrue(response.getStatusCode().is4xxClientError()),
+                () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND)
         );
     }
 
