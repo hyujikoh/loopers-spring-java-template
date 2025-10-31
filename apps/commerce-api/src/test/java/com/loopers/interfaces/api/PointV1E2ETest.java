@@ -20,6 +20,7 @@ import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.user.Gender;
 import com.loopers.fixtures.UserTestFixture;
 import com.loopers.interfaces.api.point.PointV1Dtos;
+import com.loopers.support.Uris;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**
@@ -54,11 +55,7 @@ public class PointV1E2ETest {
     @DisplayName("X-USER-ID 헤더를 기준으로 사용자의 포인트 조회를 성공한다.")
     void get_user_point_success() {
 
-        // given
-        String username = "testuser";
-        String email = "dvum0045@gmail.com";
-        String birthdate = "1990-01-01";
-        UserRegisterCommand userCommand = UserTestFixture.createUserCommand(username, email, birthdate, Gender.FEMALE);
+        UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
 
         userFacade.registerUser(userCommand);
 
@@ -70,13 +67,13 @@ public class PointV1E2ETest {
         ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointInfoResponse>> responseType = new ParameterizedTypeReference<>() {
         };
         ResponseEntity<ApiResponse<PointV1Dtos.PointInfoResponse>> response =
-                testRestTemplate.exchange("/api/v1/points", HttpMethod.GET, new HttpEntity<>(null, headers), responseType);
+                testRestTemplate.exchange(Uris.Point.GET_INFO, HttpMethod.GET, new HttpEntity<>(null, headers), responseType);
 
         // assert
         assertAll(
                 () -> assertTrue(response.getStatusCode().is2xxSuccessful()),
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
-                () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo(username),
+                () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo(userCommand.username()),
                 () -> {
                     assertThat(Objects.requireNonNull(response.getBody()).data().currentPointAmount()).isEqualTo(BigDecimal.ZERO.setScale(2));
                 }
@@ -92,7 +89,7 @@ public class PointV1E2ETest {
                 new ParameterizedTypeReference<>() {
                 };
         ResponseEntity<ApiResponse<PointV1Dtos.PointInfoResponse>> response =
-                testRestTemplate.exchange("/api/v1/points", HttpMethod.GET, new HttpEntity<>(null, null), responseType);
+                testRestTemplate.exchange(Uris.Point.GET_INFO, HttpMethod.GET, new HttpEntity<>(null, null), responseType);
 
         // then
         assertAll(
@@ -118,7 +115,7 @@ public class PointV1E2ETest {
         ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointChargeResponse>> responseType = new ParameterizedTypeReference<>() {
         };
         ResponseEntity<ApiResponse<PointV1Dtos.PointChargeResponse>> response =
-                testRestTemplate.exchange("/api/v1/points/charge", HttpMethod.POST,
+                testRestTemplate.exchange(Uris.Point.CHARGE, HttpMethod.POST,
                         new HttpEntity<>(chargeRequest, headers), responseType);
 
         // then
@@ -148,7 +145,7 @@ public class PointV1E2ETest {
         };
 
         ResponseEntity<ApiResponse<PointV1Dtos.PointChargeResponse>> firstResponse =
-                testRestTemplate.exchange("/api/v1/points/charge", HttpMethod.POST,
+                testRestTemplate.exchange(Uris.Point.CHARGE, HttpMethod.POST,
                         new HttpEntity<>(firstChargeRequest, headers), responseType);
 
         // 1차 충전 검증
@@ -162,7 +159,7 @@ public class PointV1E2ETest {
         PointV1Dtos.PointChargeRequest secondChargeRequest = new PointV1Dtos.PointChargeRequest(new BigDecimal("2500"));
 
         ResponseEntity<ApiResponse<PointV1Dtos.PointChargeResponse>> secondResponse =
-                testRestTemplate.exchange("/api/v1/points/charge", HttpMethod.POST,
+                testRestTemplate.exchange(Uris.Point.CHARGE, HttpMethod.POST,
                         new HttpEntity<>(secondChargeRequest, headers), responseType);
 
         // 2차 충전 검증 (1000 + 2500 = 3500)
@@ -177,7 +174,7 @@ public class PointV1E2ETest {
         PointV1Dtos.PointChargeRequest thirdChargeRequest = new PointV1Dtos.PointChargeRequest(new BigDecimal("500"));
 
         ResponseEntity<ApiResponse<PointV1Dtos.PointChargeResponse>> thirdResponse =
-                testRestTemplate.exchange("/api/v1/points/charge", HttpMethod.POST,
+                testRestTemplate.exchange(Uris.Point.CHARGE, HttpMethod.POST,
                         new HttpEntity<>(thirdChargeRequest, headers), responseType);
 
         // 3차 충전 검증 (1000 + 2500 + 500 = 4000)
@@ -195,7 +192,7 @@ public class PointV1E2ETest {
         getHeaders.set("X-USER-ID", userCommand.username());
 
         ResponseEntity<ApiResponse<PointV1Dtos.PointInfoResponse>> pointInfoResponse =
-                testRestTemplate.exchange("/api/v1/points", HttpMethod.GET, new HttpEntity<>(null, getHeaders), pointInfoResponseType);
+                testRestTemplate.exchange(Uris.Point.GET_INFO, HttpMethod.GET, new HttpEntity<>(null, getHeaders), pointInfoResponseType);
 
         // 최종 포인트 조회 검증
         assertAll(
@@ -220,7 +217,7 @@ public class PointV1E2ETest {
         ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointChargeResponse>> responseType = new ParameterizedTypeReference<>() {
         };
         ResponseEntity<ApiResponse<PointV1Dtos.PointChargeResponse>> response =
-                testRestTemplate.exchange("/api/v1/points/charge", HttpMethod.POST,
+                testRestTemplate.exchange(Uris.Point.CHARGE, HttpMethod.POST,
                         new HttpEntity<>(chargeRequest, headers), responseType);
 
         // then

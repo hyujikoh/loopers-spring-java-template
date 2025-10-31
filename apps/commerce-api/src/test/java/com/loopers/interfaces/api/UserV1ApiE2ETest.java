@@ -22,11 +22,10 @@ import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserRepository;
 import com.loopers.fixtures.UserTestFixture;
 import com.loopers.interfaces.api.user.UserV1Dtos;
+import com.loopers.support.Uris;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**
- * ø
- *
  * @author hyunjikoh
  * @since 2025. 10. 27.
  */
@@ -62,7 +61,7 @@ public class UserV1ApiE2ETest {
         ParameterizedTypeReference<ApiResponse<UserV1Dtos.UserRegisterResponse>> responseType = new ParameterizedTypeReference<>() {
         };
         ResponseEntity<ApiResponse<UserV1Dtos.UserRegisterResponse>> response =
-                testRestTemplate.exchange("/api/v1/users", HttpMethod.POST, new HttpEntity<>(apiRequest), responseType);
+                testRestTemplate.exchange(Uris.User.REGISTER, HttpMethod.POST, new HttpEntity<>(apiRequest), responseType);
 
         // then
         assertAll(
@@ -83,7 +82,7 @@ public class UserV1ApiE2ETest {
         ParameterizedTypeReference<ApiResponse<UserV1Dtos.UserRegisterResponse>> responseType = new ParameterizedTypeReference<>() {
         };
         ResponseEntity<ApiResponse<UserV1Dtos.UserRegisterResponse>> response =
-                testRestTemplate.exchange("/api/v1/users", HttpMethod.POST, new HttpEntity<>(apiRequest), responseType);
+                testRestTemplate.exchange(Uris.User.REGISTER, HttpMethod.POST, new HttpEntity<>(apiRequest), responseType);
 
         // then
         assertAll(
@@ -103,7 +102,7 @@ public class UserV1ApiE2ETest {
         ParameterizedTypeReference<ApiResponse<UserV1Dtos.UserInfoResponse>> responseType = new ParameterizedTypeReference<>() {
         };
         ResponseEntity<ApiResponse<UserV1Dtos.UserInfoResponse>> response =
-                testRestTemplate.exchange("/api/v1/users?username=testuser", HttpMethod.GET, null, responseType);
+                testRestTemplate.exchange(Uris.User.GET_BY_USERNAME + "?username=testuser", HttpMethod.GET, null, responseType);
 
         // then
         assertAll(
@@ -125,14 +124,13 @@ public class UserV1ApiE2ETest {
         ParameterizedTypeReference<ApiResponse<UserV1Dtos.UserInfoResponse>> responseType = new ParameterizedTypeReference<>() {
         };
         ResponseEntity<ApiResponse<UserV1Dtos.UserInfoResponse>> response =
-                testRestTemplate.exchange("/api/v1/users?username=" + nonExistentUsername, HttpMethod.GET, null, responseType);
+                testRestTemplate.exchange(Uris.User.GET_BY_USERNAME + "?username=" + nonExistentUsername, HttpMethod.GET, null, responseType);
 
         // then
         assertAll(
                 () -> assertTrue(response.getStatusCode().is4xxClientError()),
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND)
         );
-
     }
 
 }

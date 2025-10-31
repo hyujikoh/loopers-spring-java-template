@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.loopers.application.point.PointFacade;
 import com.loopers.interfaces.api.ApiResponse;
+import com.loopers.support.Uris;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,14 +19,14 @@ import jakarta.validation.Valid;
 public class PointV1Controller {
     private final PointFacade pointFacade;
 
-    @GetMapping("/api/v1/points")
+    @GetMapping(Uris.Point.GET_INFO)
     public ApiResponse<PointV1Dtos.PointInfoResponse> getPointInfo(@RequestHeader("X-USER-ID") String username) {
         PointV1Dtos.PointInfo pointInfo = pointFacade.getPointInfo(username);
 
         return ApiResponse.success(PointV1Dtos.PointInfoResponse.from(pointInfo));
     }
 
-    @PostMapping("/api/v1/points/charge")
+    @PostMapping(Uris.Point.CHARGE)
     public ApiResponse<PointV1Dtos.PointChargeResponse> chargePoint(
             @RequestHeader("X-USER-ID") String username,
             @Valid @RequestBody PointV1Dtos.PointChargeRequest request) {

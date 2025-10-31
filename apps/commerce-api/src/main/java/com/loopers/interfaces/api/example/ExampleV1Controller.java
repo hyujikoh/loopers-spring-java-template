@@ -8,12 +8,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.loopers.application.example.ExampleFacade;
 import com.loopers.application.example.ExampleInfo;
 import com.loopers.interfaces.api.ApiResponse;
+import com.loopers.support.Uris;
 
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/examples")
+@RequestMapping(Uris.Example.BASE)
 public class ExampleV1Controller implements ExampleV1ApiSpec {
 
     private final ExampleFacade exampleFacade;
