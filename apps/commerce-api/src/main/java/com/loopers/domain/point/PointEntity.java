@@ -37,7 +37,7 @@ public class PointEntity extends BaseEntity {
     }
 
     public static PointEntity createPointEntity(UserEntity user) {
-        return  new PointEntity(user);
+        return new PointEntity(user);
     }
 
     public void charge(BigDecimal chargeAmount) {

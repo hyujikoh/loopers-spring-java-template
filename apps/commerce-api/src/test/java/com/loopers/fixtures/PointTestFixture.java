@@ -1,7 +1,6 @@
 package com.loopers.fixtures;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 import java.math.BigDecimal;
 
 import org.springframework.http.HttpHeaders;
@@ -27,12 +26,12 @@ public class PointTestFixture {
     public static final BigDecimal CHARGE_AMOUNT_1000_SCALED = new BigDecimal("1000.00");
     public static final BigDecimal ZERO_AMOUNT = BigDecimal.ZERO;
     public static final BigDecimal NEGATIVE_AMOUNT = new BigDecimal("-100");
-    
+
     public static final String NONEXISTENT_USERNAME = "nonexistentuser";
-    
+
     // HTTP 헤더 관련 상수
     public static final String USER_ID_HEADER = "X-USER-ID";
-    
+
     // 에러 메시지
     public static final String ERROR_INVALID_CHARGE_AMOUNT = "충전 금액은 0보다 커야 합니다.";
     public static final String ERROR_USER_NOT_FOUND = "존재하지 않는 사용자입니다.";
@@ -52,14 +51,16 @@ public class PointTestFixture {
     /**
      * 커스텀 UserRegisterCommand 생성
      */
-    public static UserRegisterCommand createUserRegisterCommand(String username, String email, String birthdate, Gender gender) {
+    public static UserRegisterCommand createUserRegisterCommand(String username, String email, String birthdate,
+                                                                Gender gender) {
         return new UserRegisterCommand(username, email, birthdate, gender);
     }
 
     /**
      * UserRegisterCommand.of() 메서드를 사용한 생성
      */
-    public static UserRegisterCommand createUserRegisterCommandOf(String username, String email, String birthdate, Gender gender) {
+    public static UserRegisterCommand createUserRegisterCommandOf(String username, String email, String birthdate,
+                                                                  Gender gender) {
         return UserRegisterCommand.of(username, email, birthdate, gender);
     }
 

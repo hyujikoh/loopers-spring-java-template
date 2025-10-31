@@ -5,7 +5,9 @@ import java.util.Objects;
 
 import com.loopers.domain.BaseEntity;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -43,7 +45,7 @@ public class UserEntity extends BaseEntity {
             throw new IllegalArgumentException("올바른 형식의 이메일 주소여야 합니다.");
         }
 
-        if(Objects.isNull(request.gender())) {
+        if (Objects.isNull(request.gender())) {
             throw new IllegalArgumentException("성별은 필수 입력값입니다.");
         }
 

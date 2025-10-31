@@ -41,7 +41,8 @@ public class UserTestFixture {
     /**
      * 커스텀 UserDomainCreateRequest 생성
      */
-    public static UserDomainCreateRequest createUserDomainRequest(String username, String email, String birthdate, Gender gender) {
+    public static UserDomainCreateRequest createUserDomainRequest(String username, String email, String birthdate,
+                                                                  Gender gender) {
         return new UserDomainCreateRequest(username, email, birthdate, gender);
     }
 
@@ -55,7 +56,8 @@ public class UserTestFixture {
     /**
      * 커스텀 UserV1Dtos.UserRegisterRequest 생성 (API 계층용)
      */
-    public static UserV1Dtos.UserRegisterRequest createApiRequest(String username, String email, String birthdate, Gender gender) {
+    public static UserV1Dtos.UserRegisterRequest createApiRequest(String username, String email, String birthdate,
+                                                                  Gender gender) {
         return new UserV1Dtos.UserRegisterRequest(username, email, birthdate, gender);
     }
 
@@ -85,7 +87,8 @@ public class UserTestFixture {
     /**
      * 커스텀 UserRegisterCommand 생성
      */
-    public static UserRegisterCommand createUserCommand(String username, String email, String birthdate, Gender gender) {
+    public static UserRegisterCommand createUserCommand(String username, String email, String birthdate,
+                                                        Gender gender) {
         return UserRegisterCommand.of(username, email, birthdate, gender);
     }
 
@@ -116,7 +119,8 @@ public class UserTestFixture {
     /**
      * User 생성 실패 검증 헬퍼 메서드
      */
-    public static void assertUserCreationFails(String username, String email, String birthdate, Gender gender, String expectedMessage) {
+    public static void assertUserCreationFails(String username, String email, String birthdate, Gender gender,
+                                               String expectedMessage) {
         UserDomainCreateRequest request = createUserDomainRequest(username, email, birthdate, gender);
 
         Assertions.assertThatThrownBy(() -> UserEntity.createUserEntity(request))

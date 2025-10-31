@@ -20,7 +20,6 @@ import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.user.Gender;
 import com.loopers.fixtures.UserTestFixture;
 import com.loopers.interfaces.api.point.PointV1Dtos;
-import com.loopers.interfaces.api.user.UserV1Dtos;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**

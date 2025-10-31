@@ -43,23 +43,23 @@ public class PointService {
     @Transactional
     public BigDecimal charge(String username, BigDecimal amount) {
         PointEntity point = getByUsername(username);
-        
+
         if (point == null) {
-            throw new CoreException(ErrorType.NOT_FOUND,"존재하지 않는 사용자입니다.");
+            throw new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다.");
         }
-        
+
         point.charge(amount);
         pointRepository.save(point);
-        
+
         // 포인트 내역 저장
         PointHistoryEntity history = new PointHistoryEntity(
-            point, 
-            PointTransactionType.CHARGE, 
-            amount, 
-            point.getAmount()
+                point,
+                PointTransactionType.CHARGE,
+                amount,
+                point.getAmount()
         );
         pointHistoryRepository.save(history);
-        
+
         return point.getAmount();
     }
 }

@@ -5,8 +5,9 @@ import org.springframework.web.bind.annotation.*;
 import com.loopers.application.point.PointFacade;
 import com.loopers.interfaces.api.ApiResponse;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import jakarta.validation.Valid;
 
 /**
  * @author hyunjikoh
