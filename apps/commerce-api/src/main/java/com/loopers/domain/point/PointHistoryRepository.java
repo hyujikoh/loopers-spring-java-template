@@ -23,7 +23,7 @@ public interface PointHistoryRepository {
     /**
      * 특정 포인트의 이력을 페이징하여 조회합니다.
      *
-     * @param point 포인트 엔티티
+     * @param point    포인트 엔티티
      * @param pageable 페이징 정보
      * @return 포인트 이력 페이지
      */

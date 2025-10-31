@@ -34,7 +34,7 @@ public class PointEntity extends BaseEntity {
     private BigDecimal amount;
 
     @OneToMany(mappedBy = "point", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<PointHistoryEntity> histories = new ArrayList<>();
+    private final List<PointHistoryEntity> histories = new ArrayList<>();
 
     public PointEntity(UserEntity user) {
         Objects.requireNonNull(user, "사용자는 null 일 수 없습니다.");

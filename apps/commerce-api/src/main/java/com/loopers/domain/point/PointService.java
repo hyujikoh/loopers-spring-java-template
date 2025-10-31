@@ -3,10 +3,6 @@ package com.loopers.domain.point;
 import java.math.BigDecimal;
 import java.util.List;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +29,7 @@ public class PointService {
 
     /**
      * 사용자의 포인트 이력을 조회합니다.
+     * TODO : 페이징이 필요할 경우 별도 메소드 추가
      *
      * @param username 사용자명
      * @return 포인트 이력 목록 (최신순)
@@ -49,25 +46,10 @@ public class PointService {
     }
 
     /**
-     * 사용자의 포인트 이력을 페이징하여 조회합니다.
+     * 신규 사용자에 대해 포인트엔티티를 생성합니다.
      *
-     * @param username 사용자명
-     * @param page 페이지 번호 (0부터 시작)
-     * @param size 페이지 크기
-     * @return 포인트 이력 페이지
+     * @param user
      */
-    @Transactional(readOnly = true)
-    public Page<PointHistoryEntity> getPointHistories(String username, int page, int size) {
-        PointEntity point = getByUsername(username);
-
-        if (point == null) {
-            throw new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다.");
-        }
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return pointHistoryRepository.findByPoint(point, pageable);
-    }
-
     @Transactional
     public void createPointForNewUser(UserEntity user) {
         PointEntity existingPoint = getByUsername(user.getUsername());
@@ -81,6 +63,13 @@ public class PointService {
         pointRepository.save(pointEntity);
     }
 
+    /**
+     * 사용자에게 포인트를 충전합니다.
+     *
+     * @param username
+     * @param amount
+     * @return
+     */
     @Transactional
     public BigDecimal charge(String username, BigDecimal amount) {
         PointEntity point = getByUsername(username);

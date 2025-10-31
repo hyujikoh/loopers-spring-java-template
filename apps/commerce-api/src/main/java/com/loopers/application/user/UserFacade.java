@@ -32,6 +32,7 @@ public class UserFacade {
         return UserInfo.from(register);
     }
 
+    @Transactional(readOnly = true)
     public UserInfo getUserByUsername(@NotNull String username) {
         return Optional.ofNullable(userService.getUserByUsername(username))
                 .map(UserInfo::from)
