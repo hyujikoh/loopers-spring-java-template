@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import org.assertj.core.api.Assertions;
 
+import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.user.Gender;
 import com.loopers.domain.user.UserDomainCreateRequest;
 import com.loopers.domain.user.UserEntity;
@@ -50,6 +51,13 @@ public class UserTestFixture {
     public static UserEntity createUserEntity(String username, String email, String birthdate, Gender gender) {
         UserDomainCreateRequest request = createUserDomainRequest(username, email, birthdate, gender);
         return UserEntity.createUserEntity(request);
+    }
+
+    /**
+     * 커스텀 UserEntity 생성
+     */
+    public static UserRegisterCommand createUserCommand(String username, String email, String birthdate, Gender gender) {
+        return UserRegisterCommand.of(username, email, birthdate, gender);
     }
 
     /**

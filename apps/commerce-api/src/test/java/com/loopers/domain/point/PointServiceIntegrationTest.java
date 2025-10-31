@@ -9,7 +9,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
+import com.loopers.domain.user.Gender;
 import com.loopers.fixtures.PointTestFixture;
+import com.loopers.fixtures.UserTestFixture;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**
@@ -37,7 +39,7 @@ public class PointServiceIntegrationTest {
     @DisplayName("사용자 등록 시 포인트가 자동으로 생성및 포인트 조회 여부를 확인한다.")
     void get_point_when_user_exists() {
         // given
-        UserRegisterCommand req = PointTestFixture.AlternativeTestUser.createCommand();
+        UserRegisterCommand req = UserTestFixture.createUserCommand("testuser", "dvum0045@gmail.com", "1990-01-01", Gender.FEMALE);
         UserInfo userInfo = userFacade.registerUser(req);
 
         // when

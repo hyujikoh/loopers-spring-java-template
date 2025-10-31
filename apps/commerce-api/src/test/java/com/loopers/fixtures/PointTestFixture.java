@@ -110,18 +110,4 @@ public class PointTestFixture {
             return createUserRegisterCommandOf(USERNAME, EMAIL, BIRTHDATE, GENDER);
         }
     }
-
-    /**
-     * 대안 테스트용 사용자 데이터 클래스
-     */
-    public static class AlternativeTestUser {
-        public static final String USERNAME = "altuser";
-        public static final String EMAIL = "existing@email.com";
-        public static final String BIRTHDATE = "1985-05-15";
-        public static final Gender GENDER = Gender.MALE;
-
-        public static UserRegisterCommand createCommand() {
-            return createUserRegisterCommand(USERNAME, EMAIL, BIRTHDATE, GENDER);
-        }
-    }
 }
