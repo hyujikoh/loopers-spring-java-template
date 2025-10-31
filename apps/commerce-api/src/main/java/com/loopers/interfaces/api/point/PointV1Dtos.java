@@ -9,7 +9,6 @@ import com.loopers.domain.user.Gender;
 
 public class PointV1Dtos {
 
-
     public record PointInfoResponse(
             String username,
             BigDecimal currentPointAmount
@@ -22,7 +21,6 @@ public class PointV1Dtos {
         }
     }
 
-
     public record PointInfo(
             String username,
             BigDecimal currentPointAmount
@@ -34,4 +32,13 @@ public class PointV1Dtos {
             );
         }
     }
+
+    public record PointChargeRequest(
+            BigDecimal amount
+    ) {}
+
+    public record PointChargeResponse(
+            String username,
+            BigDecimal totalAmount
+    ) {}
 }

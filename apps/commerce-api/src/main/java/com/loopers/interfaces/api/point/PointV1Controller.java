@@ -27,4 +27,13 @@ public class PointV1Controller {
 
         return ApiResponse.success(PointV1Dtos.PointInfoResponse.from(pointInfo));
     }
+
+    @PostMapping("/api/v1/points/charge")
+    public ApiResponse<PointV1Dtos.PointChargeResponse> chargePoint(
+            @RequestHeader("X-USER-ID") String username,
+            @Valid @RequestBody PointV1Dtos.PointChargeRequest request) {
+        PointV1Dtos.PointChargeResponse response = pointFacade.chargePoint(username, request);
+
+        return ApiResponse.success(response);
+    }
 }
