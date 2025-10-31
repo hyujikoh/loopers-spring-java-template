@@ -21,8 +21,7 @@ public class Uris {
      * Example API 엔드포인트
      */
     public static class Example {
-        private Example() {
-        }
+        private Example() {}
 
         public static final String BASE = API_V1 + "/examples";
         public static final String GET_BY_ID = BASE + "/{exampleId}";
@@ -32,8 +31,7 @@ public class Uris {
      * User API 엔드포인트
      */
     public static class User {
-        private User() {
-        }
+        private User() {}
 
         public static final String BASE = API_V1 + "/users";
         public static final String REGISTER = BASE;
@@ -44,8 +42,7 @@ public class Uris {
      * Point API 엔드포인트
      */
     public static class Point {
-        private Point() {
-        }
+        private Point() {}
 
         public static final String BASE = API_V1 + "/points";
         public static final String GET_INFO = BASE;

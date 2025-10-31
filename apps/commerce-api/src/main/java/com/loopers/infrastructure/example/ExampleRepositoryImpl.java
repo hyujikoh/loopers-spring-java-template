@@ -1,13 +1,11 @@
 package com.loopers.infrastructure.example;
 
-import java.util.Optional;
-
-import org.springframework.stereotype.Component;
-
 import com.loopers.domain.example.ExampleModel;
 import com.loopers.domain.example.ExampleRepository;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Component

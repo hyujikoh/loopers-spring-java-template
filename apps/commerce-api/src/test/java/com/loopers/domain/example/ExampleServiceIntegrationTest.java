@@ -1,9 +1,9 @@
 package com.loopers.domain.example;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
+import com.loopers.infrastructure.example.ExampleJpaRepository;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
+import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,10 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import com.loopers.infrastructure.example.ExampleJpaRepository;
-import com.loopers.support.error.CoreException;
-import com.loopers.support.error.ErrorType;
-import com.loopers.utils.DatabaseCleanUp;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 class ExampleServiceIntegrationTest {
@@ -40,7 +39,7 @@ class ExampleServiceIntegrationTest {
         void returnsExampleInfo_whenValidIdIsProvided() {
             // arrange
             ExampleModel exampleModel = exampleJpaRepository.save(
-                    new ExampleModel("예시 제목", "예시 설명")
+                new ExampleModel("예시 제목", "예시 설명")
             );
 
             // act
@@ -48,10 +47,10 @@ class ExampleServiceIntegrationTest {
 
             // assert
             assertAll(
-                    () -> assertThat(result).isNotNull(),
-                    () -> assertThat(result.getId()).isEqualTo(exampleModel.getId()),
-                    () -> assertThat(result.getName()).isEqualTo(exampleModel.getName()),
-                    () -> assertThat(result.getDescription()).isEqualTo(exampleModel.getDescription())
+                () -> assertThat(result).isNotNull(),
+                () -> assertThat(result.getId()).isEqualTo(exampleModel.getId()),
+                () -> assertThat(result.getName()).isEqualTo(exampleModel.getName()),
+                () -> assertThat(result.getDescription()).isEqualTo(exampleModel.getDescription())
             );
         }
 

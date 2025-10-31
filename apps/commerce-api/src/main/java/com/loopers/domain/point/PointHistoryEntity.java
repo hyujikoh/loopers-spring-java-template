@@ -36,7 +36,7 @@ public class PointHistoryEntity extends BaseEntity {
     private BigDecimal balanceAfter;
 
     private PointHistoryEntity(PointEntity point, PointTransactionType transactionType, BigDecimal amount,
-                               BigDecimal balanceAfter) {
+                              BigDecimal balanceAfter) {
         validateInputs(point, transactionType, amount, balanceAfter);
 
         this.point = point;
@@ -48,7 +48,7 @@ public class PointHistoryEntity extends BaseEntity {
     /**
      * 포인트 충전 이력을 생성합니다.
      *
-     * @param point        포인트 엔티티
+     * @param point 포인트 엔티티
      * @param chargeAmount 충전 금액
      * @param balanceAfter 충전 후 잔액
      * @return 충전 이력 엔티티
@@ -60,20 +60,19 @@ public class PointHistoryEntity extends BaseEntity {
     /**
      * 포인트 사용 이력을 생성합니다.
      *
-     * @param point        포인트 엔티티
-     * @param useAmount    사용 금액
+     * @param point 포인트 엔티티
+     * @param useAmount 사용 금액
      * @param balanceAfter 사용 후 잔액
      * @return 사용 이력 엔티티
      */
-    public static PointHistoryEntity createUseHistory(PointEntity point, BigDecimal useAmount, BigDecimal balanceAfter) {
-        return new PointHistoryEntity(point, PointTransactionType.USE, useAmount, balanceAfter);
+    public static PointHistoryEntity createUseHistory(PointEntity point,BigDecimal useAmount, BigDecimal balanceAfter) {
+        return new PointHistoryEntity(point, PointTransactionType.USE , useAmount, balanceAfter);
     }
 
     /**
      * 입력값 유효성을 검사합니다.
      */
-    private void validateInputs(PointEntity point, PointTransactionType transactionType, BigDecimal amount,
-                                BigDecimal balanceAfter) {
+    private void validateInputs(PointEntity point, PointTransactionType transactionType, BigDecimal amount, BigDecimal balanceAfter) {
         if (Objects.isNull(point)) {
             throw new IllegalArgumentException("포인트 엔티티는 필수값입니다.");
         }
