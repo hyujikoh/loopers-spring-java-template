@@ -38,6 +38,21 @@ public class PointEntity extends BaseEntity {
 
     public static PointEntity createPointEntity(UserEntity user) {
         return  new PointEntity(user);
+    }
 
+    public void charge(BigDecimal chargeAmount) {
+        if (chargeAmount == null || chargeAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("충전 금액은 0보다 커야 합니다.");
+        }
+        this.amount = this.amount.add(chargeAmount);
+    }
+
+    public BigDecimal getAmount() {
+        return amount.setScale(2);
+    }
+
+    public enum PointTransactionType {
+        CHARGE,  // 충전
+        USE      // 사용
     }
 }

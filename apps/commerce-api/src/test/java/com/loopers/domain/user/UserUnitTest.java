@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
  * @author hyunjikoh
  * @since 2025. 10. 26.
  */
-class UserEntityTest {
+class UserUnitTest {
     @DisplayName("User 객체 생성 성공 테스트")
     @Test
     void register_success() {
