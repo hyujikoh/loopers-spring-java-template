@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class PointFacade {
     private final PointService pointService;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public PointV1Dtos.PointInfo getPointInfo(String username) {
         PointEntity point = pointService.getByUsername(username);
 
