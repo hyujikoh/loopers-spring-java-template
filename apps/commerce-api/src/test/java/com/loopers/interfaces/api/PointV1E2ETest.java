@@ -61,7 +61,7 @@ public class PointV1E2ETest {
 
         // given
         HttpHeaders headers = new HttpHeaders();
-        headers.set("X-USER-ID", "testuser");
+        headers.set("X-USER-ID", userCommand.username());
 
         // act
         ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointInfoResponse>> responseType = new ParameterizedTypeReference<>() {

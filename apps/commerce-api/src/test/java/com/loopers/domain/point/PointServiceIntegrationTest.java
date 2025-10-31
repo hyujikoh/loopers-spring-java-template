@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,11 +51,7 @@ public class PointServiceIntegrationTest {
     @DisplayName("사용자 등록 시 포인트가 자동으로 생성및 포인트 조회 여부를 확인한다.")
     void get_point_when_user_exists() {
         // given
-        UserRegisterCommand command = UserTestFixture.createUserCommand(
-                "testuser",
-                "dvum0045@gmail.com",
-                "1990-01-01",
-                Gender.FEMALE);
+        UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
         UserInfo userInfo = userFacade.registerUser(command);
 
         // when
@@ -88,11 +86,7 @@ public class PointServiceIntegrationTest {
     @DisplayName("존재하는 유저가 1000원을 충전할 경우, 충전된 보유 총량을 응답으로 반환한다.")
     void charge_1000_returns_total_amount() {
         // given
-        UserRegisterCommand command = UserTestFixture.createUserCommand(
-                UserTestFixture.DEFAULT_USERNAME,
-                UserTestFixture.DEFAULT_EMAIL,
-                UserTestFixture.DEFAULT_BIRTHDATE,
-                UserTestFixture.DEFAULT_GENDER);
+        UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
         UserInfo userInfo = userFacade.registerUser(command);
 
         // when
@@ -108,17 +102,19 @@ public class PointServiceIntegrationTest {
     @DisplayName("포인트 충전 시, 포인트 내역이 저장된다.")
     void charge_saves_point_history() {
         // given
-        UserRegisterCommand command = UserTestFixture.createUserCommand(
-                UserTestFixture.DEFAULT_USERNAME,
-                UserTestFixture.DEFAULT_EMAIL,
-                UserTestFixture.DEFAULT_BIRTHDATE,
-                UserTestFixture.DEFAULT_GENDER);
+        UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
         UserInfo userInfo = userFacade.registerUser(command);
 
         // when
         pointService.charge(userInfo.username(), PointTestFixture.CHARGE_AMOUNT_1000);
 
         // then
-        verify(pointHistoryRepository).save(any(PointHistoryEntity.class));
+        List<PointHistoryEntity> userPointHistories = pointService.getPointHistories(userInfo.username());
+        assertThat(userPointHistories).hasSize(1);
+
+        PointHistoryEntity history = userPointHistories.getFirst();
+        assertThat(history.getTransactionType()).isEqualTo(PointTransactionType.CHARGE);
+        assertThat(history.getAmount()).isEqualByComparingTo(PointTestFixture.CHARGE_AMOUNT_1000);
+        assertThat(history.getBalanceAfter()).isEqualByComparingTo(PointTestFixture.CHARGE_AMOUNT_1000_SCALED);
     }
 }

@@ -19,12 +19,7 @@ public class PointUnitTest {
     @DisplayName("0 이하의 정수로 포인트를 충전 시 실패한다.")
     void charge_with_zero_or_negative_amount_fails() {
         // given
-        UserEntity user = UserTestFixture.createUserEntity(
-                UserTestFixture.DEFAULT_USERNAME,
-                UserTestFixture.DEFAULT_EMAIL,
-                UserTestFixture.DEFAULT_BIRTHDATE,
-                UserTestFixture.DEFAULT_GENDER
-        );
+        UserEntity user = UserTestFixture.createDefaultUserEntity();
         PointEntity point = PointTestFixture.createPointEntity(user);
 
         // when & then
@@ -45,12 +40,7 @@ public class PointUnitTest {
     @DisplayName("존재하는 유저가 1000원을 충전할 경우, 충전된 보유 총량을 응답으로 반환한다.")
     void charge_1000_returns_total_amount() {
         // given
-        UserEntity user = UserTestFixture.createUserEntity(
-                UserTestFixture.DEFAULT_USERNAME,
-                UserTestFixture.DEFAULT_EMAIL,
-                UserTestFixture.DEFAULT_BIRTHDATE,
-                UserTestFixture.DEFAULT_GENDER
-        );
+        UserEntity user = UserTestFixture.createDefaultUserEntity();
         PointEntity point = PointTestFixture.createPointEntity(user);
 
         // when

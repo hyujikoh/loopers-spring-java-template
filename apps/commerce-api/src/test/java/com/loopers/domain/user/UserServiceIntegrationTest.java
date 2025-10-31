@@ -38,7 +38,7 @@ public class UserServiceIntegrationTest {
     @Test
     void register_user_success() {
         // given
-        UserDomainCreateRequest request = UserTestFixture.createUserDomainRequest("testuser", "test@email.com", "1990-01-01", Gender.MALE);
+        UserDomainCreateRequest request = UserTestFixture.createDefaultUserDomainRequest();
 
         // when
         UserEntity result = userService.register(request);
@@ -79,7 +79,7 @@ public class UserServiceIntegrationTest {
     @DisplayName("사용자 아이디로 사용자 정보를 조회한다.")
     void get_user_by_username_success() {
         // given
-        UserDomainCreateRequest req = UserTestFixture.createUserDomainRequest("testuser", "test@email.com", "1990-01-01", Gender.MALE);
+        UserDomainCreateRequest req = UserTestFixture.createDefaultUserDomainRequest();
         UserEntity savedUser = userRepository.save(UserEntity.createUserEntity(req));
 
         // when

@@ -1,5 +1,6 @@
 package com.loopers.interfaces.api;
 
+import static com.loopers.fixtures.UserTestFixture.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,7 +18,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.loopers.domain.user.Gender;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserRepository;
 import com.loopers.fixtures.UserTestFixture;
@@ -55,7 +55,7 @@ public class UserV1ApiE2ETest {
     @DisplayName("올바른_API_요청으로_회원가입이_성공하면_생성된_사용자_정보를_응답한다")
     void register_user_success() {
         // given
-        UserV1Dtos.UserRegisterRequest apiRequest = UserTestFixture.createApiRequest("testuser", "dvum0045@gmail.com", "1990-01-01", Gender.FEMALE);
+        UserV1Dtos.UserRegisterRequest apiRequest = UserTestFixture.createDefaultApiRequest();
 
         // when
         ParameterizedTypeReference<ApiResponse<UserV1Dtos.UserRegisterResponse>> responseType = new ParameterizedTypeReference<>() {
@@ -67,8 +67,8 @@ public class UserV1ApiE2ETest {
         assertAll(
                 () -> assertTrue(response.getStatusCode().is2xxSuccessful()),
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
-                () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo("testuser"),
-                () -> assertThat(Objects.requireNonNull(response.getBody()).data().email()).isEqualTo("dvum0045@gmail.com")
+                () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo(DEFAULT_USERNAME),
+                () -> assertThat(Objects.requireNonNull(response.getBody()).data().email()).isEqualTo(DEFAULT_EMAIL)
         );
     }
 
@@ -95,7 +95,7 @@ public class UserV1ApiE2ETest {
     @DisplayName("등록된_사용자명으로_사용자_조회시_사용자_정보를_응답한다")
     void get_user_by_username_success() {
         // given
-        UserEntity userEntity = UserTestFixture.createUserEntity("testuser", "dvum0045@gmail.com", "1990-01-01", Gender.MALE);
+        UserEntity userEntity = UserTestFixture.createDefaultUserEntity();
         userRepository.save(userEntity);
 
         // when
@@ -108,9 +108,9 @@ public class UserV1ApiE2ETest {
         assertAll(
                 () -> assertTrue(response.getStatusCode().is2xxSuccessful()),
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
-                () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo("testuser"),
-                () -> assertThat(Objects.requireNonNull(response.getBody()).data().email()).isEqualTo("dvum0045@gmail.com"),
-                () -> assertThat(Objects.requireNonNull(response.getBody()).data().gender()).isEqualTo(Gender.MALE)
+                () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo(DEFAULT_USERNAME),
+                () -> assertThat(Objects.requireNonNull(response.getBody()).data().email()).isEqualTo(DEFAULT_EMAIL),
+                () -> assertThat(Objects.requireNonNull(response.getBody()).data().gender()).isEqualTo(DEFAULT_GENDER)
         );
     }
 
