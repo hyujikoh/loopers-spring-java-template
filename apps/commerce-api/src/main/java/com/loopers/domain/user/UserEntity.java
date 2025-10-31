@@ -22,11 +22,13 @@ import jakarta.validation.Valid;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserEntity extends BaseEntity {
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false, length = 10)
     private String username;
 
+    @Column(nullable = false, length = 254)
     private String email;
 
+    @Column(nullable = false)
     private LocalDate birthdate;
 
     @Enumerated(EnumType.STRING)
