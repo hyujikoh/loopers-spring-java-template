@@ -32,6 +32,13 @@ public class UserTestFixture {
     public static final String INVALID_BIRTHDATE = "1990/01/01";
 
     /**
+     * 기본값으로 UserDomainCreateRequest 생성
+     */
+    public static UserDomainCreateRequest createDefaultUserDomainRequest() {
+        return new UserDomainCreateRequest(DEFAULT_USERNAME, DEFAULT_EMAIL, DEFAULT_BIRTHDATE, DEFAULT_GENDER);
+    }
+
+    /**
      * 커스텀 UserDomainCreateRequest 생성
      */
     public static UserDomainCreateRequest createUserDomainRequest(String username, String email, String birthdate, Gender gender) {
@@ -39,10 +46,25 @@ public class UserTestFixture {
     }
 
     /**
+     * 기본값으로 UserV1Dtos.UserRegisterRequest 생성 (API 계층용)
+     */
+    public static UserV1Dtos.UserRegisterRequest createDefaultApiRequest() {
+        return new UserV1Dtos.UserRegisterRequest(DEFAULT_USERNAME, DEFAULT_EMAIL, DEFAULT_BIRTHDATE, DEFAULT_GENDER);
+    }
+
+    /**
      * 커스텀 UserV1Dtos.UserRegisterRequest 생성 (API 계층용)
      */
     public static UserV1Dtos.UserRegisterRequest createApiRequest(String username, String email, String birthdate, Gender gender) {
         return new UserV1Dtos.UserRegisterRequest(username, email, birthdate, gender);
+    }
+
+    /**
+     * 기본값으로 UserEntity 생성
+     */
+    public static UserEntity createDefaultUserEntity() {
+        UserDomainCreateRequest request = createDefaultUserDomainRequest();
+        return UserEntity.createUserEntity(request);
     }
 
     /**
@@ -54,7 +76,14 @@ public class UserTestFixture {
     }
 
     /**
-     * 커스텀 UserEntity 생성
+     * 기본값으로 UserRegisterCommand 생성
+     */
+    public static UserRegisterCommand createDefaultUserCommand() {
+        return UserRegisterCommand.of(DEFAULT_USERNAME, DEFAULT_EMAIL, DEFAULT_BIRTHDATE, DEFAULT_GENDER);
+    }
+
+    /**
+     * 커스텀 UserRegisterCommand 생성
      */
     public static UserRegisterCommand createUserCommand(String username, String email, String birthdate, Gender gender) {
         return UserRegisterCommand.of(username, email, birthdate, gender);

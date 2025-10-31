@@ -16,9 +16,9 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
 import com.loopers.application.user.UserFacade;
+import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.user.Gender;
-import com.loopers.domain.user.UserRegisterRequest;
-import com.loopers.domain.user.UserRepository;
+import com.loopers.fixtures.UserTestFixture;
 import com.loopers.interfaces.api.point.PointV1Dtos;
 import com.loopers.interfaces.api.user.UserV1Dtos;
 import com.loopers.utils.DatabaseCleanUp;
@@ -31,6 +31,7 @@ import com.loopers.utils.DatabaseCleanUp;
 public class PointV1E2ETest {
     private final TestRestTemplate testRestTemplate;
     private final DatabaseCleanUp databaseCleanUp;
+
     @Autowired
     private UserFacade userFacade;
 
@@ -58,9 +59,9 @@ public class PointV1E2ETest {
         String username = "testuser";
         String email = "dvum0045@gmail.com";
         String birthdate = "1990-01-01";
-        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, email, birthdate, Gender.FEMALE);
+        UserRegisterCommand userCommand = UserTestFixture.createUserCommand(username, email, birthdate, Gender.FEMALE);
 
-        userFacade.registerUser(userRegisterRequest);
+        userFacade.registerUser(userCommand);
 
         // given
         HttpHeaders headers = new HttpHeaders();
@@ -105,12 +106,11 @@ public class PointV1E2ETest {
     @DisplayName("존재하는 유저가 1000원을 충전할 경우, 충전된 보유 총량을 응답으로 반환한다.")
     void charge_1000_returns_total_amount() {
         // given
-        String username = "testuser";
-        UserRegisterRequest userRegisterRequest = new UserRegisterRequest(username, "test@email.com", "1990-01-01", Gender.MALE);
-        userFacade.registerUser(userRegisterRequest);
+        UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+        userFacade.registerUser(userCommand);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.set("X-USER-ID", username);
+        headers.set("X-USER-ID", userCommand.username());
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         PointV1Dtos.PointChargeRequest chargeRequest = new PointV1Dtos.PointChargeRequest(new BigDecimal("1000"));
@@ -126,7 +126,7 @@ public class PointV1E2ETest {
         assertAll(
                 () -> assertTrue(response.getStatusCode().is2xxSuccessful()),
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
-                () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo(username),
+                () -> assertThat(Objects.requireNonNull(response.getBody()).data().username()).isEqualTo(userCommand.username()),
                 () -> assertThat(Objects.requireNonNull(response.getBody()).data().totalAmount()).isEqualByComparingTo(new BigDecimal("1000.00"))
         );
     }
