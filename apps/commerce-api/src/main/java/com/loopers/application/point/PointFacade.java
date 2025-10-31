@@ -25,4 +25,11 @@ public class PointFacade {
 
         return PointV1Dtos.PointInfo.from(point);
     }
+
+    @Transactional
+    public PointV1Dtos.PointChargeResponse chargePoint(String username, PointV1Dtos.PointChargeRequest request) {
+        java.math.BigDecimal totalAmount = pointService.charge(username, request.amount());
+
+        return new PointV1Dtos.PointChargeResponse(username, totalAmount);
+    }
 }

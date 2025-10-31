@@ -21,12 +21,13 @@ import org.springframework.http.ResponseEntity;
 import com.loopers.domain.example.ExampleModel;
 import com.loopers.infrastructure.example.ExampleJpaRepository;
 import com.loopers.interfaces.api.example.ExampleV1Dto;
+import com.loopers.support.Uris;
 import com.loopers.utils.DatabaseCleanUp;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ExampleV1ApiE2ETest {
 
-    private static final Function<Long, String> ENDPOINT_GET = id -> "/api/v1/examples/" + id;
+    private static final Function<Long, String> ENDPOINT_GET = id -> Uris.Example.BASE + "/" + id;
 
     private final TestRestTemplate testRestTemplate;
     private final ExampleJpaRepository exampleJpaRepository;
@@ -48,7 +49,7 @@ class ExampleV1ApiE2ETest {
         databaseCleanUp.truncateAllTables();
     }
 
-    @DisplayName("GET /api/v1/examples/{id}")
+    @DisplayName("GET " + Uris.Example.GET_BY_ID)
     @Nested
     class Get {
         @DisplayName("존재하는 예시 ID를 주면, 해당 예시 정보를 반환한다.")
@@ -79,7 +80,7 @@ class ExampleV1ApiE2ETest {
         @Test
         void throwsBadRequest_whenIdIsNotProvided() {
             // arrange
-            String requestUrl = "/api/v1/examples/나나";
+            String requestUrl = Uris.Example.BASE + "/나나";
 
             // act
             ParameterizedTypeReference<ApiResponse<ExampleV1Dto.ExampleResponse>> responseType = new ParameterizedTypeReference<>() {
