@@ -1,24 +1,17 @@
 package com.loopers.domain.point;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-
-import java.math.BigDecimal;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
+import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.user.Gender;
-import com.loopers.domain.user.UserRegisterRequest;
-import com.loopers.support.error.CoreException;
+import com.loopers.fixtures.PointTestFixture;
+import com.loopers.fixtures.UserTestFixture;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**
@@ -47,25 +40,25 @@ public class PointServiceIntegrationTest {
 
     @Test
     @DisplayName("사용자 등록 시 포인트가 자동으로 생성및 포인트 조회 여부를 확인한다.")
-    void get_exist_user_point_amount() {
+    void get_point_when_user_exists() {
         // given
-        UserRegisterRequest request = createUserRegisterRequest("testuser", "existing@email.com", "1990-01-01");
-        UserInfo userInfo = userFacade.registerUser(request);
+        UserRegisterCommand req = UserTestFixture.createUserCommand("testuser", "dvum0045@gmail.com", "1990-01-01", Gender.FEMALE);
+        UserInfo userInfo = userFacade.registerUser(req);
 
         // when
         PointEntity point = pointService.getByUsername(userInfo.username());
 
         // then
-        assertThat(point.getAmount()).isNotNull();
-        assertThat(point.getUser().getId()).isEqualTo(userInfo.id());
-        assertThat(point.getAmount()).isNotNegative();
+        Assertions.assertThat(point.getAmount()).isNotNull();
+        Assertions.assertThat(point.getUser().getId()).isEqualTo(userInfo.id());
+        Assertions.assertThat(point.getAmount()).isNotNegative();
     }
 
     @Test
     @DisplayName("해당 ID 의 회원이 존재하지 않을 경우, null 이 반환된다.")
-    void no_exist_user_null() {
+    void get_point_return_null_when_user_not_exists() {
         // when
-        PointEntity point = pointService.getByUsername("nonexistentuser");
+        PointEntity point = pointService.getByUsername(PointTestFixture.NONEXISTENT_USERNAME);
 
         // then
         assertThat(point).isNull();
@@ -110,5 +103,7 @@ public class PointServiceIntegrationTest {
 
     private UserRegisterRequest createUserRegisterRequest(String username, String email, String birthdate) {
         return new UserRegisterRequest(username, email, birthdate, Gender.MALE);
+        PointTestFixture.assertPointIsNull(point);
     }
+
 }

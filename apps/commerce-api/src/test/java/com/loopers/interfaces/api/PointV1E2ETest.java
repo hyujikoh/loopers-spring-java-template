@@ -18,7 +18,9 @@ import org.springframework.http.*;
 import com.loopers.application.user.UserFacade;
 import com.loopers.domain.user.Gender;
 import com.loopers.domain.user.UserRegisterRequest;
+import com.loopers.domain.user.UserRepository;
 import com.loopers.interfaces.api.point.PointV1Dtos;
+import com.loopers.interfaces.api.user.UserV1Dtos;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**
@@ -83,16 +85,16 @@ public class PointV1E2ETest {
 
 
     @Test
-    @DisplayName("X-USER-ID 헤더가 없을 경우 400 Bad Request 응답을 반환한다.")
-    void get_user_point_without_header_fails() {
-
-        // act
-        ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointInfoResponse>> responseType = new ParameterizedTypeReference<>() {
-        };
+    @DisplayName("X_USER_ID_헤더가_없을_경우_400_Bad_Request_응답을_반환한다")
+    void get_user_point_fail_when_header_missing() {
+        // when
+        ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointInfoResponse>> responseType =
+                new ParameterizedTypeReference<>() {
+                };
         ResponseEntity<ApiResponse<PointV1Dtos.PointInfoResponse>> response =
                 testRestTemplate.exchange("/api/v1/points", HttpMethod.GET, new HttpEntity<>(null, null), responseType);
 
-        // assert
+        // then
         assertAll(
                 () -> assertTrue(response.getStatusCode().is4xxClientError()),
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST)
@@ -117,7 +119,7 @@ public class PointV1E2ETest {
         ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointChargeResponse>> responseType = new ParameterizedTypeReference<>() {
         };
         ResponseEntity<ApiResponse<PointV1Dtos.PointChargeResponse>> response =
-                testRestTemplate.exchange("/api/v1/points/charge", HttpMethod.POST, 
+                testRestTemplate.exchange("/api/v1/points/charge", HttpMethod.POST,
                         new HttpEntity<>(chargeRequest, headers), responseType);
 
         // then
@@ -143,7 +145,7 @@ public class PointV1E2ETest {
         ParameterizedTypeReference<ApiResponse<PointV1Dtos.PointChargeResponse>> responseType = new ParameterizedTypeReference<>() {
         };
         ResponseEntity<ApiResponse<PointV1Dtos.PointChargeResponse>> response =
-                testRestTemplate.exchange("/api/v1/points/charge", HttpMethod.POST, 
+                testRestTemplate.exchange("/api/v1/points/charge", HttpMethod.POST,
                         new HttpEntity<>(chargeRequest, headers), responseType);
 
         // then

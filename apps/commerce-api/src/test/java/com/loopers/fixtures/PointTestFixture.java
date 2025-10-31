@@ -1,0 +1,113 @@
+package com.loopers.fixtures;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.math.BigDecimal;
+
+import org.springframework.http.HttpHeaders;
+
+import com.loopers.application.user.UserRegisterCommand;
+import com.loopers.domain.point.PointEntity;
+import com.loopers.domain.user.Gender;
+
+/**
+ * Point 테스트를 위한 공통 픽스처 클래스
+ *
+ * @author hyunjikoh
+ * @since 2025. 10. 31.
+ */
+public class PointTestFixture {
+
+    // 기본 포인트 테스트 데이터
+    public static final BigDecimal DEFAULT_POINT_AMOUNT = BigDecimal.ZERO.setScale(2);
+    public static final String NONEXISTENT_USERNAME = "nonexistentuser";
+    
+    // HTTP 헤더 관련 상수
+    public static final String USER_ID_HEADER = "X-USER-ID";
+
+    /**
+     * 기본 UserRegisterCommand 생성
+     */
+    public static UserRegisterCommand createDefaultUserRegisterCommand() {
+        return new UserRegisterCommand(
+                "testuser",
+                "test@example.com",
+                "1990-01-01",
+                Gender.MALE
+        );
+    }
+
+    /**
+     * 커스텀 UserRegisterCommand 생성
+     */
+    public static UserRegisterCommand createUserRegisterCommand(String username, String email, String birthdate, Gender gender) {
+        return new UserRegisterCommand(username, email, birthdate, gender);
+    }
+
+    /**
+     * UserRegisterCommand.of() 메서드를 사용한 생성
+     */
+    public static UserRegisterCommand createUserRegisterCommandOf(String username, String email, String birthdate, Gender gender) {
+        return UserRegisterCommand.of(username, email, birthdate, gender);
+    }
+
+    /**
+     * X-USER-ID 헤더가 포함된 HttpHeaders 생성
+     */
+    public static HttpHeaders createUserIdHeaders(String username) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(USER_ID_HEADER, username);
+        return headers;
+    }
+
+    /**
+     * 기본 사용자명으로 X-USER-ID 헤더 생성
+     */
+    public static HttpHeaders createDefaultUserIdHeaders() {
+        return createUserIdHeaders("testuser");
+    }
+
+    /**
+     * PointEntity 검증 헬퍼 메서드 - 포인트가 존재하고 유효한 값인지 확인
+     */
+    public static void assertPointEntityValid(PointEntity point, Long expectedUserId) {
+        assertThat(point).isNotNull();
+        assertThat(point.getAmount()).isNotNull();
+        assertThat(point.getUser().getId()).isEqualTo(expectedUserId);
+        assertThat(point.getAmount()).isNotNegative();
+    }
+
+    /**
+     * PointEntity 검증 헬퍼 메서드 - 특정 금액과 사용자 ID 확인
+     */
+    public static void assertPointEntityFields(PointEntity point, BigDecimal expectedAmount, Long expectedUserId) {
+        assertThat(point).isNotNull();
+        assertThat(point.getAmount()).isEqualTo(expectedAmount);
+        assertThat(point.getUser().getId()).isEqualTo(expectedUserId);
+    }
+
+    /**
+     * 포인트가 null인지 검증하는 헬퍼 메서드
+     */
+    public static void assertPointIsNull(PointEntity point) {
+        assertThat(point).isNull();
+    }
+
+    /**
+     * 테스트용 사용자 데이터 클래스
+     */
+    public static class TestUser {
+        public static final String USERNAME = "testuser";
+        public static final String EMAIL = "dvum0045@gmail.com";
+        public static final String BIRTHDATE = "1990-01-01";
+        public static final Gender GENDER = Gender.FEMALE;
+
+        public static UserRegisterCommand createCommand() {
+            return createUserRegisterCommand(USERNAME, EMAIL, BIRTHDATE, GENDER);
+        }
+
+        public static UserRegisterCommand createCommandOf() {
+            return createUserRegisterCommandOf(USERNAME, EMAIL, BIRTHDATE, GENDER);
+        }
+    }
+}
