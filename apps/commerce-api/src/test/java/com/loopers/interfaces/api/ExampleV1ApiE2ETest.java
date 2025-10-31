@@ -1,10 +1,9 @@
 package com.loopers.interfaces.api;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.util.function.Function;
-
+import com.loopers.domain.example.ExampleModel;
+import com.loopers.infrastructure.example.ExampleJpaRepository;
+import com.loopers.interfaces.api.example.ExampleV1Dto;
+import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -18,16 +17,16 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.loopers.domain.example.ExampleModel;
-import com.loopers.infrastructure.example.ExampleJpaRepository;
-import com.loopers.interfaces.api.example.ExampleV1Dto;
-import com.loopers.support.Uris;
-import com.loopers.utils.DatabaseCleanUp;
+import java.util.function.Function;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ExampleV1ApiE2ETest {
 
-    private static final Function<Long, String> ENDPOINT_GET = id -> Uris.Example.BASE + "/" + id;
+    private static final Function<Long, String> ENDPOINT_GET = id -> "/api/v1/examples/" + id;
 
     private final TestRestTemplate testRestTemplate;
     private final ExampleJpaRepository exampleJpaRepository;
@@ -35,9 +34,9 @@ class ExampleV1ApiE2ETest {
 
     @Autowired
     public ExampleV1ApiE2ETest(
-            TestRestTemplate testRestTemplate,
-            ExampleJpaRepository exampleJpaRepository,
-            DatabaseCleanUp databaseCleanUp
+        TestRestTemplate testRestTemplate,
+        ExampleJpaRepository exampleJpaRepository,
+        DatabaseCleanUp databaseCleanUp
     ) {
         this.testRestTemplate = testRestTemplate;
         this.exampleJpaRepository = exampleJpaRepository;
@@ -49,7 +48,7 @@ class ExampleV1ApiE2ETest {
         databaseCleanUp.truncateAllTables();
     }
 
-    @DisplayName("GET " + Uris.Example.GET_BY_ID)
+    @DisplayName("GET /api/v1/examples/{id}")
     @Nested
     class Get {
         @DisplayName("존재하는 예시 ID를 주면, 해당 예시 정보를 반환한다.")
@@ -57,22 +56,21 @@ class ExampleV1ApiE2ETest {
         void returnsExampleInfo_whenValidIdIsProvided() {
             // arrange
             ExampleModel exampleModel = exampleJpaRepository.save(
-                    new ExampleModel("예시 제목", "예시 설명")
+                new ExampleModel("예시 제목", "예시 설명")
             );
             String requestUrl = ENDPOINT_GET.apply(exampleModel.getId());
 
             // act
-            ParameterizedTypeReference<ApiResponse<ExampleV1Dto.ExampleResponse>> responseType = new ParameterizedTypeReference<>() {
-            };
+            ParameterizedTypeReference<ApiResponse<ExampleV1Dto.ExampleResponse>> responseType = new ParameterizedTypeReference<>() {};
             ResponseEntity<ApiResponse<ExampleV1Dto.ExampleResponse>> response =
-                    testRestTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(null), responseType);
+                testRestTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(null), responseType);
 
             // assert
             assertAll(
-                    () -> assertTrue(response.getStatusCode().is2xxSuccessful()),
-                    () -> assertThat(response.getBody().data().id()).isEqualTo(exampleModel.getId()),
-                    () -> assertThat(response.getBody().data().name()).isEqualTo(exampleModel.getName()),
-                    () -> assertThat(response.getBody().data().description()).isEqualTo(exampleModel.getDescription())
+                () -> assertTrue(response.getStatusCode().is2xxSuccessful()),
+                () -> assertThat(response.getBody().data().id()).isEqualTo(exampleModel.getId()),
+                () -> assertThat(response.getBody().data().name()).isEqualTo(exampleModel.getName()),
+                () -> assertThat(response.getBody().data().description()).isEqualTo(exampleModel.getDescription())
             );
         }
 
@@ -80,18 +78,17 @@ class ExampleV1ApiE2ETest {
         @Test
         void throwsBadRequest_whenIdIsNotProvided() {
             // arrange
-            String requestUrl = Uris.Example.BASE + "/나나";
+            String requestUrl = "/api/v1/examples/나나";
 
             // act
-            ParameterizedTypeReference<ApiResponse<ExampleV1Dto.ExampleResponse>> responseType = new ParameterizedTypeReference<>() {
-            };
+            ParameterizedTypeReference<ApiResponse<ExampleV1Dto.ExampleResponse>> responseType = new ParameterizedTypeReference<>() {};
             ResponseEntity<ApiResponse<ExampleV1Dto.ExampleResponse>> response =
-                    testRestTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(null), responseType);
+                testRestTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(null), responseType);
 
             // assert
             assertAll(
-                    () -> assertTrue(response.getStatusCode().is4xxClientError()),
-                    () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST)
+                () -> assertTrue(response.getStatusCode().is4xxClientError()),
+                () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST)
             );
         }
 
@@ -103,15 +100,14 @@ class ExampleV1ApiE2ETest {
             String requestUrl = ENDPOINT_GET.apply(invalidId);
 
             // act
-            ParameterizedTypeReference<ApiResponse<ExampleV1Dto.ExampleResponse>> responseType = new ParameterizedTypeReference<>() {
-            };
+            ParameterizedTypeReference<ApiResponse<ExampleV1Dto.ExampleResponse>> responseType = new ParameterizedTypeReference<>() {};
             ResponseEntity<ApiResponse<ExampleV1Dto.ExampleResponse>> response =
-                    testRestTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(null), responseType);
+                testRestTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(null), responseType);
 
             // assert
             assertAll(
-                    () -> assertTrue(response.getStatusCode().is4xxClientError()),
-                    () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND)
+                () -> assertTrue(response.getStatusCode().is4xxClientError()),
+                () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND)
             );
         }
     }
