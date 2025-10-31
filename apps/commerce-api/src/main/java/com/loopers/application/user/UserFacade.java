@@ -36,6 +36,6 @@ public class UserFacade {
     public UserInfo getUserByUsername(@NotNull String username) {
         return Optional.ofNullable(userService.getUserByUsername(username))
                 .map(UserInfo::from)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "user not found for username: " + username));
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_USER, "user not found for username: " + username));
     }
 }

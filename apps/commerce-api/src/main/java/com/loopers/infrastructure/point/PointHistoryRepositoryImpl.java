@@ -31,9 +31,4 @@ public class PointHistoryRepositoryImpl implements PointHistoryRepository {
     public List<PointHistoryEntity> findByPointOrderByCreatedAtDesc(PointEntity point) {
         return pointHistoryJpaRepository.findByPointOrderByCreatedAtDesc(point);
     }
-
-    @Override
-    public Page<PointHistoryEntity> findByPoint(PointEntity point, Pageable pageable) {
-        return pointHistoryJpaRepository.findByPoint(point, pageable);
-    }
 }

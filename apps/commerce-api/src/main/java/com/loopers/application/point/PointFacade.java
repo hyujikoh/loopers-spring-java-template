@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.loopers.domain.point.PointEntity;
 import com.loopers.domain.point.PointService;
 import com.loopers.interfaces.api.point.PointV1Dtos;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,6 +25,10 @@ public class PointFacade {
     public PointV1Dtos.PointInfo getPointInfo(String username) {
         PointEntity point = pointService.getByUsername(username);
 
+        // 포인트 정보가 없는 경우를 사용자 없는 정보로 간주.
+        if (point == null) {
+            throw new CoreException(ErrorType.NOT_FOUND_USER);
+        }
         return PointV1Dtos.PointInfo.from(point);
     }
 

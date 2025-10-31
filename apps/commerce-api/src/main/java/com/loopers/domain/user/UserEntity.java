@@ -9,10 +9,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.Valid;
 
 /**
@@ -32,7 +29,7 @@ public class UserEntity extends BaseEntity {
 
     private LocalDate birthdate;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @Column(length = 10, nullable = false)
     private Gender gender;
 

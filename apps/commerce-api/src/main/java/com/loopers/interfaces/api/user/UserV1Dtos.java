@@ -34,7 +34,7 @@ public class UserV1Dtos {
             Long id,
             String username,
             String email,
-            LocalDate birth,
+            LocalDate birthdate,
             Gender gender
     ) {
         public static UserRegisterResponse from(UserInfo userInfo) {

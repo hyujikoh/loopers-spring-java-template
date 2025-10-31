@@ -1,5 +1,7 @@
 package com.loopers.domain.point;
 
+import java.util.Optional;
+
 /**
  * @author hyunjikoh
  * @since 2025. 10. 29.
@@ -7,5 +9,5 @@ package com.loopers.domain.point;
 public interface PointRepository {
     PointEntity save(PointEntity user);
 
-    PointEntity findByUsername(String username);
+    Optional<PointEntity> findByUsername(String username);
 }

@@ -26,7 +26,7 @@ import jakarta.validation.constraints.Min;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PointEntity extends BaseEntity {
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     private UserEntity user;
 
     @Min(0)
