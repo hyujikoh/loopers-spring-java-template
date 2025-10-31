@@ -24,7 +24,8 @@ public class PointService {
 
     @Transactional(readOnly = true)
     public PointEntity getByUsername(String username) {
-        return pointRepository.findByUsername(username);
+        return pointRepository.findByUsername(username)
+                .orElse(null);
     }
 
     /**
