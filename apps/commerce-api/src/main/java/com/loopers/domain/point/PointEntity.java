@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 
 /**
@@ -29,7 +30,6 @@ public class PointEntity extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY)
     private UserEntity user;
 
-    @Min(0)
     @Column(precision = 9, scale = 2, nullable = false)
     private BigDecimal amount;
 
