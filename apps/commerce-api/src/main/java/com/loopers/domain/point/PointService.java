@@ -54,13 +54,11 @@ public class PointService {
     public void createPointForNewUser(UserEntity user) {
         PointEntity existingPoint = getByUsername(user.getUsername());
 
-        if (existingPoint != null) {
-            // 이미 포인트가 존재하는 경우 아무 작업도 수행하지 않음
-            return;
+        // 이미 포인트 엔티티가 존재하는 경우 생성하지 않음
+        if (existingPoint == null) {
+            PointEntity pointEntity = PointEntity.createPointEntity(user);
+            pointRepository.save(pointEntity);
         }
-
-        PointEntity pointEntity = PointEntity.createPointEntity(user);
-        pointRepository.save(pointEntity);
     }
 
     /**
