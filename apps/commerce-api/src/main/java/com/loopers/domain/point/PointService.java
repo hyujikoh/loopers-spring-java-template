@@ -39,7 +39,7 @@ public class PointService {
         PointEntity point = getByUsername(username);
 
         if (point == null) {
-            throw new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다.");
+            throw new CoreException(ErrorType.NOT_FOUND_USER);
         }
 
         return pointHistoryRepository.findByPointOrderByCreatedAtDesc(point);
@@ -73,7 +73,7 @@ public class PointService {
         PointEntity point = getByUsername(username);
 
         if (point == null) {
-            throw new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다.");
+            throw new CoreException(ErrorType.NOT_FOUND_USER, "존재하지 않는 사용자입니다.");
         }
 
         point.charge(amount);

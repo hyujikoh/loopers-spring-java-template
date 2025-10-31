@@ -24,8 +24,10 @@ public class PointFacade {
     @Transactional(readOnly = true)
     public PointV1Dtos.PointInfo getPointInfo(String username) {
         PointEntity point = pointService.getByUsername(username);
+
+        // 포인트 정보가 없는 경우를 사용자 없는 정보로 간주.
         if (point == null) {
-            throw new CoreException(ErrorType.NOT_FOUND, "존재하지 않는 사용자입니다.");
+            throw new CoreException(ErrorType.NOT_FOUND_USER);
         }
         return PointV1Dtos.PointInfo.from(point);
     }
