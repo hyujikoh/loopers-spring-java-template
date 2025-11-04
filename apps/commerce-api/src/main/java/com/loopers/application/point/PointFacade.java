@@ -3,8 +3,9 @@ package com.loopers.application.point;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.loopers.domain.point.PointEntity;
 import com.loopers.domain.point.PointService;
+import com.loopers.domain.user.UserEntity;
+import com.loopers.domain.user.UserService;
 import com.loopers.interfaces.api.point.PointV1Dtos;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
@@ -20,16 +21,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PointFacade {
     private final PointService pointService;
+    private final UserService userService;
 
     @Transactional(readOnly = true)
     public PointV1Dtos.PointInfo getPointInfo(String username) {
-        PointEntity point = pointService.getByUsername(username);
+        UserEntity user = userService.getUserByUsername(username);
 
         // 포인트 정보가 없는 경우를 사용자 없는 정보로 간주.
-        if (point == null) {
+        if (user == null) {
             throw new CoreException(ErrorType.NOT_FOUND_USER);
         }
-        return PointV1Dtos.PointInfo.from(point);
+        return PointV1Dtos.PointInfo.from(user);
     }
 
     @Transactional

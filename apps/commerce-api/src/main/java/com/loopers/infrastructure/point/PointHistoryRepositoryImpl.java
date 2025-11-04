@@ -6,9 +6,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import com.loopers.domain.point.PointEntity;
 import com.loopers.domain.point.PointHistoryEntity;
 import com.loopers.domain.point.PointHistoryRepository;
+import com.loopers.domain.user.UserEntity;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,7 +28,7 @@ public class PointHistoryRepositoryImpl implements PointHistoryRepository {
     }
 
     @Override
-    public List<PointHistoryEntity> findByPointOrderByCreatedAtDesc(PointEntity point) {
-        return pointHistoryJpaRepository.findByPointOrderByCreatedAtDesc(point);
+    public List<PointHistoryEntity> findByUserOrderByCreatedAtDesc(UserEntity user) {
+        return pointHistoryJpaRepository.findByUserOrderByCreatedAtDesc(user);
     }
 }

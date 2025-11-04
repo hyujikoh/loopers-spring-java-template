@@ -7,7 +7,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import com.loopers.application.user.UserRegisterCommand;
-import com.loopers.domain.point.PointEntity;
 import com.loopers.domain.user.Gender;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.interfaces.api.point.PointV1Dtos;
@@ -81,43 +80,19 @@ public class PointTestFixture {
     }
 
     /**
-     * PointEntity 검증 헬퍼 메서드 - 포인트가 존재하고 유효한 값인지 확인
+     * 사용자의 포인트 금액 검증 헬퍼 메서드
      */
-    public static void assertPointEntityValid(PointEntity point, Long expectedUserId) {
-        assertThat(point).isNotNull();
-        assertThat(point.getAmount()).isNotNull();
-        assertThat(point.getUser().getId()).isEqualTo(expectedUserId);
-        assertThat(point.getAmount()).isNotNegative();
+    public static void assertUserPointAmount(UserEntity user, BigDecimal expectedAmount) {
+        assertThat(user).isNotNull();
+        assertThat(user.getPointAmount()).isEqualByComparingTo(expectedAmount);
     }
 
     /**
-     * PointEntity 검증 헬퍼 메서드 - 특정 금액과 사용자 ID 확인
+     * 사용자의 포인트가 0인지 검증하는 헬퍼 메서드
      */
-    public static void assertPointEntityFields(PointEntity point, BigDecimal expectedAmount, Long expectedUserId) {
-        assertThat(point).isNotNull();
-        assertThat(point.getAmount()).isEqualTo(expectedAmount);
-        assertThat(point.getUser().getId()).isEqualTo(expectedUserId);
-    }
-
-    /**
-     * 포인트가 null인지 검증하는 헬퍼 메서드
-     */
-    public static void assertPointIsNull(PointEntity point) {
-        assertThat(point).isNull();
-    }
-
-    /**
-     * 포인트 금액 검증 헬퍼 메서드
-     */
-    public static void assertPointAmount(PointEntity point, BigDecimal expectedAmount) {
-        assertThat(point.getAmount()).isEqualByComparingTo(expectedAmount);
-    }
-
-    /**
-     * PointEntity 생성 (UserEntity 기반)
-     */
-    public static PointEntity createPointEntity(UserEntity user) {
-        return PointEntity.createPointEntity(user);
+    public static void assertUserPointIsZero(UserEntity user) {
+        assertThat(user).isNotNull();
+        assertThat(user.getPointAmount()).isEqualByComparingTo(DEFAULT_POINT_AMOUNT);
     }
 
     /**
