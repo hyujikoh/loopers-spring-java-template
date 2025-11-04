@@ -3,6 +3,7 @@ package com.loopers.domain.point;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -16,6 +17,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
+import com.loopers.domain.user.UserEntity;
+import com.loopers.domain.user.UserRepository;
 import com.loopers.fixtures.PointTestFixture;
 import com.loopers.fixtures.UserTestFixture;
 import com.loopers.support.error.CoreException;
@@ -38,6 +41,9 @@ class PointServiceIntegrationTest {
     @Autowired
     private UserFacade userFacade;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @MockitoSpyBean
     private PointHistoryRepository pointHistoryRepository;
 
@@ -51,27 +57,17 @@ class PointServiceIntegrationTest {
     class GetPointTest {
 
         @Test
-        @DisplayName("사용자 등록 시 포인트가 자동으로 생성되고 조회할 수 있다")
-        void get_point_when_user_exists() {
+        @DisplayName("사용자 등록 시 포인트가 0으로 초기화되어 있다")
+        void user_has_zero_point_when_registered() {
             // given
             UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
             UserInfo userInfo = userFacade.registerUser(command);
 
             // when
-            PointEntity point = pointService.getByUsername(userInfo.username());
+            UserEntity user = userRepository.findByUsername(userInfo.username()).orElseThrow();
 
             // then
-            PointTestFixture.assertPointEntityValid(point, userInfo.id());
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 회원의 경우 null을 반환한다")
-        void get_point_return_null_when_user_not_exists() {
-            // when
-            PointEntity point = pointService.getByUsername(PointTestFixture.NONEXISTENT_USERNAME);
-
-            // then
-            PointTestFixture.assertPointIsNull(point);
+            PointTestFixture.assertUserPointIsZero(user);
         }
     }
 
@@ -98,12 +94,16 @@ class PointServiceIntegrationTest {
             UserInfo userInfo = userFacade.registerUser(command);
 
             // when
-            java.math.BigDecimal totalAmount = pointService.charge(
+            BigDecimal totalAmount = pointService.charge(
                     userInfo.username(),
                     PointTestFixture.CHARGE_AMOUNT_1000);
 
             // then
             assertThat(totalAmount).isEqualByComparingTo(PointTestFixture.CHARGE_AMOUNT_1000_SCALED);
+            
+            // 사용자 엔티티에서도 포인트가 업데이트되었는지 확인
+            UserEntity user = userRepository.findByUsername(userInfo.username()).orElseThrow();
+            PointTestFixture.assertUserPointAmount(user, PointTestFixture.CHARGE_AMOUNT_1000_SCALED);
         }
 
         @Test
