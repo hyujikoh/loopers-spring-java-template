@@ -2,7 +2,7 @@ package com.loopers.interfaces.api.point;
 
 import java.math.BigDecimal;
 
-import com.loopers.domain.point.PointEntity;
+import com.loopers.domain.user.UserEntity;
 
 public class PointV1Dtos {
 
@@ -22,10 +22,10 @@ public class PointV1Dtos {
             String username,
             BigDecimal currentPointAmount
     ) {
-        public static PointInfo from(PointEntity pointEntity) {
+        public static PointInfo from(UserEntity user) {
             return new PointInfo(
-                    pointEntity.getUser().getUsername(),
-                    pointEntity.getAmount()
+                    user.getUsername(),
+                    user.getPointAmount()
             );
         }
     }

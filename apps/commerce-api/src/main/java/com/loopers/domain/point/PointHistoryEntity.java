@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Objects;
 
 import com.loopers.domain.BaseEntity;
+import com.loopers.domain.user.UserEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,8 +23,8 @@ import jakarta.persistence.*;
 public class PointHistoryEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "point_id", nullable = false)
-    private PointEntity point;
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -35,11 +36,11 @@ public class PointHistoryEntity extends BaseEntity {
     @Column(precision = 9, scale = 2, nullable = false)
     private BigDecimal balanceAfter;
 
-    private PointHistoryEntity(PointEntity point, PointTransactionType transactionType, BigDecimal amount,
+    private PointHistoryEntity(UserEntity user, PointTransactionType transactionType, BigDecimal amount,
                               BigDecimal balanceAfter) {
-        validateInputs(point, transactionType, amount, balanceAfter);
+        validateInputs(user, transactionType, amount, balanceAfter);
 
-        this.point = point;
+        this.user = user;
         this.transactionType = transactionType;
         this.amount = amount;
         this.balanceAfter = balanceAfter;
@@ -48,33 +49,33 @@ public class PointHistoryEntity extends BaseEntity {
     /**
      * 포인트 충전 이력을 생성합니다.
      *
-     * @param point 포인트 엔티티
+     * @param user 사용자 엔티티
      * @param chargeAmount 충전 금액
      * @param balanceAfter 충전 후 잔액
      * @return 충전 이력 엔티티
      */
-    public static PointHistoryEntity createChargeHistory(PointEntity point, BigDecimal chargeAmount, BigDecimal balanceAfter) {
-        return new PointHistoryEntity(point, PointTransactionType.CHARGE, chargeAmount, balanceAfter);
+    public static PointHistoryEntity createChargeHistory(UserEntity user, BigDecimal chargeAmount, BigDecimal balanceAfter) {
+        return new PointHistoryEntity(user, PointTransactionType.CHARGE, chargeAmount, balanceAfter);
     }
 
     /**
      * 포인트 사용 이력을 생성합니다.
      *
-     * @param point 포인트 엔티티
+     * @param user 사용자 엔티티
      * @param useAmount 사용 금액
      * @param balanceAfter 사용 후 잔액
      * @return 사용 이력 엔티티
      */
-    public static PointHistoryEntity createUseHistory(PointEntity point,BigDecimal useAmount, BigDecimal balanceAfter) {
-        return new PointHistoryEntity(point, PointTransactionType.USE , useAmount, balanceAfter);
+    public static PointHistoryEntity createUseHistory(UserEntity user, BigDecimal useAmount, BigDecimal balanceAfter) {
+        return new PointHistoryEntity(user, PointTransactionType.USE, useAmount, balanceAfter);
     }
 
     /**
      * 입력값 유효성을 검사합니다.
      */
-    private void validateInputs(PointEntity point, PointTransactionType transactionType, BigDecimal amount, BigDecimal balanceAfter) {
-        if (Objects.isNull(point)) {
-            throw new IllegalArgumentException("포인트 엔티티는 필수값입니다.");
+    private void validateInputs(UserEntity user, PointTransactionType transactionType, BigDecimal amount, BigDecimal balanceAfter) {
+        if (Objects.isNull(user)) {
+            throw new IllegalArgumentException("사용자 엔티티는 필수값입니다.");
         }
 
         if (Objects.isNull(transactionType)) {

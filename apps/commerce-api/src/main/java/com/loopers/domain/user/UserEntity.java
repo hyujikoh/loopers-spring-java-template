@@ -1,5 +1,7 @@
 package com.loopers.domain.user;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -34,6 +36,9 @@ public class UserEntity extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(length = 10, nullable = false)
     private Gender gender;
+
+    @Column(name = "point_amount", precision = 9, scale = 2, nullable = false)
+    private BigDecimal pointAmount = BigDecimal.ZERO;
 
     public static UserEntity createUserEntity(@Valid UserDomainCreateRequest request) {
         if (Objects.isNull(request.username()) || !request.username().matches("^[A-Za-z0-9]{1,10}$")) {
@@ -86,7 +91,32 @@ public class UserEntity extends BaseEntity {
         this.email = email;
         this.birthdate = birthdate;
         this.gender = gender;
+        this.pointAmount = BigDecimal.ZERO;
     }
 
+    /**
+     * 포인트를 충전합니다.
+     *
+     * @param amount 충전할 금액
+     */
+    public void chargePoint(BigDecimal amount) {
+        validateChargeAmount(amount);
+        this.pointAmount = this.pointAmount.add(amount);
+    }
 
+    /**
+     * 충전 금액의 유효성을 검사합니다.
+     */
+    private void validateChargeAmount(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("충전 금액은 0보다 커야 합니다.");
+        }
+    }
+
+    /**
+     * 포인트 잔액을 반환합니다.
+     */
+    public BigDecimal getPointAmount() {
+        return pointAmount.setScale(2, RoundingMode.HALF_UP);
+    }
 }

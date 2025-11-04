@@ -27,8 +27,6 @@ public class UserFacade {
         // 회원 가입
         UserEntity register = userService.register(command.toDomainRequest());
 
-        // 신규 회원 포인트 생성
-        pointService.createPointForNewUser(register);
         return UserInfo.from(register);
     }
 
