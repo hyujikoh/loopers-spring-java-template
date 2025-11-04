@@ -57,17 +57,20 @@ public class UserEntity extends BaseEntity {
             if (Objects.isNull(request.birthdate())) {
                 throw new IllegalArgumentException("생년월일은 필수 입력값입니다.");
             }
-            LocalDate.parse(request.birthdate());
+            LocalDate parsedBirthdate = LocalDate.parse(request.birthdate());
+            if (parsedBirthdate.isAfter(LocalDate.now())) {
+                throw new IllegalArgumentException("생년월일은 현재 날짜보다 이후일 수 없습니다.");
+            }
+            return new UserEntity(
+                    request.username(),
+                    request.email(),
+                    parsedBirthdate,
+                    request.gender());
         } catch (Exception e) {
             throw new IllegalArgumentException(e instanceof IllegalArgumentException ?
                     e.getMessage() : "올바른 날짜 형식이어야 합니다.");
         }
 
-        return new UserEntity(
-                request.username(),
-                request.email(),
-                LocalDate.parse(request.birthdate()),
-                request.gender());
     }
 
     private UserEntity(String username, String email, LocalDate birthdate, Gender gender) {
