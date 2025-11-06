@@ -172,7 +172,6 @@ classDiagram
     }
 
     class ProductEntity {
-        -Long id
         -BrandEntity brand
         -String name
         -String description
@@ -181,25 +180,13 @@ classDiagram
         -Integer stockQuantity
         -Long likeCount
         -LocalDate releasedAt
-        -ZonedDateTime createdAt
-        -ZonedDateTime updatedAt
-        -ZonedDateTime deletedAt
-        
-        +createProduct(request) ProductEntity$
-        +isInStock(quantity) boolean
-        +reserveStock(quantity) void
-        +releaseStock(quantity) void
+        +createProduct() ProductEntity
+        +isInStock() boolean
+        +reserveStock() void
+        +releaseStock() void
         +increaseLikeCount() void
         +decreaseLikeCount() void
-        +updatePrice(originPrice, discountPrice) void
-        +updateStock(quantity) void
         +isAvailableForOrder() boolean
-        +getCurrentPrice() BigDecimal
-        +validateStock(quantity) void
-        +validatePrice(originPrice, discountPrice) void
-        +isDiscounted() boolean
-        +getDiscountRate() BigDecimal
-        #guard() void
     }
 
     BrandEntity "1" --> "*" ProductEntity : 브랜드 내 상품
