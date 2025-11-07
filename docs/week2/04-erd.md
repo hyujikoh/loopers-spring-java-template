@@ -184,14 +184,15 @@ erDiagram
 | 컬럼명 | 타입 | 제약조건 | 설명 |
 |--------|------|----------|------|
 | id | BIGINT | PK, AUTO_INCREMENT | 좋아요 고유 식별자 |
-| user_id | BIGINT | NOT NULL | 사용자 ID (users.id) |
-| product_id | BIGINT | NOT NULL | 상품 ID (products.id) |
+| user_id | BIGINT | NOT NULL, UNIQUE (with product_id) | 사용자 ID (users.id) |
+| product_id | BIGINT | NOT NULL, UNIQUE (with user_id) | 상품 ID (products.id) |
 | created_at | TIMESTAMP | NOT NULL | 좋아요 등록 시간 |
 | updated_at | TIMESTAMP | NOT NULL | 수정일시 |
 | deleted_at | TIMESTAMP | NULL | 삭제일시|
 
 **인덱스**:
 - `idx_like_user_id`: user_id (사용자별 좋아요 목록 조회)
+- `uk_like_user_product`: (user_id, product_id) UNIQUE (중복 방지)
 
 **논리적 관계** (물리적 FK 없음):
 - user_id → users(id)

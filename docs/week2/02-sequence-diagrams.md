@@ -224,6 +224,7 @@ sequenceDiagram
     participant ProductService
     participant PointService
     participant OrderRepository
+    
 
     User->>OrderController: POST /api/v1/orders<br/>Header: X-USER-ID=123<br/>Body: {"items":[{"productId":1,"quantity":2}]}
     OrderController->>OrderService: createOrder(userId=123, orderRequest)
@@ -236,10 +237,11 @@ sequenceDiagram
     else 사용자가 존재하는 경우
         UserService-->>OrderService: User validated
         
-        loop 각 주문 상품 검증
+        loop 각 주문 상품 검증 및 재고 예약
             OrderService->>ProductService: validateAndReserveStock(productId, quantity)
             alt 상품이 존재하지 않거나 재고 부족
                 ProductService-->>OrderService: ProductException
+                Note over OrderService: 이미 예약된 재고 해제 (보상 트랜잭션)
                 OrderService-->>OrderController: ProductException
                 OrderController-->>User: 400 Bad Request
             else 재고 예약 성공
@@ -250,17 +252,33 @@ sequenceDiagram
         OrderService->>PointService: deductPoints(userId=123, totalAmount)
         alt 포인트가 부족한 경우
             PointService-->>OrderService: InsufficientPointsException
+            Note over OrderService: 예약된 모든 재고 해제 (보상 트랜잭션)
             OrderService-->>OrderController: InsufficientPointsException
             OrderController-->>User: 400 Bad Request
         else 포인트 차감 성공
             PointService-->>OrderService: Points deducted
             OrderService->>OrderRepository: createOrderWithItems(orderData)
-            OrderRepository-->>OrderService: OrderEntity created
-            OrderService-->>OrderController: OrderResponse
-            OrderController-->>User: 201 Created
+            alt 주문 생성 실패
+                OrderRepository-->>OrderService: DataIntegrityException
+                Note over OrderService: 포인트 복구 + 재고 해제 (보상 트랜잭션)
+                OrderService-->>OrderController: OrderCreationException
+                OrderController-->>User: 500 Internal Server Error
+            else 주문 생성 성공
+                OrderRepository-->>OrderService: OrderEntity created
+                OrderService-->>OrderController: OrderResponse
+                OrderController-->>User: 201 Created
+            end
         end
     end
 ```
+
+### 🔒 주문 처리 원자성 보장
+
+#### **트랜잭션 전략**
+- **보상 트랜잭션**: 실패 시점에 따른 롤백 전략
+  - 재고 예약 실패 → 이미 예약된 재고 즉시 해제
+  - 포인트 차감 실패 → 예약된 모든 재고 해제  
+  - 주문 생성 실패 → 포인트 복구 + 재고 해제
 
 ## 9. 사용자의 주문 목록 조회
 

@@ -73,6 +73,7 @@ classDiagram
         +increaseLikeCount() void
         +decreaseLikeCount() void
         +isAvailableForOrder() boolean
+        +validateAndReserveStock() void
     }
 
     class LikeEntity {
@@ -80,6 +81,7 @@ classDiagram
         -ProductEntity product
         +createLike() LikeEntity
         +updateLikeStatus() LikeEntity
+        +removeLike() void
     }
 
     class OrderEntity {
@@ -109,8 +111,10 @@ classDiagram
         -BigDecimal amount
         -PointTransactionType transactionType
         -BigDecimal balanceAfter
+        -String description
         +createChargeHistory() PointHistoryEntity
         +createUseHistory() PointHistoryEntity
+        +createRevertHistory() PointHistoryEntity
         +validateAmount() void
         +validateBalance() void
     }
@@ -150,8 +154,10 @@ classDiagram
         -BigDecimal amount
         -PointTransactionType transactionType
         -BigDecimal balanceAfter
+        -String description
         +createChargeHistory() PointHistoryEntity
         +createUseHistory() PointHistoryEntity
+        +createRevertHistory() PointHistoryEntity
         +validateAmount() void
         +validateBalance() void
     }
@@ -188,6 +194,7 @@ classDiagram
         +increaseLikeCount() void
         +decreaseLikeCount() void
         +isAvailableForOrder() boolean
+        +validateAndReserveStock() void
     }
 
     BrandEntity "1" --> "*" ProductEntity : 브랜드 내 상품
@@ -202,6 +209,7 @@ classDiagram
         -ProductEntity product
         +createLike() LikeEntity
         +updateLikeStatus() LikeEntity
+        +removeLike() void
     }
 
     class UserEntity {
@@ -233,6 +241,7 @@ classDiagram
         +increaseLikeCount() void
         +decreaseLikeCount() void
         +isAvailableForOrder() boolean
+        +validateAndReserveStock() void
     }
 
     LikeEntity "*" --> "1" UserEntity : 사용자 기준 좋아요
@@ -294,6 +303,7 @@ classDiagram
         +increaseLikeCount() void
         +decreaseLikeCount() void
         +isAvailableForOrder() boolean
+        +validateAndReserveStock() void
     }
 
     OrderEntity "1" --> "*" OrderItemEntity : 주문 항목들
@@ -326,6 +336,7 @@ classDiagram
 | `increaseLikeCount()` | 좋아요 수 증가 | 음수 방지, 동시성 제어 | 원자적 증가 연산 |
 | `decreaseLikeCount()` | 좋아요 수 감소 | 0 이하로 감소 방지 | 최소값 0 보장 |
 | `isAvailableForOrder()` | 주문 가능 여부 | 재고 존재, 삭제되지 않음 | 복합 조건 검증 |
+| `validateAndReserveStock()` | 재고 검증 및 예약 | 재고 부족 시 예외, 동시성 제어 | 원자적 재고 예약 처리 |
 
 ### 3. OrderEntity - 주문 도메인의 핵심 책임
 
@@ -347,17 +358,17 @@ classDiagram
 
 ### 5. LikeEntity - 좋아요 도메인의 핵심 책임
 
-| 메서드                   | 책임          | 비즈니스 규칙              | 구현 세부사항           |
-|-----------------------|-------------|----------------------|-------------------|
-| `createLike()`        | 좋아요 생성      | 사용자-상품 조합 유일성, 멱등성 보장 | 정적 팩토리 메서드, 복합키 검증 |
-| `updateLikeStatus()`  | 좋아요 상태 업데이트 | 기존 사용자 좋아요 상태 비활성화   | 변경 전 , 변경후 상태 검증  |
+| 메서드                   | 책임          | 비즈니스 규칙                 | 구현 세부사항           |
+|-----------------------|-------------|-------------------------|-------------------|
+| `createLike()`        | 좋아요 생성      | 사용자-상품 조합 유일성, 멱등성 보장   | 정적 팩토리 메서드, 복합키 검증 |
+| `updateLikeStatus()`  | 좋아요 상태 업데이트 | 기존 사용자 좋아요 상태 활성화       | 변경 전 , 변경후 상태 검증  |
+| `removeLike()`        | 좋아요 삭제      | 소프트 삭제, isDeleted 플래그 설정 | 물리적 삭제 대신 논리적 삭제 |
 
 ### 6. BrandEntity - 브랜드 도메인의 핵심 책임
 
 | 메서드 | 책임 | 비즈니스 규칙 | 구현 세부사항 |
 |--------|------|---------------|---------------|
 | `createBrand()` | 브랜드 생성 | 브랜드명 중복 방지, 필수값 검증 | 정적 팩토리 메서드, 유니크 제약 |
-| `updateDescription()` | 설명 변경 | 설명 길이 제한, 유효성 검증 | 설명 업데이트 로직 |
 | `validateName()` | 브랜드명 검증 | 브랜드명 형식, 길이, 중복 검증 | 브랜드명 유효성 규칙 |
 
 ### 7. PointHistoryEntity - 포인트 이력 도메인의 핵심 책임
@@ -366,6 +377,7 @@ classDiagram
 |--------|------|---------------|---------------|
 | `createChargeHistory()` | 충전 이력 생성 | 충전 금액 양수, 잔액 일치성 | 정적 팩토리 메서드, 충전 타입 |
 | `createUseHistory()` | 사용 이력 생성 | 사용 금액 양수, 잔액 일치성 | 정적 팩토리 메서드, 사용 타입 |
+| `createRevertHistory()` | 복구 이력 생성 | 복구 금액 양수, 잔액 일치성 | 정적 팩토리 메서드, 복구 타입 |
 | `validateAmount()` | 금액 검증 | 금액 양수, 범위 검증 | 금액 유효성 규칙 |
 | `validateBalance()` | 잔액 검증 | 거래 후 잔액 음수 방지 | 잔액 일치성 검증 |
 
