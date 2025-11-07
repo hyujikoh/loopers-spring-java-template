@@ -140,6 +140,8 @@ sequenceDiagram
             ProductService-->>LikeService: Product validated
             LikeService->>LikeRepository: upsert(userId=123, productId=1)
             LikeRepository-->>LikeService: LikeResult(action=ADDED|ALREADY_EXISTS)
+            LikeService->>ProductService: increaseLikeCount()
+            ProductService-->>LikeService: LikeResult()
             LikeService-->>LikeController: LikeResponse(action)
         end
     end
@@ -169,6 +171,8 @@ sequenceDiagram
         UserService-->>LikeService: User validated
         LikeService->>LikeRepository: deleteIfExists(userId=123, productId=1)
         LikeRepository-->>LikeService: UnlikeResult(action=REMOVED|ALREADY_REMOVED)
+        LikeService->>ProductService: decreaseLikeCount()
+        ProductService-->>LikeService: LikeResult()
         LikeService-->>LikeController: UnlikeResponse(action)
     end
     
