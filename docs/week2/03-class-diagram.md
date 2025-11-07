@@ -68,12 +68,12 @@ classDiagram
         -LocalDate releasedAt
         +createProduct() ProductEntity
         +isInStock() boolean
-        +reserveStock(quantity) void
-        +releaseStock(quantity) void
+        +reserveStock() void
+        +releaseStock() void
         +increaseLikeCount() void
         +decreaseLikeCount() void
         +isAvailableForOrder() boolean
-        +validateAndReserveStock(quantity) void
+        +validateAndReserveStock() void
     }
 
     class LikeEntity {
@@ -189,12 +189,12 @@ classDiagram
         -LocalDate releasedAt
         +createProduct() ProductEntity
         +isInStock() boolean
-        +reserveStock(quantity) void
-        +releaseStock(quantity) void
+        +reserveStock() void
+        +releaseStock() void
         +increaseLikeCount() void
         +decreaseLikeCount() void
         +isAvailableForOrder() boolean
-        +validateAndReserveStock(quantity) void
+        +validateAndReserveStock() void
     }
 
     BrandEntity "1" --> "*" ProductEntity : 브랜드 내 상품
@@ -236,12 +236,12 @@ classDiagram
         -LocalDate releasedAt
         +createProduct() ProductEntity
         +isInStock() boolean
-        +reserveStock(quantity) void
-        +releaseStock(quantity) void
+        +reserveStock() void
+        +releaseStock() void
         +increaseLikeCount() void
         +decreaseLikeCount() void
         +isAvailableForOrder() boolean
-        +validateAndReserveStock(quantity) void
+        +validateAndReserveStock() void
     }
 
     LikeEntity "*" --> "1" UserEntity : 사용자 기준 좋아요
@@ -298,12 +298,12 @@ classDiagram
         -LocalDate releasedAt
         +createProduct() ProductEntity
         +isInStock() boolean
-        +reserveStock(quantity) void
-        +releaseStock(quantity) void
+        +reserveStock() void
+        +releaseStock() void
         +increaseLikeCount() void
         +decreaseLikeCount() void
         +isAvailableForOrder() boolean
-        +validateAndReserveStock(quantity) void
+        +validateAndReserveStock() void
     }
 
     OrderEntity "1" --> "*" OrderItemEntity : 주문 항목들

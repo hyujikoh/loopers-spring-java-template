@@ -225,7 +225,6 @@ sequenceDiagram
     participant PointService
     participant OrderRepository
     
-    Note over OrderService: @Transactional
 
     User->>OrderController: POST /api/v1/orders<br/>Header: X-USER-ID=123<br/>Body: {"items":[{"productId":1,"quantity":2}]}
     OrderController->>OrderService: createOrder(userId=123, orderRequest)
@@ -276,7 +275,6 @@ sequenceDiagram
 ### 🔒 주문 처리 원자성 보장
 
 #### **트랜잭션 전략**
-- **단일 트랜잭션**: 모든 상태 변경이 하나의 트랜잭션에서 원자적 처리
 - **보상 트랜잭션**: 실패 시점에 따른 롤백 전략
   - 재고 예약 실패 → 이미 예약된 재고 즉시 해제
   - 포인트 차감 실패 → 예약된 모든 재고 해제  
