@@ -79,6 +79,7 @@ classDiagram
         -UserEntity user
         -ProductEntity product
         +createLike() LikeEntity
+        +updateLikeStatus() LikeEntity
     }
 
     class OrderEntity {
@@ -200,6 +201,7 @@ classDiagram
         -UserEntity user
         -ProductEntity product
         +createLike() LikeEntity
+        +updateLikeStatus() LikeEntity
     }
 
     class UserEntity {
@@ -345,9 +347,10 @@ classDiagram
 
 ### 5. LikeEntity - 좋아요 도메인의 핵심 책임
 
-| 메서드 | 책임 | 비즈니스 규칙 | 구현 세부사항 |
-|--------|------|---------------|---------------|
-| `createLike()` | 좋아요 생성 | 사용자-상품 조합 유일성, 멱등성 보장 | 정적 팩토리 메서드, 복합키 검증 |
+| 메서드                   | 책임          | 비즈니스 규칙              | 구현 세부사항           |
+|-----------------------|-------------|----------------------|-------------------|
+| `createLike()`        | 좋아요 생성      | 사용자-상품 조합 유일성, 멱등성 보장 | 정적 팩토리 메서드, 복합키 검증 |
+| `updateLikeStatus()`  | 좋아요 상태 업데이트 | 기존 사용자 좋아요 상태 비활성화   | 변경 전 , 변경후 상태 검증  |
 
 ### 6. BrandEntity - 브랜드 도메인의 핵심 책임
 
