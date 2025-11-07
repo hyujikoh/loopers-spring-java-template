@@ -139,7 +139,7 @@ sequenceDiagram
         else 상품이 존재하는 경우
             ProductService-->>LikeService: Product validated
             LikeService->>LikeRepository: upsert(userId=123, productId=1)
-            LikeRepository-->>LikeService: LikeResult(action=ADDED|ALREADY_EXISTS)
+            LikeRepository-->>LikeService: LikeResult()
             LikeService->>ProductService: increaseLikeCount()
             ProductService-->>LikeService: LikeResult()
             LikeService-->>LikeController: LikeResponse(action)
