@@ -1,5 +1,8 @@
 package com.loopers.domain.brand;
 
+import static java.util.Objects.requireNonNull;
+import java.util.Objects;
+
 import com.loopers.domain.BaseEntity;
 
 import lombok.AccessLevel;
@@ -28,5 +31,18 @@ public class BrandEntity extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    public BrandEntity(String name, String description) {
+        requireNonNull(name);
+        this.name = name;
+        this.description = description;
 
+    }
+
+    public static BrandEntity createBrandEntity(String name, String description) {
+        if(Objects.isNull(name)) {
+            throw new IllegalArgumentException("브랜드 이름은 필수 입력값입니다.");
+        }
+
+        return new BrandEntity(name, description);
+    }
 }
