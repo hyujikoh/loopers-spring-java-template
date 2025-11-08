@@ -23,7 +23,7 @@ import jakarta.persistence.Table;
         @Index(name = "idx_brand_name", columnList = "name")
 })
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access =  AccessLevel.PROTECTED)
 public class BrandEntity extends BaseEntity {
     @Column(unique = true, nullable = false, length = 100)
     private String name;
@@ -45,4 +45,16 @@ public class BrandEntity extends BaseEntity {
 
         return new BrandEntity(name, description);
     }
+
+    @Override
+    protected void guard() {
+        if (this.name == null || this.name.isBlank()) {
+            throw new IllegalStateException("브랜드 이름은 비어있을 수 없습니다.");
+        }
+
+        if (this.name.length() > 100) {
+            throw new IllegalStateException("브랜드 이름은 100자를 초과할 수 없습니다.");
+        }
+    }
+
 }
