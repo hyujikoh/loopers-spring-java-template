@@ -7,10 +7,6 @@ import java.util.stream.IntStream;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandRepository;
 
-/**
- * @author hyunjikoh
- * @since 2025. 11. 9.
- */
 public class BrandTestFixture {
 
     public static BrandEntity createEntity(String name, String description) {
@@ -23,9 +19,14 @@ public class BrandTestFixture {
                 .collect(Collectors.toList());
     }
 
-    public static List<BrandEntity> saveBrands(BrandRepository brandRepository, int count) {
-        List<BrandEntity> brands = createEntities(count);
-        brands.forEach(brandRepository::save);
-        return brands;
+    public static List<BrandEntity> saveBrands(BrandRepository repository, int count) {
+        return createEntities(count).stream()
+                .map(repository::save)
+                .collect(Collectors.toList());
+    }
+
+    public static BrandEntity createAndSave(BrandRepository repository, String name, String description) {
+        BrandEntity brand = createEntity(name, description);
+        return repository.save(brand);
     }
 }

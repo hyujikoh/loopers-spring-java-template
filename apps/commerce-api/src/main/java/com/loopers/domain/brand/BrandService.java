@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.loopers.domain.brand.dto.BrandSearchFilter;
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -25,5 +27,16 @@ public class BrandService {
     public BrandEntity getBrandById(long id) {
         return brandRepository.getBrandById(id)
                 .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public BrandEntity getBrandByName(String name) {
+        return brandRepository.findByName(name)
+                .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BrandEntity> searchBrands(BrandSearchFilter filter, Pageable pageable) {
+        return brandRepository.searchBrands(filter, pageable);
     }
 }
