@@ -1,5 +1,7 @@
 package com.loopers.domain.brand;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -11,4 +13,6 @@ public interface BrandRepository {
     BrandEntity save(BrandEntity brand);
 
     Page<BrandEntity> listBrands(Pageable pageable);
+
+    Optional<BrandEntity> getBrandById(long id);
 }

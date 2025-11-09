@@ -3,6 +3,7 @@ package com.loopers.domain.brand;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,8 +16,14 @@ import lombok.RequiredArgsConstructor;
 public class BrandService {
     private final BrandRepository brandRepository;
 
-
+    @Transactional(readOnly = true)
     public Page<BrandEntity> listBrands(Pageable pageable) {
         return brandRepository.listBrands(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public BrandEntity getBrandById(long id) {
+        return brandRepository.getBrandById(id)
+                .orElse(null);
     }
 }
