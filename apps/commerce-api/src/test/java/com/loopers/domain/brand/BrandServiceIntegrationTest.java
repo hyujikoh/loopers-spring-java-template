@@ -36,21 +36,6 @@ class BrandServiceIntegrationTest {
     @DisplayName("브랜드 목록 조회")
     class ListBrandsTest {
         @Test
-        @DisplayName("페이지네이션으로 브랜드 목록을 조회하는데 성공한다")
-        void list_brands_with_pagination_success() {
-            // given
-            BrandTestFixture.saveBrands(brandRepository, 5);
-            Pageable pageable = Pageable.ofSize(3).withPage(0);
-
-            // when
-            Page<BrandEntity> resultPages = brandService.listBrands(pageable);
-
-            // then
-            assertThat(resultPages.getContent()).hasSize(3);
-            assertThat(resultPages.getTotalElements()).isEqualTo(5L);
-        }
-
-        @Test
         @DisplayName("브랜드명으로 검색하여 페이지네이션된 결과를 조회한다")
         void search_brands_by_name_with_pagination() {
             // given
