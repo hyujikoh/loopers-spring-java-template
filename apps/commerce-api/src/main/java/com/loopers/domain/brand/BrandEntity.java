@@ -23,7 +23,7 @@ import jakarta.persistence.Table;
         @Index(name = "idx_brand_name", columnList = "name")
 })
 @Getter
-@NoArgsConstructor(access =  AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class BrandEntity extends BaseEntity {
     @Column(unique = true, nullable = false, length = 100)
     private String name;
@@ -39,7 +39,7 @@ public class BrandEntity extends BaseEntity {
     }
 
     public static BrandEntity createBrandEntity(String name, String description) {
-        if(Objects.isNull(name)) {
+        if (Objects.isNull(name)) {
             throw new IllegalArgumentException("브랜드 이름은 필수 입력값입니다.");
         }
 

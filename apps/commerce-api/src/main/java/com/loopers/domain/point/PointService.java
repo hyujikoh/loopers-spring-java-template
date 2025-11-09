@@ -42,7 +42,7 @@ public class PointService {
      * 사용자에게 포인트를 충전합니다.
      *
      * @param username 사용자명
-     * @param amount 충전할 금액
+     * @param amount   충전할 금액
      * @return 충전 후 포인트 잔액
      */
     @Transactional
@@ -51,11 +51,11 @@ public class PointService {
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_USER, "존재하지 않는 사용자입니다."));
 
         user.chargePoint(amount);
-        
+
         // 포인트 이력 생성
         PointHistoryEntity history = PointHistoryEntity.createChargeHistory(user, amount, user.getPointAmount());
         pointHistoryRepository.save(history);
-        
+
         userRepository.save(user);
 
         return user.getPointAmount();
