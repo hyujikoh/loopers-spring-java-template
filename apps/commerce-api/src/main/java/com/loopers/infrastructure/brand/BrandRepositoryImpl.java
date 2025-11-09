@@ -1,5 +1,7 @@
 package com.loopers.infrastructure.brand;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import com.loopers.domain.brand.BrandEntity;
@@ -20,5 +22,10 @@ public class BrandRepositoryImpl implements BrandRepository {
     @Override
     public BrandEntity save(BrandEntity brand) {
         return brandJpaRepository.save(brand);
+    }
+
+    @Override
+    public Page<BrandEntity> listBrands(Pageable pageable) {
+        return brandJpaRepository.findAllByDeletedAtNull(pageable);
     }
 }
