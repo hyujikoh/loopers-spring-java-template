@@ -1,5 +1,6 @@
 package com.loopers.domain.product;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.fixtures.BrandTestFixture;
+import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**
@@ -47,19 +49,22 @@ public class ProductIntegrationTest {
         @DisplayName("새로운 상품 등록 시 상품이 저장된다")
         void save_product_with_brand() {
             // given
-            BrandEntity andSave = BrandTestFixture.createAndSave(brandRepository, "Nike", "jump man");
-            ProductDomainRequest productDomainRequest = ProductDomainRequest.withoutDiscount(
-                    andSave, "Air Max", "Comfortable running shoes", new BigDecimal("100000"), 50
-            );
-
+            BrandEntity brand = BrandTestFixture.createAndSave(brandRepository, "Nike", "Just do it");
 
             // when
-            ProductEntity save = productRepository.save(ProductEntity.createEntity(productDomainRequest));
+            ProductEntity product = ProductTestFixture.createAndSave(
+                    productRepository,
+                    brand,
+                    "Air Max",
+                    "편안한 운동화",
+                    new BigDecimal("120000"),
+                    50
+            );
 
-            Assertions.assertThat(save).isNotNull();
-            Assertions.assertThat(save.getId()).isNotNull();
-            Assertions.assertThat(save.getName()).isEqualTo("Air Max");
-            Assertions.assertThat(save.getBrand().getId()).isEqualTo(andSave.getId());
+            // then
+            assertThat(product.getId()).isNotNull();
+            assertThat(product.getName()).isEqualTo("Air Max");
+            assertThat(product.getBrand().getId()).isEqualTo(brand.getId());
         }
     }
 }
