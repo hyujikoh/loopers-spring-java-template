@@ -63,7 +63,7 @@ public class ProductTestFixture {
                 brand,
                 "상품" + ID_GENERATOR.getAndIncrement(),
                 "상품 설명",
-                new BigDecimal("10000"),
+                new BigDecimal("10000") ,
                 100
         );
     }
