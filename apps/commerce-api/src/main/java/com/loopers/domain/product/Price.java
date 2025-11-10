@@ -45,6 +45,16 @@ public class Price {
         return price;
     }
 
+
+    public static Price of(BigDecimal originPrice) {
+        validatePrice(originPrice, null);
+
+        Price price = new Price();
+        price.originPrice = originPrice.setScale(2, RoundingMode.HALF_UP);
+        price.discountPrice = null;
+
+        return price;
+    }
     /**
      * 정가만으로 가격 정보를 생성한다.
      *

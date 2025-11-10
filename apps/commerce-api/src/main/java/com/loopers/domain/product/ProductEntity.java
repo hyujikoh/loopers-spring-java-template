@@ -1,5 +1,7 @@
 package com.loopers.domain.product;
 
+import static java.util.Objects.requireNonNull;
+
 import com.loopers.domain.BaseEntity;
 import com.loopers.domain.brand.BrandEntity;
 
@@ -9,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.Objects;
 
 /**
  * 상품 엔티티
@@ -17,15 +20,18 @@ import java.math.BigDecimal;
  * @since 2025. 11. 10.
  */
 @Entity
-@Table(name = "products")
+@Table(name = "products", indexes = {
+        @Index(name = "idx_productentity_brand_id", columnList = "brand_id"),
+        @Index(name = "idx_productentity_name", columnList = "name")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProductEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
-        name = "brand_id",
-        nullable = false
+            name = "brand_id",
+            nullable = false
     )
     private BrandEntity brand;
 
@@ -42,75 +48,56 @@ public class ProductEntity extends BaseEntity {
     private Integer stockQuantity;
 
     @Column(name = "like_count", nullable = false)
-    private Long likeCount;
+    private Long likeCount = 0L;
 
     /**
-     * 상품을 생성한다.
+     * 상품 엔티티 생성자
+     *
+     * @param brand 브랜드 엔티티
+     * @param name 상품명
+     * @param description 상품 설명
+     * @param originPrice 정가
+     * @param discountPrice 할인가
+     * @param stockQuantity 재고 수량
+     */
+    public ProductEntity(BrandEntity brand, String name, String description,
+                         BigDecimal originPrice, BigDecimal discountPrice, Integer stockQuantity) {
+        requireNonNull(brand, "브랜드 정보는 필수입니다.");
+        requireNonNull(name, "상품명은 필수입니다.");
+        requireNonNull(originPrice, "정가는 필수입니다.");
+        requireNonNull(stockQuantity, "재고 수량은 필수입니다.");
+
+        validateName(name);
+        validateOriginPrice(originPrice);
+        validateDiscountPrice(originPrice, discountPrice);
+        validateStockQuantity(stockQuantity);
+
+        this.brand = brand;
+        this.name = name.trim();
+        this.description = description != null ? description.trim() : null;
+        this.price = discountPrice != null ? Price.of(originPrice, discountPrice) : Price.of(originPrice);
+        this.stockQuantity = stockQuantity;
+    }
+
+    /**
+     * 상품 엔티티를 생성한다.
      *
      * @param request 상품 생성 요청 정보
      * @return 생성된 상품 엔티티
      */
-    public static ProductEntity createProduct(ProductDomainRequest request) {
-        ProductEntity product = new ProductEntity();
-        product.brand = request.brand();
-        product.name = request.name();
-        product.description = request.description();
-        product.price = Price.of(request.originPrice(), request.discountPrice());
-        product.stockQuantity = request.stockQuantity();
-        product.likeCount = 0L;
-
-        return product;
-    }
-
-    /**
-     * 상품 정보를 수정한다.
-     * TODO : 향후 상품 상태(판매중지 등) 관련 필드가 추가되면 수정 필요
-     *
-     * @param name 상품명
-     * @param description 상품 설명
-     */
-    public void updateBasicInfo(String name, String description) {
-        validateName(name);
-        this.name = name;
-        this.description = description;
-    }
-
-    /**
-     * 가격 정보를 수정한다.
-     *
-     * @param originPrice 정가
-     * @param discountPrice 할인가
-     */
-    public void updatePrice(BigDecimal originPrice, BigDecimal discountPrice) {
-        this.price = Price.of(originPrice, discountPrice);
-    }
-
-    /**
-     * 할인가를 적용한다.
-     *
-     * @param discountPrice 할인가
-     */
-    public void applyDiscount(BigDecimal discountPrice) {
-        this.price.applyDiscount(discountPrice);
-    }
-
-    /**
-     * 할인을 제거한다.
-     */
-    public void removeDiscount() {
-        this.price.removeDiscount();
-    }
-
-    /**
-     * 재고를 추가한다.
-     *
-     * @param quantity 추가할 재고 수량
-     */
-    public void addStock(int quantity) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("추가할 재고 수량은 0보다 커야 합니다.");
+    public static ProductEntity createEntity(ProductDomainRequest request) {
+        if (Objects.isNull(request)) {
+            throw new IllegalArgumentException("상품 생성 요청 정보는 필수입니다.");
         }
-        this.stockQuantity += quantity;
+
+        return new ProductEntity(
+                request.brand(),
+                request.name(),
+                request.description(),
+                request.originPrice(),
+                request.discountPrice(),
+                request.stockQuantity()
+        );
     }
 
     /**
@@ -130,17 +117,6 @@ public class ProductEntity extends BaseEntity {
         this.stockQuantity -= quantity;
     }
 
-    /**
-     * 재고 수량을 설정한다.
-     *
-     * @param stockQuantity 재고 수량
-     */
-    public void setStockQuantity(int stockQuantity) {
-        if (stockQuantity < 0) {
-            throw new IllegalArgumentException("재고 수량은 음수일 수 없습니다.");
-        }
-        this.stockQuantity = stockQuantity;
-    }
 
     /**
      * 좋아요 수를 증가시킨다.
@@ -178,15 +154,6 @@ public class ProductEntity extends BaseEntity {
     }
 
     /**
-     * 실제 판매 가격을 반환한다.
-     *
-     * @return 실제 판매 가격
-     */
-    public BigDecimal getSellingPrice() {
-        return this.price.getSellingPrice();
-    }
-
-    /**
      * 할인 여부를 확인한다.
      *
      * @return 할인 상품인지 여부
@@ -197,22 +164,37 @@ public class ProductEntity extends BaseEntity {
 
     @Override
     protected void guard() {
-        validateName(this.name);
-        validateStockQuantity(this.stockQuantity);
-        validateLikeCount(this.likeCount);
-
         if (this.brand == null) {
             throw new IllegalStateException("브랜드는 필수입니다.");
+        }
+
+        if (this.name == null || this.name.isBlank()) {
+            throw new IllegalStateException("상품명은 비어있을 수 없습니다.");
+        }
+
+        if (this.name.length() > 200) {
+            throw new IllegalStateException("상품명은 200자를 초과할 수 없습니다.");
         }
 
         if (this.price == null) {
             throw new IllegalStateException("가격 정보는 필수입니다.");
         }
+
+        if (this.stockQuantity == null || this.stockQuantity < 0) {
+            throw new IllegalStateException("재고 수량은 0 이상이어야 합니다.");
+        }
+
+        if (this.likeCount == null || this.likeCount < 0) {
+            throw new IllegalStateException("좋아요 수는 0 이상이어야 합니다.");
+        }
     }
 
+    /**
+     * 상품명 유효성을 검증한다.
+     */
     private void validateName(String name) {
         if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("상품명은 필수입니다.");
+            throw new IllegalArgumentException("상품명은 필수 입력값입니다.");
         }
 
         if (name.length() > 200) {
@@ -220,15 +202,46 @@ public class ProductEntity extends BaseEntity {
         }
     }
 
-    private void validateStockQuantity(Integer stockQuantity) {
-        if (stockQuantity == null || stockQuantity < 0) {
-            throw new IllegalArgumentException("재고 수량은 0 이상이어야 합니다.");
+    /**
+     * 정가 유효성을 검증한다.
+     */
+    private void validateOriginPrice(BigDecimal originPrice) {
+        if (originPrice == null) {
+            throw new IllegalArgumentException("정가는 필수 입력값입니다.");
+        }
+
+        if (originPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("정가는 0보다 커야 합니다.");
         }
     }
 
-    private void validateLikeCount(Long likeCount) {
-        if (likeCount == null || likeCount < 0) {
-            throw new IllegalArgumentException("좋아요 수는 0 이상이어야 합니다.");
+    /**
+     * 할인가 유효성을 검증한다.
+     */
+    private void validateDiscountPrice(BigDecimal originPrice, BigDecimal discountPrice) {
+        if (discountPrice == null) {
+            return; // 할인가는 선택사항
+        }
+
+        if (discountPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("할인가는 0보다 커야 합니다.");
+        }
+
+        if (discountPrice.compareTo(originPrice) >= 0) {
+            throw new IllegalArgumentException("할인가는 정가보다 작아야 합니다.");
+        }
+    }
+
+    /**
+     * 재고 수량 유효성을 검증한다.
+     */
+    private void validateStockQuantity(Integer stockQuantity) {
+        if (stockQuantity == null) {
+            throw new IllegalArgumentException("재고 수량은 필수 입력값입니다.");
+        }
+
+        if (stockQuantity < 0) {
+            throw new IllegalArgumentException("재고 수량은 0 이상이어야 합니다.");
         }
     }
 }
