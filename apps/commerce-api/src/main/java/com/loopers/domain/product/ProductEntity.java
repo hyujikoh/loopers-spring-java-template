@@ -90,6 +90,30 @@ public class ProductEntity extends BaseEntity {
             throw new IllegalArgumentException("상품 생성 요청 정보는 필수입니다.");
         }
 
+        if (request.brand() == null) {
+            throw new IllegalArgumentException("브랜드는 필수입니다.");
+        }
+
+        if (request.name() == null || request.name().trim().isEmpty()) {
+            throw new IllegalArgumentException("상품명은 필수입니다.");
+        }
+
+        if (request.originPrice() == null || request.originPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("정가는 0보다 커야 합니다.");
+        }
+
+        if (request.discountPrice() != null && request.discountPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("할인가는 음수일 수 없습니다.");
+        }
+
+        if (request.discountPrice() != null && request.discountPrice().compareTo(request.originPrice()) > 0) {
+            throw new IllegalArgumentException("할인가는 정가보다 클 수 없습니다.");
+        }
+
+        if (request.stockQuantity() == null || request.stockQuantity() < 0) {
+            throw new IllegalArgumentException("재고 수량은 0 이상이어야 합니다.");
+        }
+
         return new ProductEntity(
                 request.brand(),
                 request.name(),
@@ -243,5 +267,13 @@ public class ProductEntity extends BaseEntity {
         if (stockQuantity < 0) {
             throw new IllegalArgumentException("재고 수량은 0 이상이어야 합니다.");
         }
+    }
+
+    public void setStockQuantity(int stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+
+    public BigDecimal getSellingPrice() {
+        return price.getSellingPrice();
     }
 }
