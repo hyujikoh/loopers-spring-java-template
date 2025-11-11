@@ -3,6 +3,8 @@ package com.loopers.domain.product;
 import static java.util.Objects.requireNonNull;
 
 import com.loopers.domain.BaseEntity;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -130,7 +132,10 @@ public class ProductEntity extends BaseEntity {
         }
 
         if (this.stockQuantity < quantity) {
-            throw new IllegalStateException("재고가 부족합니다. (요청: " + quantity + ", 보유: " + this.stockQuantity + ")");
+            throw new CoreException(
+                    ErrorType.INSUFFICIENT_STOCK,
+                    String.format("재고가 부족합니다. (요청: %d, 보유: %d)", quantity, this.stockQuantity)
+            );
         }
 
         this.stockQuantity -= quantity;

@@ -384,6 +384,64 @@ class ProductUnitTest {
     }
 
     @Nested
+    @DisplayName("재고 차감")
+    class 재고_차감 {
+        private ProductEntity product;
+        private BrandEntity brand;
+
+        @BeforeEach
+        void setUp() {
+            brand = BrandTestFixture.createEntity("Nike", "Just Do It");
+            product = ProductEntity.createEntity(
+                ProductDomainRequest.withoutDiscount(
+                    brand.getId(), "Test Product", "Description",
+                    new BigDecimal("10000"), 100
+                )
+            );
+        }
+
+        @Test
+        @DisplayName("정상적인 재고 차감이 성공한다")
+        void deduct_stock_success() {
+            // given
+            int deductQuantity = 10;
+            int initialStock = product.getStockQuantity();
+
+            // when
+            product.deductStock(deductQuantity);
+
+            // then
+            Assertions.assertThat(product.getStockQuantity())
+                .isEqualTo(initialStock - deductQuantity);
+        }
+
+        @Test
+        @DisplayName("재고보다 많은 수량을 차감하면 CoreException이 발생한다")
+        void deduct_stock_insufficient() {
+            // given
+            int deductQuantity = product.getStockQuantity() + 1;
+
+            // when & then
+            Assertions.assertThatThrownBy(() -> product.deductStock(deductQuantity))
+                .isInstanceOf(com.loopers.support.error.CoreException.class)
+                .hasMessageContaining("재고가 부족합니다");
+        }
+
+        @Test
+        @DisplayName("0 이하의 수량을 차감하면 IllegalArgumentException이 발생한다")
+        void deduct_stock_invalid_quantity() {
+            // when & then
+            Assertions.assertThatThrownBy(() -> product.deductStock(0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("차감할 재고 수량은 0보다 커야 합니다.");
+
+            Assertions.assertThatThrownBy(() -> product.deductStock(-1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("차감할 재고 수량은 0보다 커야 합니다.");
+        }
+    }
+
+    @Nested
     @DisplayName("엔티티 검증")
     class 엔티티_검증 {
         private BrandEntity brand;

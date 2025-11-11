@@ -5,6 +5,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -25,6 +28,9 @@ public class ProductService {
     @Transactional(readOnly = true)
     public ProductEntity getProductDetail(Long id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
+                .orElseThrow(() -> new CoreException(
+                        ErrorType.NOT_FOUND_PRODUCT,
+                        String.format("상품을 찾을 수 없습니다. (ID: %d)", id)
+                ));
     }
 }

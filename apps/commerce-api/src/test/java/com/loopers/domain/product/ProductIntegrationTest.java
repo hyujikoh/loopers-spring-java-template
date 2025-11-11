@@ -154,7 +154,14 @@ public class ProductIntegrationTest {
     @Test
     @DisplayName("존재하지 않는 상품 조회 시 ProductNotFoundException이 발생한다")
     void throw_exception_when_product_not_found() {
+        // given
+        Long nonExistentId = 999L;
 
+        // when & then
+        assertThat(org.junit.jupiter.api.Assertions.assertThrows(
+                com.loopers.support.error.CoreException.class,
+                () -> productFacade.getProductDetail(nonExistentId)
+        ).getErrorType()).isEqualTo(com.loopers.support.error.ErrorType.NOT_FOUND_PRODUCT);
     }
 
     @Test
