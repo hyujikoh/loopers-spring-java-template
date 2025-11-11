@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.loopers.domain.BaseEntity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 
@@ -34,10 +35,8 @@ public class LikeService {
 
     @Transactional
     public void unlikeProduct(Long userId, Long productId) {
-        LikeEntity likeEntity = likeRepository.findByUserIdAndProductId(userId, productId)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_EXIST_LIKED));
-
-        likeEntity.delete();
+        likeRepository.findByUserIdAndProductId(userId, productId)
+                .ifPresent(LikeEntity::delete);
 
     }
 }

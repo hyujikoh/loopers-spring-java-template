@@ -2,6 +2,7 @@ package com.loopers.domain.like;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.util.Optional;
 
@@ -102,6 +103,20 @@ class LikeUnitTest {
             // 취소 로직에서 save 호출 가정
             likeService.unlikeProduct(userId, productId);
             assertNotNull(existingLike.getDeletedAt());  // 취소 후 deletedAt 설정 검증
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 좋아요 관계이면 취소를 무시한다")
+        void 존재하지_않는_좋아요_관계이면_취소를_무시한다() {
+            // Given
+            Long userId = 1L;
+            Long productId = 2L;
+
+            // When
+            when(likeRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.empty());
+
+            // Then
+            likeService.unlikeProduct(userId, productId);
         }
 
         @Test
