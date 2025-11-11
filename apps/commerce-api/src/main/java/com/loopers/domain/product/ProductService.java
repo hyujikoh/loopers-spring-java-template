@@ -1,10 +1,10 @@
 package com.loopers.domain.product;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 
@@ -21,8 +21,8 @@ public class ProductService {
     private final ProductRepository productRepository;
 
     @Transactional(readOnly = true)
-    public Page<ProductEntity> getProducts(Pageable pageable) {
-        return productRepository.getProducts(pageable);
+    public Page<ProductEntity> getProducts(ProductSearchFilter searchFilter) {
+        return productRepository.getProducts(searchFilter);
     }
 
     @Transactional(readOnly = true)

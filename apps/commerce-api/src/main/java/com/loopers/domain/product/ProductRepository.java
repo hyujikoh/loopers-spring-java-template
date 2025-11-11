@@ -3,7 +3,8 @@ package com.loopers.domain.product;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+
+import com.loopers.domain.product.dto.ProductSearchFilter;
 
 /**
  * @author hyunjikoh
@@ -12,7 +13,7 @@ import org.springframework.data.domain.Pageable;
 public interface ProductRepository {
     ProductEntity save(ProductEntity product);
 
-    Page<ProductEntity> getProducts(Pageable pageable);
+    Page<ProductEntity> getProducts(ProductSearchFilter searchFilter);
 
     Optional<ProductEntity> findById(Long id);
 }

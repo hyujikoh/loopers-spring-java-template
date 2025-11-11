@@ -20,6 +20,7 @@ import com.loopers.application.product.ProductFacade;
 import com.loopers.application.product.ProductInfo;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandRepository;
+import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.utils.DatabaseCleanUp;
@@ -94,8 +95,10 @@ public class ProductIntegrationTest {
 
             Pageable pageable = PageRequest.of(0, 5);
 
+            ProductSearchFilter productSearchFilter = new ProductSearchFilter(null, null, pageable);
+
             // when
-            Page<ProductInfo> productInfos = productFacade.getProducts(pageable);
+            Page<ProductInfo> productInfos = productFacade.getProducts(productSearchFilter);
 
             // then
             assertThat(productInfos).isNotNull();

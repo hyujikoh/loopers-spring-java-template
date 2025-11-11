@@ -3,11 +3,11 @@ package com.loopers.infrastructure.product;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductRepository;
+import com.loopers.domain.product.dto.ProductSearchFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,8 +27,8 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public Page<ProductEntity> getProducts(Pageable pageable) {
-        return productQueryRepository.getProducts(pageable);
+    public Page<ProductEntity> getProducts(ProductSearchFilter searchFilter) {
+        return productQueryRepository.getProducts(searchFilter);
     }
 
     @Override
