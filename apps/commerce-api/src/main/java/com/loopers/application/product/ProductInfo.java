@@ -1,7 +1,7 @@
 package com.loopers.application.product;
 
 import com.loopers.application.brand.BrandInfo;
-import com.loopers.domain.product.Price;
+import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.product.ProductEntity;
 
 /**
@@ -12,24 +12,39 @@ public record ProductInfo(
         Long id,
         String name,
         String description,
-        Long likeCount,
+        Long likesCount,
         ProductPriceInfo price,
         BrandInfo brand
 ) {
-    public static ProductInfo of(ProductEntity entity) {
+    /**
+     * ProductEntity와 BrandEntity를 조합하여 ProductInfo를 생성한다.
+     *
+     * @param product 상품 엔티티
+     * @param brand 브랜드 엔티티
+     * @return ProductInfo
+     */
+    public static ProductInfo of(ProductEntity product, BrandEntity brand) {
+        if (product == null) {
+            throw new IllegalArgumentException("상품 정보는 필수입니다.");
+        }
+
+        if (brand == null) {
+            throw new IllegalArgumentException("브랜드 정보는 필수입니다.");
+        }
+
         return new ProductInfo(
-                entity.getId(),
-                entity.getName(),
-                entity.getDescription(),
-                entity.getLikeCount(),
+                product.getId(),
+                product.getName(),
+                product.getDescription(),
+                product.getLikeCount(),
                 new ProductPriceInfo(
-                        entity.getPrice().getOriginPrice(),
-                        entity.getPrice().getDiscountPrice()
+                        product.getPrice().getOriginPrice(),
+                        product.getPrice().getDiscountPrice()
                 ),
                 new BrandInfo(
-                        entity.getBrand().getId(),
-                        entity.getBrand().getName(),
-                        entity.getBrand().getDescription()
+                        brand.getId(),
+                        brand.getName(),
+                        brand.getDescription()
                 )
         );
     }

@@ -2,8 +2,6 @@ package com.loopers.domain.product;
 
 import java.math.BigDecimal;
 
-import com.loopers.domain.brand.BrandEntity;
-
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -14,7 +12,7 @@ import jakarta.validation.constraints.NotNull;
  */
 public record ProductDomainRequest(
         @NotNull
-        BrandEntity brand,
+        Long brandId,
         @NotNull
         String name,
 
@@ -29,7 +27,7 @@ public record ProductDomainRequest(
     /**
      * 할인가 없이 상품 생성 요청을 만든다.
      *
-     * @param brand         브랜드
+     * @param brandId       브랜드 ID
      * @param name          상품명
      * @param description   상품 설명
      * @param originPrice   정가
@@ -37,11 +35,11 @@ public record ProductDomainRequest(
      * @return 상품 생성 요청
      */
     public static ProductDomainRequest withoutDiscount(
-            BrandEntity brand,
+            Long brandId,
             String name,
             String description,
             BigDecimal originPrice,
             Integer stockQuantity) {
-        return new ProductDomainRequest(brand, name, description, originPrice, null, stockQuantity);
+        return new ProductDomainRequest(brandId, name, description, originPrice, null, stockQuantity);
     }
 }

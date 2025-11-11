@@ -5,8 +5,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.loopers.application.product.ProductInfo;
-
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -27,6 +25,6 @@ public class ProductService {
     @Transactional(readOnly = true)
     public ProductEntity getProductDetail(Long id) {
         return productRepository.findById(id)
-                .orElse(null);
+                .orElseThrow(() -> new ProductNotFoundException(id));
     }
 }

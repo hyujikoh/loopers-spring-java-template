@@ -3,10 +3,8 @@ package com.loopers.domain.product;
 import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,14 +14,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 
 import com.loopers.application.product.ProductDetailInfo;
 import com.loopers.application.product.ProductFacade;
 import com.loopers.application.product.ProductInfo;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandRepository;
-import com.loopers.domain.brand.BrandService;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.utils.DatabaseCleanUp;
@@ -75,7 +71,7 @@ public class ProductIntegrationTest {
             // then
             assertThat(product.getId()).isNotNull();
             assertThat(product.getName()).isEqualTo("Air Max");
-            assertThat(product.getBrand().getId()).isEqualTo(brand.getId());
+            assertThat(product.getBrandId()).isEqualTo(brand.getId());
         }
 
 
@@ -114,7 +110,7 @@ public class ProductIntegrationTest {
 
 
         @Test
-        void get_product_detail() {
+        void get_product_detail_success() {
             // given
             List<BrandEntity> brands = BrandTestFixture.createEntities(2)
                     .stream()
@@ -141,5 +137,36 @@ public class ProductIntegrationTest {
             assertThat(productDetail.price().originPrice()).isEqualTo(new BigDecimal("10000.00"));
             assertThat(productDetail.brand()).isNotNull();
         }
+    }
+
+    @Test
+    @DisplayName("브랜드 ID로 상품을 필터링하여 조회할 수 있다")
+    void filter_products_by_brand() {
+
+    }
+
+    @Test
+    @DisplayName("상품이 없는 경우 빈 목록을 반환한다")
+    void return_empty_list_when_no_products() {
+
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 상품 조회 시 ProductNotFoundException이 발생한다")
+    void throw_exception_when_product_not_found() {
+
+    }
+
+    @Test
+    @DisplayName("최신순으로 상품을 정렬하여 조회할 수 있다")
+    void get_products_sorted_by_latest() {
+
+
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 브랜드로 상품을 필터링하면 BrandNotFoundException이 발생한다")
+    void throw_exception_when_brand_not_found() {
+
     }
 }

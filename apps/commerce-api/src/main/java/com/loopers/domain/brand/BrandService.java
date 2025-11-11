@@ -26,13 +26,13 @@ public class BrandService {
     @Transactional(readOnly = true)
     public BrandEntity getBrandById(long id) {
         return brandRepository.getBrandById(id)
-                .orElse(null);
+                .orElseThrow(() -> new BrandNotFoundException(id));
     }
 
     @Transactional(readOnly = true)
     public BrandEntity getBrandByName(String name) {
         return brandRepository.findByName(name)
-                .orElse(null);
+                .orElseThrow(() -> new BrandNotFoundException(name));
     }
 
     @Transactional(readOnly = true)

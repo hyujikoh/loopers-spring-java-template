@@ -17,7 +17,7 @@ public class ProductTestFixture {
 
     public static ProductEntity createEntity(BrandEntity brand) {
         return createEntity(
-                brand,
+                brand.getId(),
                 "상품" + ID_GENERATOR.getAndIncrement(),
                 "상품 설명",
                 new BigDecimal("10000"),
@@ -26,14 +26,14 @@ public class ProductTestFixture {
     }
 
     public static ProductEntity createEntity(
-            BrandEntity brand,
+            Long brandId,
             String name,
             String description,
             BigDecimal price,
             int stock
     ) {
         ProductDomainRequest request = ProductDomainRequest.withoutDiscount(
-                brand,
+                brandId,
                 name,
                 description,
                 price,
@@ -50,7 +50,7 @@ public class ProductTestFixture {
             BigDecimal price,
             int stock
     ) {
-        ProductEntity product = createEntity(brand, name, description, price, stock);
+        ProductEntity product = createEntity(brand.getId(), name, description, price, stock);
         return productRepository.save(product);
     }
 
