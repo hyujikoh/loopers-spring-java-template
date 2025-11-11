@@ -101,7 +101,7 @@ public class ProductIntegrationTest {
             ProductInfo firstProduct = productInfos.getContent().get(0);
             assertThat(firstProduct.name()).isNotNull();
             assertThat(firstProduct.price().originPrice()).isEqualTo(new BigDecimal("10000.00"));
-            assertThat(firstProduct.likesCount()).isNotNull();
+            assertThat(firstProduct.likeCount()).isNotNull();
         }
 
         @Test

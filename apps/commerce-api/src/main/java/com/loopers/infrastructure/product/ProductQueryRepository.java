@@ -71,15 +71,15 @@ public class ProductQueryRepository {
                 .map(sort -> {
                     String property = sort.getProperty();
                     boolean isAsc = sort.isAscending();
-
-                    if ("생성일시".equals(property)) {
-                        return isAsc ? productEntity.createdAt.asc() : productEntity.createdAt.desc();
-                    } else if ("id".equals(property)) {
-                        return isAsc ? productEntity.id.asc() : productEntity.id.desc();
-                    } else {
-                        // 기본 정렬: 생성일시 내림차순
-                        return productEntity.createdAt.desc();
-                    }
+                    return switch (property) {
+                        case "createdAt" -> isAsc ? productEntity.createdAt.asc() : productEntity.createdAt.desc();
+                        case "id" -> isAsc ? productEntity.id.asc() : productEntity.id.desc();
+                        case "likeCount" -> isAsc ? productEntity.likeCount.asc() : productEntity.likeCount.desc();
+                        case "price" -> isAsc ? productEntity.price.originPrice.asc() : productEntity.price.originPrice.desc();
+                        default ->
+                            // 기본 정렬: 생성일시 내림차순
+                                productEntity.createdAt.desc();
+                    };
                 })
                 .collect(Collectors.toList());
     }

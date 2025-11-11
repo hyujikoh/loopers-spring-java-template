@@ -12,7 +12,7 @@ public record ProductInfo(
         Long id,
         String name,
         String description,
-        Long likesCount,
+        Long likeCount,
         ProductPriceInfo price,
         Long brandId,
         ZonedDateTime createdAt
