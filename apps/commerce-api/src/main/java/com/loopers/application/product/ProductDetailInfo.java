@@ -13,6 +13,7 @@ public record ProductDetailInfo(
         String name,
         String description,
         Long likeCount,
+        Integer stockQuantity,
         ProductPriceInfo price,
         BrandInfo brand
 ) {
@@ -37,6 +38,7 @@ public record ProductDetailInfo(
                 product.getName(),
                 product.getDescription(),
                 product.getLikeCount(),
+                product.getStockQuantity(),
                 new ProductPriceInfo(
                         product.getPrice().getOriginPrice(),
                         product.getPrice().getDiscountPrice()
