@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.brand.dto.BrandSearchFilter;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,13 +28,19 @@ public class BrandService {
     @Transactional(readOnly = true)
     public BrandEntity getBrandById(long id) {
         return brandRepository.getBrandById(id)
-                .orElseThrow(() -> new BrandNotFoundException(id));
+                .orElseThrow(() -> new CoreException(
+                        ErrorType.NOT_FOUND_BRAND,
+                        String.format("브랜드를 찾을 수 없습니다. (ID: %d)", id)
+                ));
     }
 
     @Transactional(readOnly = true)
     public BrandEntity getBrandByName(String name) {
         return brandRepository.findByName(name)
-                .orElseThrow(() -> new BrandNotFoundException(name));
+                .orElseThrow(() -> new CoreException(
+                        ErrorType.NOT_FOUND_BRAND,
+                        String.format("브랜드를 찾을 수 없습니다. (이름: %s)", name)
+                ));
     }
 
     @Transactional(readOnly = true)
