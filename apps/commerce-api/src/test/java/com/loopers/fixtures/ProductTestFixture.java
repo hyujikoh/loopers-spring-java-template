@@ -1,9 +1,12 @@
 package com.loopers.fixtures;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.IntStream;
 
 import com.loopers.domain.brand.BrandEntity;
+import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.product.ProductDomainRequest;
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductRepository;
@@ -66,5 +69,30 @@ public class ProductTestFixture {
                 new BigDecimal("10000") ,
                 100
         );
+    }
+
+    /**
+     * 브랜드와 상품을 생성하는 헬퍼 메서드
+     * @param brandRepository 브랜드 리포지토리
+     * @param productRepository 상품 리포지토리
+     * @param brandCount 브랜드 수
+     * @param productCountPerBrand 브랜드당 상품 수
+     */
+    public static void createBrandsAndProducts(
+            BrandRepository brandRepository,
+            ProductRepository productRepository,
+            int brandCount,
+            int productCountPerBrand
+    ) {
+        List<BrandEntity> brands = BrandTestFixture.createEntities(brandCount)
+                .stream()
+                .map(brandRepository::save)
+                .toList();
+
+        brands.forEach(brand -> {
+            IntStream.range(0, productCountPerBrand).forEach(i -> {
+                ProductTestFixture.createAndSave(productRepository, brand);
+            });
+        });
     }
 }

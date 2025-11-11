@@ -76,26 +76,13 @@ public class ProductIntegrationTest {
             assertThat(product.getBrandId()).isEqualTo(brand.getId());
         }
 
-
-        @org.junit.jupiter.api.Test
+        @Test
+        @DisplayName("상품 목록을 페이징하여 조회할 수 있다")
         void get_product_pagination() {
             // given
-            List<BrandEntity> brands = BrandTestFixture.createEntities(2)
-                    .stream()
-                    .map(brandRepository::save)
-                    .toList();
-
-            // 각 브랜드당 5개의 상품 생성
-            brands.forEach(brand -> {
-                IntStream.range(0, 5).forEach(i -> {
-                    ProductEntity product = ProductTestFixture.createAndSave(productRepository, brand);
-
-                    productRepository.save(product);
-                });
-            });
+            ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
 
             Pageable pageable = PageRequest.of(0, 5);
-
             ProductSearchFilter productSearchFilter = new ProductSearchFilter(null, null, pageable);
 
             // when
@@ -112,31 +99,17 @@ public class ProductIntegrationTest {
             assertThat(firstProduct.likesCount()).isNotNull();
         }
 
-
         @Test
+        @DisplayName("상품 상세를 조회할 수 있다")
         void get_product_detail_success() {
             // given
-            List<BrandEntity> brands = BrandTestFixture.createEntities(2)
-                    .stream()
-                    .map(brandRepository::save)
-                    .toList();
-
-            // 각 브랜드당 5개의 상품 생성
-            brands.forEach(brand -> {
-                IntStream.range(0, 5).forEach(i -> {
-                    ProductEntity product = ProductTestFixture.createAndSave(productRepository, brand);
-
-                    productRepository.save(product);
-                });
-            });
-
+            ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
 
             // when
             ProductDetailInfo productDetail = productFacade.getProductDetail(1L);
 
             // then
             assertThat(productDetail).isNotNull();
-
             assertThat(productDetail.name()).isNotNull();
             assertThat(productDetail.price().originPrice()).isEqualTo(new BigDecimal("10000.00"));
             assertThat(productDetail.brand()).isNotNull();
@@ -147,22 +120,9 @@ public class ProductIntegrationTest {
     @DisplayName("브랜드 ID로 상품을 필터링하여 조회할 수 있다")
     void filter_products_by_brand() {
         // given
-        List<BrandEntity> brands = BrandTestFixture.createEntities(2)
-                .stream()
-                .map(brandRepository::save)
-                .toList();
-
-        // 각 브랜드당 5개의 상품 생성
-        brands.forEach(brand -> {
-            IntStream.range(0, 5).forEach(i -> {
-                ProductEntity product = ProductTestFixture.createAndSave(productRepository, brand);
-
-                productRepository.save(product);
-            });
-        });
+        ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
 
         Pageable pageable = PageRequest.of(0, 25);
-
         ProductSearchFilter productSearchFilter = new ProductSearchFilter(1L, null, pageable);
 
         // when
@@ -182,7 +142,6 @@ public class ProductIntegrationTest {
     @DisplayName("상품이 없는 경우 빈 목록을 반환한다")
     void return_empty_list_when_no_products() {
         Pageable pageable = PageRequest.of(0, 25);
-
         ProductSearchFilter productSearchFilter = new ProductSearchFilter(1L, null, pageable);
 
         // when
@@ -211,21 +170,9 @@ public class ProductIntegrationTest {
     @DisplayName("최신순으로 상품을 정렬하여 조회할 수 있다")
     void get_products_sorted_by_latest() {
         // given
-        List<BrandEntity> brands = BrandTestFixture.createEntities(1)
-                .stream()
-                .map(brandRepository::save)
-                .toList();
+        ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 1, 5); // 1개 브랜드, 5개 상품 생성
 
-        // 각 브랜드당 5개의 상품 생성 (생성 순서대로 ID 증가)
-        brands.forEach(brand -> {
-            IntStream.range(0, 5).forEach(i -> {
-                ProductEntity product = ProductTestFixture.createAndSave(productRepository, brand);
-                productRepository.save(product);
-            });
-        });
-
-        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
-
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "생성일시"));
         ProductSearchFilter productSearchFilter = new ProductSearchFilter(null, null, pageable);
 
         // when
@@ -236,34 +183,20 @@ public class ProductIntegrationTest {
         assertThat(productInfos.getContent()).hasSize(5);
         assertThat(productInfos.getTotalElements()).isEqualTo(5);
 
-        // 최신순 정렬 검증 ( )
-        List<Long> productIds = productInfos.getContent().stream()
-                .map(ProductInfo::id)
+        // 최신순 정렬 검증 (생성일시 내림차순)
+        List<java.time.ZonedDateTime> createdAts = productInfos.getContent().stream()
+                .map(ProductInfo::createdAt)  // ProductInfo에 생성일시 필드가 있다고 가정
                 .toList();
-        assertThat(productIds).isSortedAccordingTo(Comparator.reverseOrder());
-
+        assertThat(createdAts).isSortedAccordingTo(Comparator.reverseOrder());
     }
 
     @Test
     @DisplayName("존재하지 않는 브랜드로 상품을 필터링하면 빈 목록을 반환한다")
-    void throw_exception_when_brand_not_found() {
-// given
-        List<BrandEntity> brands = BrandTestFixture.createEntities(2)
-                .stream()
-                .map(brandRepository::save)
-                .toList();
-
-        // 각 브랜드당 5개의 상품 생성
-        brands.forEach(brand -> {
-            IntStream.range(0, 5).forEach(i -> {
-                ProductEntity product = ProductTestFixture.createAndSave(productRepository, brand);
-
-                productRepository.save(product);
-            });
-        });
+    void return_empty_list_when_filtering_by_non_existent_brand() {
+        // given
+        ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
 
         Pageable pageable = PageRequest.of(0, 25);
-
         ProductSearchFilter productSearchFilter = new ProductSearchFilter(9L, null, pageable);
 
         // when

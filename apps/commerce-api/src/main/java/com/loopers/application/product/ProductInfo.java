@@ -1,5 +1,7 @@
 package com.loopers.application.product;
 
+import java.time.ZonedDateTime;
+
 import com.loopers.domain.product.ProductEntity;
 
 /**
@@ -12,7 +14,8 @@ public record ProductInfo(
         String description,
         Long likesCount,
         ProductPriceInfo price,
-        Long brandId
+        Long brandId,
+        ZonedDateTime createdAt
 ) {
     /**
      * ProductEntity와 BrandEntity를 조합하여 ProductInfo를 생성한다.
@@ -34,7 +37,8 @@ public record ProductInfo(
                         product.getPrice().getOriginPrice(),
                         product.getPrice().getDiscountPrice()
                 ),
-                product.getBrandId()
+                product.getBrandId(),
+                product.getCreatedAt()
         );
     }
 }
