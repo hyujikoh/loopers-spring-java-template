@@ -66,16 +66,17 @@ public class ProductTestFixture {
                 brand,
                 "상품" + ID_GENERATOR.getAndIncrement(),
                 "상품 설명",
-                new BigDecimal("10000") ,
+                new BigDecimal("10000"),
                 100
         );
     }
 
     /**
      * 브랜드와 상품을 생성하는 헬퍼 메서드
-     * @param brandRepository 브랜드 리포지토리
-     * @param productRepository 상품 리포지토리
-     * @param brandCount 브랜드 수
+     *
+     * @param brandRepository      브랜드 리포지토리
+     * @param productRepository    상품 리포지토리
+     * @param brandCount           브랜드 수
      * @param productCountPerBrand 브랜드당 상품 수
      */
     public static void createBrandsAndProducts(

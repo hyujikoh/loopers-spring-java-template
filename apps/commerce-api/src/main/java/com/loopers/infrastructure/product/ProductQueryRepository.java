@@ -28,6 +28,7 @@ public class ProductQueryRepository {
 
     /**
      * 상품 페이징 조회
+     *
      * @param searchFilter
      * @return
      */
@@ -61,6 +62,7 @@ public class ProductQueryRepository {
 
     /**
      * pageable 기반 정렬 조건 빌드
+     *
      * @param pageable
      * @return
      */
@@ -84,6 +86,7 @@ public class ProductQueryRepository {
 
     /**
      * 검색 필터 기반 where 조건 빌드
+     *
      * @param searchFilter
      * @return
      */

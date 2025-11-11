@@ -98,13 +98,13 @@ class ProductUnitTest {
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
-                ProductDomainRequest request = new ProductDomainRequest(
-                    brand.getId(), tooLongName, "description",
-                    new BigDecimal("10000"), null, 100
-                );
-                ProductEntity.createEntity(request);
-            }).isInstanceOf(IllegalArgumentException.class)
-              .hasMessage("상품명은 200자를 초과할 수 없습니다.");
+                        ProductDomainRequest request = new ProductDomainRequest(
+                                brand.getId(), tooLongName, "description",
+                                new BigDecimal("10000"), null, 100
+                        );
+                        ProductEntity.createEntity(request);
+                    }).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("상품명은 200자를 초과할 수 없습니다.");
         }
 
         @Test
@@ -115,13 +115,13 @@ class ProductUnitTest {
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
-                ProductDomainRequest request = new ProductDomainRequest(
-                    brand.getId(), "상품명", "description",
-                    new BigDecimal("10000"), null, -1
-                );
-                ProductEntity.createEntity(request);
-            }).isInstanceOf(IllegalArgumentException.class)
-              .hasMessage("재고 수량은 0 이상이어야 합니다.");
+                        ProductDomainRequest request = new ProductDomainRequest(
+                                brand.getId(), "상품명", "description",
+                                new BigDecimal("10000"), null, -1
+                        );
+                        ProductEntity.createEntity(request);
+                    }).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("재고 수량은 0 이상이어야 합니다.");
         }
     }
 
@@ -135,10 +135,10 @@ class ProductUnitTest {
         void setUp() {
             brand = BrandTestFixture.createEntity("Nike", "Just Do It");
             product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    new BigDecimal("10000"), 100
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            new BigDecimal("10000"), 100
+                    )
             );
         }
 
@@ -153,7 +153,7 @@ class ProductUnitTest {
 
             // then
             Assertions.assertThat(product.getLikeCount())
-                .isEqualTo(initialLikes + 1);
+                    .isEqualTo(initialLikes + 1);
         }
 
         @Test
@@ -168,7 +168,7 @@ class ProductUnitTest {
 
             // then
             Assertions.assertThat(product.getLikeCount())
-                .isEqualTo(initialLikes - 1);
+                    .isEqualTo(initialLikes - 1);
         }
 
         @Test
@@ -201,10 +201,10 @@ class ProductUnitTest {
         void 재고가_있으면_true를_반환한다() {
             // given
             product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    new BigDecimal("10000"), 100
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            new BigDecimal("10000"), 100
+                    )
             );
 
             // when & then
@@ -216,10 +216,10 @@ class ProductUnitTest {
         void 재고가_0이면_false를_반환한다() {
             // given
             product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    new BigDecimal("10000"), 0
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            new BigDecimal("10000"), 0
+                    )
             );
 
             // when & then
@@ -237,10 +237,10 @@ class ProductUnitTest {
         void setUp() {
             brand = BrandTestFixture.createEntity("Nike", "Just Do It");
             product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    new BigDecimal("10000"), 100
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            new BigDecimal("10000"), 100
+                    )
             );
         }
 
@@ -311,15 +311,15 @@ class ProductUnitTest {
         void 할인이_없는_경우_정가를_반환한다() {
             // given
             product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    ORIGIN_PRICE, 100
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            ORIGIN_PRICE, 100
+                    )
             );
 
             // when & then
             Assertions.assertThat(product.getSellingPrice())
-                .isEqualByComparingTo(ORIGIN_PRICE);
+                    .isEqualByComparingTo(ORIGIN_PRICE);
         }
 
         @Test
@@ -327,15 +327,15 @@ class ProductUnitTest {
         void 할인이_있는_경우_할인가를_반환한다() {
             // given
             product = ProductEntity.createEntity(
-                new ProductDomainRequest(
-                    brand.getId(), "Test Product", "Description",
-                    ORIGIN_PRICE, DISCOUNT_PRICE, 100
-                )
+                    new ProductDomainRequest(
+                            brand.getId(), "Test Product", "Description",
+                            ORIGIN_PRICE, DISCOUNT_PRICE, 100
+                    )
             );
 
             // when & then
             Assertions.assertThat(product.getSellingPrice())
-                .isEqualByComparingTo(DISCOUNT_PRICE);
+                    .isEqualByComparingTo(DISCOUNT_PRICE);
         }
     }
 
@@ -357,10 +357,10 @@ class ProductUnitTest {
         void 할인이_적용된_상품이면_true를_반환한다() {
             // given
             product = ProductEntity.createEntity(
-                new ProductDomainRequest(
-                    brand.getId(), "Test Product", "Description",
-                    ORIGIN_PRICE, DISCOUNT_PRICE, 100
-                )
+                    new ProductDomainRequest(
+                            brand.getId(), "Test Product", "Description",
+                            ORIGIN_PRICE, DISCOUNT_PRICE, 100
+                    )
             );
 
             // when & then
@@ -372,10 +372,10 @@ class ProductUnitTest {
         void 할인이_없는_상품이면_false를_반환한다() {
             // given
             product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    ORIGIN_PRICE, 100
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            ORIGIN_PRICE, 100
+                    )
             );
 
             // when & then
@@ -393,10 +393,10 @@ class ProductUnitTest {
         void setUp() {
             brand = BrandTestFixture.createEntity("Nike", "Just Do It");
             product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    new BigDecimal("10000"), 100
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            new BigDecimal("10000"), 100
+                    )
             );
         }
 
@@ -412,7 +412,7 @@ class ProductUnitTest {
 
             // then
             Assertions.assertThat(product.getStockQuantity())
-                .isEqualTo(initialStock - deductQuantity);
+                    .isEqualTo(initialStock - deductQuantity);
         }
 
         @Test
@@ -423,8 +423,8 @@ class ProductUnitTest {
 
             // when & then
             Assertions.assertThatThrownBy(() -> product.deductStock(deductQuantity))
-                .isInstanceOf(com.loopers.support.error.CoreException.class)
-                .hasMessageContaining("재고가 부족합니다");
+                    .isInstanceOf(com.loopers.support.error.CoreException.class)
+                    .hasMessageContaining("재고가 부족합니다");
         }
 
         @Test
@@ -432,12 +432,12 @@ class ProductUnitTest {
         void deduct_stock_invalid_quantity() {
             // when & then
             Assertions.assertThatThrownBy(() -> product.deductStock(0))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("차감할 재고 수량은 0보다 커야 합니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("차감할 재고 수량은 0보다 커야 합니다.");
 
             Assertions.assertThatThrownBy(() -> product.deductStock(-1))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("차감할 재고 수량은 0보다 커야 합니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("차감할 재고 수량은 0보다 커야 합니다.");
         }
     }
 
@@ -458,15 +458,15 @@ class ProductUnitTest {
         void 모든_필수_값이_유효하면_검증에_성공한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    ORIGIN_PRICE, STOCK_QUANTITY
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            ORIGIN_PRICE, STOCK_QUANTITY
+                    )
             );
 
             // when & then
             Assertions.assertThatCode(() -> product.guard())
-                .doesNotThrowAnyException();
+                    .doesNotThrowAnyException();
         }
 
         @Test
@@ -474,10 +474,10 @@ class ProductUnitTest {
         void 브랜드_ID가_null이면_검증에_실패한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    ORIGIN_PRICE, STOCK_QUANTITY
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            ORIGIN_PRICE, STOCK_QUANTITY
+                    )
             );
 
             // when
@@ -487,8 +487,8 @@ class ProductUnitTest {
 
             // then
             Assertions.assertThatThrownBy(() -> product.guard())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("브랜드 ID는 필수입니다.");
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("브랜드 ID는 필수입니다.");
         }
 
         @Test
@@ -496,10 +496,10 @@ class ProductUnitTest {
         void 가격_정보가_null이면_검증에_실패한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    ORIGIN_PRICE, STOCK_QUANTITY
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            ORIGIN_PRICE, STOCK_QUANTITY
+                    )
             );
 
             // when
@@ -509,8 +509,8 @@ class ProductUnitTest {
 
             // then
             Assertions.assertThatThrownBy(() -> product.guard())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("가격 정보는 필수입니다.");
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("가격 정보는 필수입니다.");
         }
 
         @Test
@@ -518,10 +518,10 @@ class ProductUnitTest {
         void 상품명이_유효하지_않으면_검증에_실패한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    ORIGIN_PRICE, STOCK_QUANTITY
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            ORIGIN_PRICE, STOCK_QUANTITY
+                    )
             );
 
             // when
@@ -533,22 +533,22 @@ class ProductUnitTest {
 
             // then
             Assertions.assertThatThrownBy(() -> product.guard())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("상품명은 비어있을 수 없습니다.");
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("상품명은 비어있을 수 없습니다.");
 
             // 상품명이 빈 문자열인 경우
             ReflectionUtils.setField(nameField, product, "");
 
             Assertions.assertThatThrownBy(() -> product.guard())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("상품명은 비어있을 수 없습니다.");
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("상품명은 비어있을 수 없습니다.");
 
             // 상품명이 200자 초과인 경우
             ReflectionUtils.setField(nameField, product, "a".repeat(201));
 
             Assertions.assertThatThrownBy(() -> product.guard())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("상품명은 200자를 초과할 수 없습니다.");
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("상품명은 200자를 초과할 수 없습니다.");
         }
 
         @Test
@@ -556,10 +556,10 @@ class ProductUnitTest {
         void 재고_수량이_음수이면_검증에_실패한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    ORIGIN_PRICE, STOCK_QUANTITY
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            ORIGIN_PRICE, STOCK_QUANTITY
+                    )
             );
 
             // when
@@ -569,8 +569,8 @@ class ProductUnitTest {
 
             // then
             Assertions.assertThatThrownBy(() -> product.guard())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("재고 수량은 0 이상이어야 합니다.");
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("재고 수량은 0 이상이어야 합니다.");
         }
 
         @Test
@@ -578,10 +578,10 @@ class ProductUnitTest {
         void 좋아요_수가_음수이면_검증에_실패한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
-                ProductDomainRequest.withoutDiscount(
-                    brand.getId(), "Test Product", "Description",
-                    ORIGIN_PRICE, STOCK_QUANTITY
-                )
+                    ProductDomainRequest.withoutDiscount(
+                            brand.getId(), "Test Product", "Description",
+                            ORIGIN_PRICE, STOCK_QUANTITY
+                    )
             );
 
             // when
@@ -591,8 +591,8 @@ class ProductUnitTest {
 
             // then
             Assertions.assertThatThrownBy(() -> product.guard())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("좋아요 수는 0 이상이어야 합니다.");
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("좋아요 수는 0 이상이어야 합니다.");
         }
     }
 }

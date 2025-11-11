@@ -1,6 +1,8 @@
 package com.loopers.domain.product;
 
 import static java.util.Objects.requireNonNull;
+import java.math.BigDecimal;
+import java.util.Objects;
 
 import com.loopers.domain.BaseEntity;
 import com.loopers.support.error.CoreException;
@@ -11,8 +13,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
-import java.math.BigDecimal;
-import java.util.Objects;
 
 /**
  * 상품 엔티티
@@ -50,10 +50,10 @@ public class ProductEntity extends BaseEntity {
     /**
      * 상품 엔티티 생성자
      *
-     * @param brandId 브랜드 ID
-     * @param name 상품명
-     * @param description 상품 설명
-     * @param originPrice 정가
+     * @param brandId       브랜드 ID
+     * @param name          상품명
+     * @param description   상품 설명
+     * @param originPrice   정가
      * @param discountPrice 할인가
      * @param stockQuantity 재고 수량
      */
@@ -170,6 +170,7 @@ public class ProductEntity extends BaseEntity {
     /**
      * 지정된 수량만큼 주문 가능한지 확인한다.
      * TODO : 향후 예약 주문 기능이 추가되면 수정 필요
+     *
      * @param quantity 주문 수량
      * @return 주문 가능 여부
      */

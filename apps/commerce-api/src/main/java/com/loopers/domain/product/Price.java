@@ -1,13 +1,14 @@
 package com.loopers.domain.product;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 
 /**
  * 상품 가격을 표현하는 Value Object
@@ -30,7 +31,7 @@ public class Price {
     /**
      * 가격 정보를 생성한다.
      *
-     * @param originPrice 정가 (필수)
+     * @param originPrice   정가 (필수)
      * @param discountPrice 할인가 (선택)
      * @return Price 객체
      */
@@ -40,7 +41,7 @@ public class Price {
         Price price = new Price();
         price.originPrice = originPrice.setScale(2, RoundingMode.HALF_UP);
         price.discountPrice = discountPrice != null ?
-            discountPrice.setScale(2, RoundingMode.HALF_UP) : null;
+                discountPrice.setScale(2, RoundingMode.HALF_UP) : null;
 
         return price;
     }
@@ -55,6 +56,7 @@ public class Price {
 
         return price;
     }
+
     /**
      * 정가만으로 가격 정보를 생성한다.
      *
@@ -87,8 +89,8 @@ public class Price {
 
         BigDecimal discount = originPrice.subtract(discountPrice);
         return discount.divide(originPrice, 4, RoundingMode.HALF_UP)
-            .multiply(BigDecimal.valueOf(100))
-            .setScale(2, RoundingMode.HALF_UP);
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     /**

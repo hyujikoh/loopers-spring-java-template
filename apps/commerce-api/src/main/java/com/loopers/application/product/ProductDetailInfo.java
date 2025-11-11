@@ -21,7 +21,7 @@ public record ProductDetailInfo(
      * ProductEntity와 BrandEntity를 조합하여 ProductDetailInfo를 생성한다.
      *
      * @param product 상품 엔티티
-     * @param brand 브랜드 엔티티
+     * @param brand   브랜드 엔티티
      * @return ProductDetailInfo
      */
     public static ProductDetailInfo of(ProductEntity product, BrandEntity brand) {

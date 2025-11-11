@@ -1,13 +1,10 @@
 package com.loopers.infrastructure.product;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.loopers.domain.point.PointHistoryEntity;
 import com.loopers.domain.product.ProductEntity;
-import com.loopers.domain.user.UserEntity;
 
 /**
  * @author hyunjikoh
