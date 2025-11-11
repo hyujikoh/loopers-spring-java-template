@@ -3,7 +3,6 @@ package com.loopers.domain.product;
 import static java.util.Objects.requireNonNull;
 
 import com.loopers.domain.BaseEntity;
-import com.loopers.domain.brand.BrandEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -28,12 +27,8 @@ import java.util.Objects;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProductEntity extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "brand_id",
-            nullable = false
-    )
-    private BrandEntity brand;
+    @Column(name = "brand_id", nullable = false)
+    private Long brandId;
 
     @Column(name = "name", nullable = false, length = 200)
     private String name;
@@ -53,16 +48,16 @@ public class ProductEntity extends BaseEntity {
     /**
      * 상품 엔티티 생성자
      *
-     * @param brand 브랜드 엔티티
+     * @param brandId 브랜드 ID
      * @param name 상품명
      * @param description 상품 설명
      * @param originPrice 정가
      * @param discountPrice 할인가
      * @param stockQuantity 재고 수량
      */
-    public ProductEntity(BrandEntity brand, String name, String description,
+    public ProductEntity(Long brandId, String name, String description,
                          BigDecimal originPrice, BigDecimal discountPrice, Integer stockQuantity) {
-        requireNonNull(brand, "브랜드 정보는 필수입니다.");
+        requireNonNull(brandId, "브랜드 ID는 필수입니다.");
         requireNonNull(name, "상품명은 필수입니다.");
         requireNonNull(originPrice, "정가는 필수입니다.");
         requireNonNull(stockQuantity, "재고 수량은 필수입니다.");
@@ -72,7 +67,7 @@ public class ProductEntity extends BaseEntity {
         validateDiscountPrice(originPrice, discountPrice);
         validateStockQuantity(stockQuantity);
 
-        this.brand = brand;
+        this.brandId = brandId;
         this.name = name.trim();
         this.description = description != null ? description.trim() : null;
         this.price = discountPrice != null ? Price.of(originPrice, discountPrice) : Price.of(originPrice);
@@ -90,8 +85,8 @@ public class ProductEntity extends BaseEntity {
             throw new IllegalArgumentException("상품 생성 요청 정보는 필수입니다.");
         }
 
-        if (request.brand() == null) {
-            throw new IllegalArgumentException("브랜드는 필수입니다.");
+        if (request.brandId() == null) {
+            throw new IllegalArgumentException("브랜드 ID는 필수입니다.");
         }
 
         if (request.name() == null || request.name().trim().isEmpty()) {
@@ -115,7 +110,7 @@ public class ProductEntity extends BaseEntity {
         }
 
         return new ProductEntity(
-                request.brand(),
+                request.brandId(),
                 request.name(),
                 request.description(),
                 request.originPrice(),
@@ -188,8 +183,8 @@ public class ProductEntity extends BaseEntity {
 
     @Override
     protected void guard() {
-        if (this.brand == null) {
-            throw new IllegalStateException("브랜드는 필수입니다.");
+        if (this.brandId == null) {
+            throw new IllegalStateException("브랜드 ID는 필수입니다.");
         }
 
         if (this.name == null || this.name.isBlank()) {
