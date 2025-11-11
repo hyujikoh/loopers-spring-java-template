@@ -19,12 +19,18 @@ public enum ErrorType {
     // 사용자 관련 오류
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "존재하지 않는 사용자 입니다."),
 
-    // 브랜드 관련 오류 (B로 시작)
+    // 브랜드 관련 오류
     NOT_FOUND_BRAND(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "존재하지 않는 브랜드입니다."),
 
-    // 상품 관련 오류 (P로 시작)
+    // 상품 관련 오류
     NOT_FOUND_PRODUCT(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "존재하지 않는 상품입니다."),
-    INSUFFICIENT_STOCK(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "재고가 부족합니다.");
+    INSUFFICIENT_STOCK(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), "재고가 부족합니다."),
+
+    //좋아요 관련 오류
+    ALREADY_LIKED_PRODUCT(HttpStatus.CONFLICT, HttpStatus.CONFLICT.getReasonPhrase(), "이미 좋아요한 상품입니다."),
+    NOT_EXIST_LIKED(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(),"좋아요하지 않은 상품입니다.")
+
+    ;
 
     private final HttpStatus status;
     private final String code;
