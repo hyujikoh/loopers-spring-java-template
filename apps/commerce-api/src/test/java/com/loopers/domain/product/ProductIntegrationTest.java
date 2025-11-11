@@ -2,6 +2,7 @@ package com.loopers.domain.product;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -14,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import com.loopers.application.product.ProductDetailInfo;
 import com.loopers.application.product.ProductFacade;
@@ -34,7 +36,6 @@ import com.loopers.utils.DatabaseCleanUp;
 public class ProductIntegrationTest {
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
-
     @Autowired
     private BrandRepository brandRepository;
 
@@ -77,7 +78,7 @@ public class ProductIntegrationTest {
 
 
         @org.junit.jupiter.api.Test
-        void get_product_pageingnation() {
+        void get_product_pagination() {
             // given
             List<BrandEntity> brands = BrandTestFixture.createEntities(2)
                     .stream()
@@ -108,7 +109,7 @@ public class ProductIntegrationTest {
             ProductInfo firstProduct = productInfos.getContent().get(0);
             assertThat(firstProduct.name()).isNotNull();
             assertThat(firstProduct.price().originPrice()).isEqualTo(new BigDecimal("10000.00"));
-            assertThat(firstProduct.brand()).isNotNull();
+            assertThat(firstProduct.likesCount()).isNotNull();
         }
 
 
@@ -145,13 +146,52 @@ public class ProductIntegrationTest {
     @Test
     @DisplayName("브랜드 ID로 상품을 필터링하여 조회할 수 있다")
     void filter_products_by_brand() {
+        // given
+        List<BrandEntity> brands = BrandTestFixture.createEntities(2)
+                .stream()
+                .map(brandRepository::save)
+                .toList();
 
+        // 각 브랜드당 5개의 상품 생성
+        brands.forEach(brand -> {
+            IntStream.range(0, 5).forEach(i -> {
+                ProductEntity product = ProductTestFixture.createAndSave(productRepository, brand);
+
+                productRepository.save(product);
+            });
+        });
+
+        Pageable pageable = PageRequest.of(0, 25);
+
+        ProductSearchFilter productSearchFilter = new ProductSearchFilter(1L, null, pageable);
+
+        // when
+        Page<ProductInfo> productInfos = productFacade.getProducts(productSearchFilter);
+
+        // then
+        assertThat(productInfos).isNotNull();
+        assertThat(productInfos.getContent()).hasSize(5);
+        assertThat(productInfos.getTotalElements()).isEqualTo(5);
+
+        productInfos.getContent().forEach(productInfo -> {
+            assertThat(productInfo.brandId()).isEqualTo(1L);
+        });
     }
 
     @Test
     @DisplayName("상품이 없는 경우 빈 목록을 반환한다")
     void return_empty_list_when_no_products() {
+        Pageable pageable = PageRequest.of(0, 25);
 
+        ProductSearchFilter productSearchFilter = new ProductSearchFilter(1L, null, pageable);
+
+        // when
+        Page<ProductInfo> productInfos = productFacade.getProducts(productSearchFilter);
+
+        // then
+        assertThat(productInfos).isNotNull();
+        assertThat(productInfos.getContent()).hasSize(0);
+        assertThat(productInfos.getTotalElements()).isEqualTo(0);
     }
 
     @Test
@@ -170,13 +210,68 @@ public class ProductIntegrationTest {
     @Test
     @DisplayName("최신순으로 상품을 정렬하여 조회할 수 있다")
     void get_products_sorted_by_latest() {
+        // given
+        List<BrandEntity> brands = BrandTestFixture.createEntities(1)
+                .stream()
+                .map(brandRepository::save)
+                .toList();
 
+        // 각 브랜드당 5개의 상품 생성 (생성 순서대로 ID 증가)
+        brands.forEach(brand -> {
+            IntStream.range(0, 5).forEach(i -> {
+                ProductEntity product = ProductTestFixture.createAndSave(productRepository, brand);
+                productRepository.save(product);
+            });
+        });
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        ProductSearchFilter productSearchFilter = new ProductSearchFilter(null, null, pageable);
+
+        // when
+        Page<ProductInfo> productInfos = productFacade.getProducts(productSearchFilter);
+
+        // then
+        assertThat(productInfos).isNotNull();
+        assertThat(productInfos.getContent()).hasSize(5);
+        assertThat(productInfos.getTotalElements()).isEqualTo(5);
+
+        // 최신순 정렬 검증 ( )
+        List<Long> productIds = productInfos.getContent().stream()
+                .map(ProductInfo::id)
+                .toList();
+        assertThat(productIds).isSortedAccordingTo(Comparator.reverseOrder());
 
     }
 
     @Test
-    @DisplayName("존재하지 않는 브랜드로 상품을 필터링하면 BrandNotFoundException이 발생한다")
+    @DisplayName("존재하지 않는 브랜드로 상품을 필터링하면 빈 목록을 반환한다")
     void throw_exception_when_brand_not_found() {
+// given
+        List<BrandEntity> brands = BrandTestFixture.createEntities(2)
+                .stream()
+                .map(brandRepository::save)
+                .toList();
 
+        // 각 브랜드당 5개의 상품 생성
+        brands.forEach(brand -> {
+            IntStream.range(0, 5).forEach(i -> {
+                ProductEntity product = ProductTestFixture.createAndSave(productRepository, brand);
+
+                productRepository.save(product);
+            });
+        });
+
+        Pageable pageable = PageRequest.of(0, 25);
+
+        ProductSearchFilter productSearchFilter = new ProductSearchFilter(9L, null, pageable);
+
+        // when
+        Page<ProductInfo> productInfos = productFacade.getProducts(productSearchFilter);
+
+        // then
+        assertThat(productInfos).isNotNull();
+        assertThat(productInfos.getContent()).hasSize(0);
+        assertThat(productInfos.getTotalElements()).isEqualTo(0);
     }
 }

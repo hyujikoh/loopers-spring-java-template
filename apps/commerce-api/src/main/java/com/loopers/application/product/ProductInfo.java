@@ -11,7 +11,8 @@ public record ProductInfo(
         String name,
         String description,
         Long likesCount,
-        ProductPriceInfo price
+        ProductPriceInfo price,
+        Long brandId
 ) {
     /**
      * ProductEntity와 BrandEntity를 조합하여 ProductInfo를 생성한다.
@@ -32,7 +33,8 @@ public record ProductInfo(
                 new ProductPriceInfo(
                         product.getPrice().getOriginPrice(),
                         product.getPrice().getDiscountPrice()
-                )
+                ),
+                product.getBrandId()
         );
     }
 }

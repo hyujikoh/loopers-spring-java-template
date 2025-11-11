@@ -2,6 +2,7 @@ package com.loopers.infrastructure.product;
 
 import static com.loopers.domain.product.QProductEntity.productEntity;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.dto.ProductSearchFilter;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -35,13 +37,16 @@ public class ProductQueryRepository {
         // 공통 where 조건 빌드
         BooleanExpression whereCondition = buildWhereCondition(searchFilter);
 
+        // 정렬 조건 빌드
+        List<OrderSpecifier<?>> orderSpecifiers = buildOrderSpecifiers(pageable);
+
         // 조회용 쿼리
         List<ProductEntity> content = queryFactory
                 .selectFrom(productEntity)
                 .where(whereCondition)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(productEntity.id.desc())
+                .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
                 .fetch();
 
         // 카운트 쿼리 (동일한 조건 적용)
@@ -52,6 +57,29 @@ public class ProductQueryRepository {
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0);
+    }
+
+    /**
+     * pageable 기반 정렬 조건 빌드
+     * @param pageable
+     * @return
+     */
+    private List<OrderSpecifier<?>> buildOrderSpecifiers(Pageable pageable) {
+        return pageable.getSort().stream()
+                .map(sort -> {
+                    String property = sort.getProperty();
+                    boolean isAsc = sort.isAscending();
+
+                    if ("생성일시".equals(property)) {
+                        return isAsc ? productEntity.createdAt.asc() : productEntity.createdAt.desc();
+                    } else if ("id".equals(property)) {
+                        return isAsc ? productEntity.id.asc() : productEntity.id.desc();
+                    } else {
+                        // 기본 정렬: 생성일시 내림차순
+                        return productEntity.createdAt.desc();
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     /**
