@@ -2,6 +2,7 @@ package com.loopers.domain.brand;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.loopers.domain.brand.dto.BrandSearchFilter;
 import com.loopers.fixtures.BrandTestFixture;
+import com.loopers.support.error.CoreException;
 import com.loopers.utils.DatabaseCleanUp;
 
 @SpringBootTest
@@ -109,11 +111,7 @@ class BrandServiceIntegrationTest {
             // given
             String nonExistentName = "존재하지않는브랜드";
 
-            // when
-            BrandEntity brand = brandService.getBrandByName(nonExistentName);
-
-            // then
-            assertThat(brand).isNull();
+            Assertions.assertThatThrownBy(() -> brandService.getBrandByName(nonExistentName)).isInstanceOf(CoreException.class).hasMessage("브랜드를 찾을 수 없습니다. (이름: 존재하지않는브랜드)");
         }
 
         @Test
@@ -124,10 +122,8 @@ class BrandServiceIntegrationTest {
             long nonExistentId = 6L;
 
             // when
-            BrandEntity brand = brandService.getBrandById(nonExistentId);
+            Assertions.assertThatThrownBy(() -> brandService.getBrandById(nonExistentId)).isInstanceOf(CoreException.class).hasMessage("브랜드를 찾을 수 없습니다. (ID: 6)");
 
-            // then
-            assertThat(brand).isNull();
         }
     }
 }
