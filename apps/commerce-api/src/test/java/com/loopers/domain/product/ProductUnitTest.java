@@ -30,7 +30,7 @@ class ProductUnitTest {
             // given
             BrandEntity brand = BrandTestFixture.createEntity("Nike", "Just Do It");
             ProductDomainRequest productDomainRequest = ProductDomainRequest.withoutDiscount(
-                    brand, "Air Max", "Comfortable running shoes", new BigDecimal("100000"), 50
+                    brand.getId(), "Air Max", "Comfortable running shoes", new BigDecimal("100000"), 50
             );
 
             // when
@@ -38,7 +38,7 @@ class ProductUnitTest {
 
             // then
             Assertions.assertThat(entity).isNotNull();
-            Assertions.assertThat(entity.getBrand()).isEqualTo(brand);
+            Assertions.assertThat(entity.getBrandId()).isEqualTo(brand.getId());
             Assertions.assertThat(entity.getName()).isEqualTo("Air Max");
         }
 
@@ -48,7 +48,7 @@ class ProductUnitTest {
             // given
             BrandEntity brand = BrandTestFixture.createEntity("Nike", "Just Do It");
             ProductDomainRequest productDomainRequest = new ProductDomainRequest(
-                    brand, "Air Max", "Comfortable running shoes", new BigDecimal("100000.00"), new BigDecimal("99.00"), 50
+                    brand.getId(), "Air Max", "Comfortable running shoes", new BigDecimal("100000.00"), new BigDecimal("80000.00"), 50
             );
 
             // when
@@ -56,7 +56,7 @@ class ProductUnitTest {
 
             // then
             Assertions.assertThat(entity).isNotNull();
-            Assertions.assertThat(entity.getBrand()).isEqualTo(brand);
+            Assertions.assertThat(entity.getBrandId()).isEqualTo(brand.getId());
             Assertions.assertThat(entity.getName()).isEqualTo(productDomainRequest.name());
             Assertions.assertThat(entity.getPrice().getOriginPrice()).isEqualTo(productDomainRequest.originPrice());
             Assertions.assertThat(entity.getPrice().getDiscountPrice()).isEqualTo(productDomainRequest.discountPrice());
@@ -64,13 +64,15 @@ class ProductUnitTest {
         }
 
         @Test
-        @DisplayName("브랜드가 null인 경우 예외가 발생한다")
+        @DisplayName("브랜드 ID가 null인 경우 예외가 발생한다")
         void 브랜드가_null인_경우_예외가_발생한다() {
             ProductDomainRequest productDomainRequest = new ProductDomainRequest(
                     null, "Air Max", "Comfortable running shoes", new BigDecimal("100000.00"), new BigDecimal("100000.00"), 50
             );
 
-            Assertions.assertThatThrownBy(() -> ProductEntity.createEntity(productDomainRequest)).isInstanceOf(IllegalArgumentException.class).hasMessage("브랜드는 필수입니다.");
+            Assertions.assertThatThrownBy(() -> ProductEntity.createEntity(productDomainRequest))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("브랜드 ID는 필수입니다.");
         }
 
         @Test
@@ -79,9 +81,11 @@ class ProductUnitTest {
             BrandEntity brand = BrandTestFixture.createEntity("Nike", "Just Do It");
 
             ProductDomainRequest productDomainRequest = new ProductDomainRequest(
-                    brand, null, "Comfortable running shoes", new BigDecimal("100000.00"), new BigDecimal("100000.00"), 50
+                    brand.getId(), null, "Comfortable running shoes", new BigDecimal("100000.00"), new BigDecimal("100000.00"), 50
             );
-            Assertions.assertThatThrownBy(() -> ProductEntity.createEntity(productDomainRequest)).isInstanceOf(IllegalArgumentException.class).hasMessage("상품명은 필수입니다.");
+            Assertions.assertThatThrownBy(() -> ProductEntity.createEntity(productDomainRequest))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("상품명은 필수입니다.");
 
         }
 
@@ -95,7 +99,7 @@ class ProductUnitTest {
             // when & then
             Assertions.assertThatThrownBy(() -> {
                 ProductDomainRequest request = new ProductDomainRequest(
-                    brand, tooLongName, "description",
+                    brand.getId(), tooLongName, "description",
                     new BigDecimal("10000"), null, 100
                 );
                 ProductEntity.createEntity(request);
@@ -112,7 +116,7 @@ class ProductUnitTest {
             // when & then
             Assertions.assertThatThrownBy(() -> {
                 ProductDomainRequest request = new ProductDomainRequest(
-                    brand, "상품명", "description",
+                    brand.getId(), "상품명", "description",
                     new BigDecimal("10000"), null, -1
                 );
                 ProductEntity.createEntity(request);
@@ -132,7 +136,7 @@ class ProductUnitTest {
             brand = BrandTestFixture.createEntity("Nike", "Just Do It");
             product = ProductEntity.createEntity(
                 ProductDomainRequest.withoutDiscount(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     new BigDecimal("10000"), 100
                 )
             );
@@ -198,7 +202,7 @@ class ProductUnitTest {
             // given
             product = ProductEntity.createEntity(
                 ProductDomainRequest.withoutDiscount(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     new BigDecimal("10000"), 100
                 )
             );
@@ -213,7 +217,7 @@ class ProductUnitTest {
             // given
             product = ProductEntity.createEntity(
                 ProductDomainRequest.withoutDiscount(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     new BigDecimal("10000"), 0
                 )
             );
@@ -234,7 +238,7 @@ class ProductUnitTest {
             brand = BrandTestFixture.createEntity("Nike", "Just Do It");
             product = ProductEntity.createEntity(
                 ProductDomainRequest.withoutDiscount(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     new BigDecimal("10000"), 100
                 )
             );
@@ -308,7 +312,7 @@ class ProductUnitTest {
             // given
             product = ProductEntity.createEntity(
                 ProductDomainRequest.withoutDiscount(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     ORIGIN_PRICE, 100
                 )
             );
@@ -324,7 +328,7 @@ class ProductUnitTest {
             // given
             product = ProductEntity.createEntity(
                 new ProductDomainRequest(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     ORIGIN_PRICE, DISCOUNT_PRICE, 100
                 )
             );
@@ -354,7 +358,7 @@ class ProductUnitTest {
             // given
             product = ProductEntity.createEntity(
                 new ProductDomainRequest(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     ORIGIN_PRICE, DISCOUNT_PRICE, 100
                 )
             );
@@ -369,7 +373,7 @@ class ProductUnitTest {
             // given
             product = ProductEntity.createEntity(
                 ProductDomainRequest.withoutDiscount(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     ORIGIN_PRICE, 100
                 )
             );
@@ -397,7 +401,7 @@ class ProductUnitTest {
             // given
             ProductEntity product = ProductEntity.createEntity(
                 ProductDomainRequest.withoutDiscount(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     ORIGIN_PRICE, STOCK_QUANTITY
                 )
             );
@@ -408,25 +412,25 @@ class ProductUnitTest {
         }
 
         @Test
-        @DisplayName("브랜드가 null이면 검증에 실패한다")
-        void 브랜드가_null이면_검증에_실패한다() {
+        @DisplayName("브랜드 ID가 null이면 검증에 실패한다")
+        void 브랜드_ID가_null이면_검증에_실패한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
                 ProductDomainRequest.withoutDiscount(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     ORIGIN_PRICE, STOCK_QUANTITY
                 )
             );
 
             // when
-            Field brandField = ReflectionUtils.findField(ProductEntity.class, "brand");
-            ReflectionUtils.makeAccessible(brandField);
-            ReflectionUtils.setField(brandField, product, null);
+            Field brandIdField = ReflectionUtils.findField(ProductEntity.class, "brandId");
+            ReflectionUtils.makeAccessible(brandIdField);
+            ReflectionUtils.setField(brandIdField, product, null);
 
             // then
             Assertions.assertThatThrownBy(() -> product.guard())
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("브랜드는 필수입니다.");
+                .hasMessage("브랜드 ID는 필수입니다.");
         }
 
         @Test
@@ -435,7 +439,7 @@ class ProductUnitTest {
             // given
             ProductEntity product = ProductEntity.createEntity(
                 ProductDomainRequest.withoutDiscount(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     ORIGIN_PRICE, STOCK_QUANTITY
                 )
             );
@@ -457,7 +461,7 @@ class ProductUnitTest {
             // given
             ProductEntity product = ProductEntity.createEntity(
                 ProductDomainRequest.withoutDiscount(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     ORIGIN_PRICE, STOCK_QUANTITY
                 )
             );
@@ -495,7 +499,7 @@ class ProductUnitTest {
             // given
             ProductEntity product = ProductEntity.createEntity(
                 ProductDomainRequest.withoutDiscount(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     ORIGIN_PRICE, STOCK_QUANTITY
                 )
             );
@@ -517,7 +521,7 @@ class ProductUnitTest {
             // given
             ProductEntity product = ProductEntity.createEntity(
                 ProductDomainRequest.withoutDiscount(
-                    brand, "Test Product", "Description",
+                    brand.getId(), "Test Product", "Description",
                     ORIGIN_PRICE, STOCK_QUANTITY
                 )
             );
