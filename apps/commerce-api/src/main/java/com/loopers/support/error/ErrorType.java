@@ -21,6 +21,7 @@ public enum ErrorType {
 
     // 브랜드 관련 오류
     NOT_FOUND_BRAND(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "존재하지 않는 브랜드입니다."),
+    DUPLICATE_BRAND(HttpStatus.CONFLICT, HttpStatus.CONFLICT.getReasonPhrase(), "이미 존재하는 브랜드 이름입니다."),
 
     // 상품 관련 오류
     NOT_FOUND_PRODUCT(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), "존재하지 않는 상품입니다."),

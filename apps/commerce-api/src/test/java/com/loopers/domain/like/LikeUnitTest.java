@@ -39,7 +39,7 @@ class LikeUnitTest {
 
         @Test
         @DisplayName("좋아요 관계가 존재하지 않으면 새로 생성된다")
-        void create_like_when_not_exist() {
+        void createLikeWhenNotExist() {
             // Given: 좋아요 관계가 존재하지 않는 상황 설정
             Long userId = 1L;
             Long productId = 2L;
@@ -47,7 +47,7 @@ class LikeUnitTest {
             when(likeRepository.save(any(LikeEntity.class))).thenReturn(LikeEntity.createEntity(userId, productId));
 
             // When: 좋아요 등록 메서드 호출
-            LikeEntity result = likeService.upsertLikeProduct(userId, productId);
+            LikeEntity result = likeService.upsertLike(userId, productId);
 
             // Then: 새로운 좋아요 엔티티가 생성되었음을 검증
             assertNotNull(result);
@@ -55,7 +55,7 @@ class LikeUnitTest {
 
         @Test
         @DisplayName("이미 삭제된 좋아요 관계가 존재하면 upsert로 복원된다")
-        void restore_deleted_like_when_exist() {
+        void restoreDeletedLikeWhenExist() {
             // Given: 삭제된 좋아요 엔티티가 존재하는 상황 설정
             Long userId = 1L;
             Long productId = 2L;
@@ -64,7 +64,7 @@ class LikeUnitTest {
             when(likeRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.of(entity));
 
             // When: 좋아요 등록 메서드 호출 (upsert)
-            LikeEntity result = likeService.upsertLikeProduct(userId, productId);
+            LikeEntity result = likeService.upsertLike(userId, productId);
 
             // Then: 삭제된 엔티티가 복원되었음을 검증 (deletedAt이 null)
             assertNotNull(result);
@@ -76,7 +76,7 @@ class LikeUnitTest {
          */
         @Test
         @DisplayName("이미 존재하는 좋아요 관계이면 중복 방지로 등록을 무시한다")
-        void ignore_duplicate_like_when_exist() {
+        void ignoreDuplicateLikeWhenExist() {
             // Given: 활성 상태의 좋아요 엔티티가 존재하는 상황 설정
             Long userId = 1L;
             Long productId = 2L;
@@ -84,7 +84,7 @@ class LikeUnitTest {
             when(likeRepository.findByUserIdAndProductId(userId, productId)).thenReturn(Optional.of(existingLike));
 
             // When: 좋아요 등록 메서드 호출
-            LikeEntity result = likeService.upsertLikeProduct(userId, productId);
+            LikeEntity result = likeService.upsertLike(userId, productId);
 
             // Then: 기존 엔티티가 반환되고 중복 생성되지 않음을 검증
             assertEquals(existingLike, result, "기존 엔티티가 반환되어야 함 (upsert 무시)");
