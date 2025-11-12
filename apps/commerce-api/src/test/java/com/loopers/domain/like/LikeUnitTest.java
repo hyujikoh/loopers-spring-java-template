@@ -15,7 +15,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * LikeService의 단위 테스트 클래스
- *
  * 좋아요 등록, 취소 기능을 테스트하며, 중복 방지 및 멱등성 처리를 검증합니다.
  *
  * @author hyunjikoh
