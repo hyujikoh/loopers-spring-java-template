@@ -82,7 +82,7 @@ public class ProductEntity extends BaseEntity {
      * @param request 상품 생성 요청 정보
      * @return 생성된 상품 엔티티
      */
-    public static ProductEntity createEntity(ProductDomainRequest request) {
+    public static ProductEntity createEntity(ProductDomainCreateRequest request) {
         if (Objects.isNull(request)) {
             throw new IllegalArgumentException("상품 생성 요청 정보는 필수입니다.");
         }
