@@ -231,33 +231,106 @@ public class LikeIntegrationTest {
     class 좋아요_취소 {
         @Test
         @DisplayName("유효한 사용자의 좋아요를 취소하면 성공한다")
+        @Transactional
         void 유효한_사용자의_좋아요를_취소하면_성공한다() {
+            // Given: 사용자 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
 
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(request);
 
+            LikeEntity like = LikeEntity.createEntity(userInfo.id(), product.getId());
+            likeRepository.save(like);
+
+            // When
+            likeFacade.unlikeProduct(userInfo.username(), product.getId());
+
+            // Then
+            Optional<LikeEntity> found = likeRepository.findByUserIdAndProductId(
+                    userInfo.id(), product.getId()
+            );
+            assertThat(found).isPresent();
+            assertThat(found.get().getDeletedAt()).isNotNull();
         }
 
         @Test
         @DisplayName("삭제된 사용자가 좋아요를 취소하려 하면 예외를 던진다")
+        @Transactional
         void 삭제된_사용자가_좋아요를_취소하려_하면_예외를_던진다() {
 
+            // When & Then
+            assertThatThrownBy(
+                    () -> likeFacade.unlikeProduct("nonExistUser", 999L)
+            ).isInstanceOf(CoreException.class);
         }
+
         @Test
         @DisplayName("존재하지 않는 사용자가 좋아요를 취소하려 하면 예외를 던진다")
+        @Transactional
         void 존재하지_않는_사용자가_좋아요를_취소하려_하면_예외를_던진다() {
-
+            // When & Then
+            assertThatThrownBy(
+                    () -> likeFacade.unlikeProduct("nonExistUser", 999L)
+            ).isInstanceOf(CoreException.class);
         }
-        @Test
-        @DisplayName("삭제된 상품의 좋아요를 취소하면 성공한다")
-        void 삭제된_상품의_좋아요를_취소하면_성공한다() {
 
+        @Test
+        @DisplayName("삭제된 상품의 좋아요를 취소하면  예외 처리한다.")
+        @Transactional
+        void 삭제된_상품의_좋아요를_취소하면_예외_처리한다() {
+            // Given
+            UserEntity user = UserTestFixture.createDefaultUserEntity();
+            userRepository.save(user);
+
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity deletedProduct = productService.registerProduct(request);
+            deletedProduct.delete();
+            productRepository.save(deletedProduct);
+
+            LikeEntity like = LikeEntity.createEntity(user.getId(), deletedProduct.getId());
+            likeRepository.save(like);
+
+
+
+            // Then
+            assertThatThrownBy(
+                    () -> likeFacade.unlikeProduct(user.getUsername(), 999L)
+            ).isInstanceOf(CoreException.class);
         }
 
         @Test
         @DisplayName("좋아요가 존재하지 않아도 취소는 무시하고 성공한다")
+        @Transactional
         void 좋아요가_존재하지_않아도_취소는_무시하고_성공한다() {
+            // Given
+            UserEntity user = UserTestFixture.createDefaultUserEntity();
+            userRepository.save(user);
 
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(request);
+
+            // When & Then - 예외 없이 정상 완료
+            likeFacade.unlikeProduct(user.getUsername(), product.getId());
         }
-
     }
 
     @Nested

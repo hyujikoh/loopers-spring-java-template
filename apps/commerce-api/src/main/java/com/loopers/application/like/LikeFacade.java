@@ -9,12 +9,13 @@ import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserService;
+import com.loopers.support.error.CoreException;
 
 import lombok.RequiredArgsConstructor;
 
 /**
  * 좋아요 애플리케이션 파사드
- *
+ * <p>
  * 좋아요 관련 유스케이스를 조정합니다.
  * 여러 도메인 서비스(User, Product, Like)를 조합하여 완전한 비즈니스 흐름을 구현합니다.
  *
@@ -30,10 +31,11 @@ public class LikeFacade {
 
     /**
      * 좋아요를 등록하거나 복원합니다.
-     * @param username 사용자명
+     *
+     * @param username  사용자명
      * @param productId 상품 ID
      * @return 좋아요 정보 DTO
-     * @throws com.loopers.support.error.CoreException 사용자 또는 상품을 찾을 수 없는 경우
+     * @throws CoreException 사용자 또는 상품을 찾을 수 없는 경우
      */
     @Transactional
     public LikeInfo upsertLike(String username, Long productId) {
@@ -48,5 +50,21 @@ public class LikeFacade {
 
         // 4. DTO 변환 후 반환
         return LikeInfo.of(likeEntity, product, user);
+    }
+
+    @Transactional
+    public void unlikeProduct(String username, Long productId) {
+        // 1. 사용자 검증
+        UserEntity user = userService.getUserByUsername(username);
+
+        // 2. 상품 검증
+        ProductEntity product = productService.getProductDetail(productId);
+
+
+        likeService.findLike(user.getId(), productId)
+                .map(like -> {
+                    like.delete();
+                    return true;
+                });
     }
 }
