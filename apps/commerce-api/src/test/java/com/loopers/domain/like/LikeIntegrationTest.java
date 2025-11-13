@@ -80,14 +80,14 @@ public class LikeIntegrationTest {
      */
     @Nested
     @DisplayName("좋아요 등록")
-    class 좋아요_등록 {
+    class LikeRegistration {
 
         /**
          * 유효한 사용자와 상품이 존재할 때 좋아요 등록에 성공하는지 테스트
          */
         @Test
         @DisplayName("유효한 사용자와 상품이면 좋아요 등록에 성공한다")
-        void 유효한_사용자와_상품이면_좋아요_등록에_성공한다() {
+        void should_register_like_successfully_when_valid_user_and_product() {
             // Given: 사용자 생성
             UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
             UserInfo userInfo = userFacade.registerUser(command);
@@ -113,7 +113,7 @@ public class LikeIntegrationTest {
 
         @Test
         @DisplayName("삭제된 사용자면 예외를 던진다")
-        void 삭제된_사용자면_예외를_던진다() {
+        void should_throw_exception_when_user_is_deleted() {
             // Given
             UserEntity deletedUser = UserTestFixture.createDefaultUserEntity();
             deletedUser.delete();
@@ -137,7 +137,7 @@ public class LikeIntegrationTest {
 
         @Test
         @DisplayName("존재하지 않는 사용자면 예외를 던진다")
-        void 존재하지_않는_사용자면_예외를_던진다() {
+        void should_throw_exception_when_user_not_exists() {
             // Given: 상품 생성 요청
             ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
                     1L,
@@ -157,7 +157,7 @@ public class LikeIntegrationTest {
 
         @Test
         @DisplayName("삭제된 상품이면 예외를 던진다")
-        void 삭제된_상품이면_예외를_던진다() {
+        void should_throw_exception_when_product_is_deleted() {
             // Given
             UserEntity user = UserTestFixture.createDefaultUserEntity();
             userRepository.save(user);
@@ -178,7 +178,7 @@ public class LikeIntegrationTest {
 
         @Test
         @DisplayName("존재하지 않는 상품이면 예외를 던진다")
-        void 존재하지_않는_상품이면_예외를_던진다() {
+        void should_throw_exception_when_product_not_exists() {
             // Given
             UserEntity user = UserTestFixture.createDefaultUserEntity();
             userRepository.save(user);
@@ -191,7 +191,7 @@ public class LikeIntegrationTest {
 
         @Test
         @DisplayName("이미 삭제된 좋아요를 다시 등록하면 복원된다")
-        void 이미_삭제된_좋아요를_다시_등록하면_복원된다() {
+        void should_restore_like_when_register_deleted_like_again() {
             // Given: 사용자 생성
             UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
             UserInfo userInfo = userFacade.registerUser(command);
@@ -227,11 +227,11 @@ public class LikeIntegrationTest {
 
     @Nested
     @DisplayName("좋아요 취소")
-    class 좋아요_취소 {
+    class LikeCancellation {
         @Test
         @DisplayName("유효한 사용자의 좋아요를 취소하면 성공한다")
         @Transactional
-        void 유효한_사용자의_좋아요를_취소하면_성공한다() {
+        void should_cancel_like_successfully_when_valid_user() {
             // Given: 사용자 생성
             UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
             UserInfo userInfo = userFacade.registerUser(command);
@@ -262,7 +262,7 @@ public class LikeIntegrationTest {
         @Test
         @DisplayName("삭제된 사용자가 좋아요를 취소하려 하면 예외를 던진다")
         @Transactional
-        void 삭제된_사용자가_좋아요를_취소하려_하면_예외를_던진다() {
+        void should_throw_exception_when_deleted_user_tries_to_cancel_like() {
 
             // When & Then
             assertThatThrownBy(
@@ -273,7 +273,7 @@ public class LikeIntegrationTest {
         @Test
         @DisplayName("존재하지 않는 사용자가 좋아요를 취소하려 하면 예외를 던진다")
         @Transactional
-        void 존재하지_않는_사용자가_좋아요를_취소하려_하면_예외를_던진다() {
+        void should_throw_exception_when_non_existent_user_tries_to_cancel_like() {
             // When & Then
             assertThatThrownBy(
                     () -> likeFacade.unlikeProduct("nonExistUser", 999L)
@@ -283,7 +283,7 @@ public class LikeIntegrationTest {
         @Test
         @DisplayName("삭제된 상품의 좋아요를 취소하면  예외 처리한다.")
         @Transactional
-        void 삭제된_상품의_좋아요를_취소하면_예외_처리한다() {
+        void should_throw_exception_when_cancel_like_for_deleted_product() {
             // Given
             UserEntity user = UserTestFixture.createDefaultUserEntity();
             userRepository.save(user);
@@ -312,7 +312,7 @@ public class LikeIntegrationTest {
         @Test
         @DisplayName("좋아요가 존재하지 않아도 취소는 무시하고 성공한다")
         @Transactional
-        void 좋아요가_존재하지_않아도_취소는_무시하고_성공한다() {
+        void should_succeed_silently_when_cancel_non_existent_like() {
             // Given
             UserEntity user = UserTestFixture.createDefaultUserEntity();
             userRepository.save(user);
@@ -333,11 +333,11 @@ public class LikeIntegrationTest {
 
     @Nested
     @DisplayName("멱등성 테스트")
-    class 멱등성_테스트 {
+    class IdempotencyTest {
 
         @Test
         @DisplayName("동시에 같은 좋아요를 등록하면 중복이 생성되지 않는다")
-        void 동시에_같은_좋아요를_등록하면_중복이_생성되지_않는다() throws InterruptedException {
+        void should_not_create_duplicate_when_concurrent_like_registration() throws InterruptedException {
             // Given: 사용자와 상품 생성
             UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
             UserInfo userInfo = userFacade.registerUser(command);
@@ -375,7 +375,7 @@ public class LikeIntegrationTest {
             executorService.shutdown();
 
             // Then: 좋아요는 1개만 생성되어야 함
-            java.util.List<LikeEntity> likes = likeRepository.findAll();
+            List<LikeEntity> likes = likeRepository.findAll();
             long userLikes = likes.stream()
                     .filter(like -> like.getUserId().equals(userInfo.id())
                             && like.getProductId().equals(product.getId())
@@ -388,7 +388,7 @@ public class LikeIntegrationTest {
 
         @Test
         @DisplayName("동시에 같은 좋아요를 등록 및 취소하면 멱등성이 보장된다")
-        void 동시에_같은_좋아요를_등록_및_취소하면_멱등성이_보장된다() throws InterruptedException {
+        void should_guarantee_idempotency_when_concurrent_like_and_unlike() throws InterruptedException {
             // Given: 사용자와 상품 생성
             UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
             UserInfo userInfo = userFacade.registerUser(command);
@@ -448,7 +448,7 @@ public class LikeIntegrationTest {
 
         @Test
         @DisplayName("동시에 여러 번 좋아요 취소 시 중복 취소가 발생하지 않는다")
-        void 동시에_여러_번_좋아요_취소_시_중복_취소가_발생하지_않는다() throws InterruptedException {
+        void should_not_duplicate_cancel_when_concurrent_unlike_operations() throws InterruptedException {
             // Given: 사용자, 상품, 좋아요 생성
             UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
             UserInfo userInfo = userFacade.registerUser(command);
@@ -501,7 +501,7 @@ public class LikeIntegrationTest {
 
         @Test
         @DisplayName("복수의 사용자가 동시에 같은 상품에 좋아요하면 각각 독립적으로 등록된다")
-        void 복수의_사용자가_동시에_같은_상품에_좋아요하면_각각_독립적으로_등록된다() throws InterruptedException {
+        void should_register_independently_when_multiple_users_like_same_product_concurrently() throws InterruptedException {
             // Given: 여러 사용자와 하나의 상품 생성
             int userCount = 5;
             List<UserInfo> users = new ArrayList<>();
@@ -548,7 +548,7 @@ public class LikeIntegrationTest {
             executorService.shutdown();
 
             // Then: 각 사용자별로 독립적인 좋아요가 생성되어야 함
-            java.util.List<LikeEntity> likes = likeRepository.findAll();
+            List<LikeEntity> likes = likeRepository.findAll();
             long activeLikes = likes.stream()
                     .filter(like -> like.getProductId().equals(product.getId())
                             && like.getDeletedAt() == null)
