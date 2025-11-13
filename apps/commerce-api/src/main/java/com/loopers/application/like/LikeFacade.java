@@ -48,10 +48,20 @@ public class LikeFacade {
         // 3. 좋아요 등록/복원
         LikeEntity likeEntity = likeService.upsertLike(user.getId(), product.getId());
 
-        // 4. DTO 변환 후 반환
+        // 4. 상품의 좋아요 수 증가
+        productService.increaseLikeCount(product.getId());
+
+        // 5. DTO 변환 후 반환
         return LikeInfo.of(likeEntity, product, user);
     }
 
+    /**
+     * 좋아요를 취소합니다.
+     *
+     * @param username  사용자명
+     * @param productId 상품 ID
+     * @throws CoreException 사용자 또는 상품을 찾을 수 없는 경우
+     */
     @Transactional
     public void unlikeProduct(String username, Long productId) {
         // 1. 사용자 검증
@@ -60,11 +70,12 @@ public class LikeFacade {
         // 2. 상품 검증
         ProductEntity product = productService.getProductDetail(productId);
 
-
+        // 3. 좋아요 취소
         likeService.findLike(user.getId(), productId)
-                .map(like -> {
+                .ifPresent(like -> {
                     like.delete();
-                    return true;
+                    // 4. 상품의 좋아요 수 감소
+                    productService.decreaseLikeCount(product.getId());
                 });
     }
 }

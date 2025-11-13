@@ -101,6 +101,7 @@ public class LikeIntegrationTest {
                     100
             );
             ProductEntity savedProduct = productService.registerProduct(productRequest);
+            Long initialLikeCount = savedProduct.getLikeCount();
 
             // When: 좋아요 등록
             LikeInfo result = likeFacade.upsertLike(userInfo.username(), savedProduct.getId());
@@ -109,6 +110,10 @@ public class LikeIntegrationTest {
             assertThat(result).isNotNull();
             assertThat(result.username()).isEqualTo(userInfo.username());
             assertThat(result.productId()).isEqualTo(savedProduct.getId());
+
+            // Then: 상품의 좋아요 수 증가 검증
+            ProductEntity updatedProduct = productService.getProductDetail(savedProduct.getId());
+            assertThat(updatedProduct.getLikeCount()).isEqualTo(initialLikeCount + 1);
         }
 
         @Test
@@ -248,15 +253,24 @@ public class LikeIntegrationTest {
             LikeEntity like = LikeEntity.createEntity(userInfo.id(), product.getId());
             likeRepository.save(like);
 
+            // 좋아요 수 증가 (좋아요가 이미 등록된 상태 시뮬레이션)
+            product.increaseLikeCount();
+            productRepository.save(product);
+            Long initialLikeCount = product.getLikeCount();
+
             // When
             likeFacade.unlikeProduct(userInfo.username(), product.getId());
 
-            // Then
+            // Then: 좋아요 취소 검증
             Optional<LikeEntity> found = likeRepository.findByUserIdAndProductId(
                     userInfo.id(), product.getId()
             );
             assertThat(found).isPresent();
             assertThat(found.get().getDeletedAt()).isNotNull();
+
+            // Then: 상품의 좋아요 수 감소 검증
+            ProductEntity updatedProduct = productService.getProductDetail(product.getId());
+            assertThat(updatedProduct.getLikeCount()).isEqualTo(initialLikeCount - 1);
         }
 
         @Test
@@ -328,6 +342,164 @@ public class LikeIntegrationTest {
 
             // When & Then - 예외 없이 정상 완료
             likeFacade.unlikeProduct(user.getUsername(), product.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("좋아요 카운트 관리")
+    class LikeCountManagement {
+
+        @Test
+        @DisplayName("좋아요 등록 시 상품의 좋아요 수가 증가한다")
+        void should_increase_like_count_when_like_registered() {
+            // Given: 사용자와 상품 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
+
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(request);
+            Long initialLikeCount = product.getLikeCount();
+
+            // When: 좋아요 등록
+            likeFacade.upsertLike(userInfo.username(), product.getId());
+
+            // Then: 좋아요 수 증가 검증
+            ProductEntity updatedProduct = productService.getProductDetail(product.getId());
+            assertThat(updatedProduct.getLikeCount()).isEqualTo(initialLikeCount + 1);
+        }
+
+        @Test
+        @DisplayName("좋아요 취소 시 상품의 좋아요 수가 감소한다")
+        void should_decrease_like_count_when_like_cancelled() {
+            // Given: 사용자, 상품, 좋아요 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
+
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(request);
+
+            // 좋아요 등록
+            likeFacade.upsertLike(userInfo.username(), product.getId());
+            Long likeCountAfterRegistration = productService.getProductDetail(product.getId()).getLikeCount();
+
+            // When: 좋아요 취소
+            likeFacade.unlikeProduct(userInfo.username(), product.getId());
+
+            // Then: 좋아요 수 감소 검증
+            ProductEntity updatedProduct = productService.getProductDetail(product.getId());
+            assertThat(updatedProduct.getLikeCount()).isEqualTo(likeCountAfterRegistration - 1);
+        }
+
+        @Test
+        @DisplayName("여러 사용자가 좋아요하면 상품의 좋아요 수가 누적된다")
+        void should_accumulate_like_count_when_multiple_users_like() {
+            // Given: 여러 사용자 생성
+            UserRegisterCommand command1 = UserTestFixture.createUserCommand(
+                    "user1", "user1@example.com", "1990-01-01", com.loopers.domain.user.Gender.MALE
+            );
+            UserRegisterCommand command2 = UserTestFixture.createUserCommand(
+                    "user2", "user2@example.com", "1990-01-01", com.loopers.domain.user.Gender.FEMALE
+            );
+            UserRegisterCommand command3 = UserTestFixture.createUserCommand(
+                    "user3", "user3@example.com", "1990-01-01", com.loopers.domain.user.Gender.MALE
+            );
+
+            UserInfo user1 = userFacade.registerUser(command1);
+            UserInfo user2 = userFacade.registerUser(command2);
+            UserInfo user3 = userFacade.registerUser(command3);
+
+            // Given: 상품 생성
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "인기상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(request);
+            Long initialLikeCount = product.getLikeCount();
+
+            // When: 세 명의 사용자가 좋아요 등록
+            likeFacade.upsertLike(user1.username(), product.getId());
+            likeFacade.upsertLike(user2.username(), product.getId());
+            likeFacade.upsertLike(user3.username(), product.getId());
+
+            // Then: 좋아요 수가 3 증가
+            ProductEntity updatedProduct = productService.getProductDetail(product.getId());
+            assertThat(updatedProduct.getLikeCount()).isEqualTo(initialLikeCount + 3);
+        }
+
+        @Test
+        @DisplayName("삭제된 좋아요를 복원하면 좋아요 수가 증가한다")
+        void should_increase_like_count_when_deleted_like_restored() {
+            // Given: 사용자와 상품 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
+
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(request);
+
+            // Given: 삭제된 좋아요 생성
+            LikeEntity deletedLike = LikeEntity.createEntity(userInfo.id(), product.getId());
+            deletedLike.delete();
+            likeRepository.save(deletedLike);
+
+            Long initialLikeCount = product.getLikeCount();
+
+            // When: 좋아요 복원 (재등록)
+            likeFacade.upsertLike(userInfo.username(), product.getId());
+
+            // Then: 좋아요 수 증가 검증
+            ProductEntity updatedProduct = productService.getProductDetail(product.getId());
+            assertThat(updatedProduct.getLikeCount()).isEqualTo(initialLikeCount + 1);
+        }
+
+        @Test
+        @DisplayName("좋아요가 0일 때 취소해도 음수가 되지 않는다")
+        void should_not_become_negative_when_cancel_like_with_zero_count() {
+            // Given: 사용자와 상품 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
+
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(request);
+
+            // Given: 좋아요 엔티티만 생성 (카운트는 증가시키지 않음)
+            LikeEntity like = LikeEntity.createEntity(userInfo.id(), product.getId());
+            likeRepository.save(like);
+
+            assertThat(product.getLikeCount()).isEqualTo(0L);
+
+            // When: 좋아요 취소
+            likeFacade.unlikeProduct(userInfo.username(), product.getId());
+
+            // Then: 좋아요 수가 음수가 되지 않음
+            ProductEntity updatedProduct = productService.getProductDetail(product.getId());
+            assertThat(updatedProduct.getLikeCount()).isGreaterThanOrEqualTo(0L);
         }
     }
 
@@ -436,11 +608,11 @@ public class LikeIntegrationTest {
 
             // 좋아요 엔티티가 존재해야 함 (등록 또는 취소 중 하나의 상태)
             assertThat(finalLike).isPresent();
-            
+
             // 데이터베이스에 중복된 좋아요가 없어야 함
             List<LikeEntity> allLikes = likeRepository.findAll();
             long duplicateCount = allLikes.stream()
-                    .filter(like -> like.getUserId().equals(userInfo.id()) 
+                    .filter(like -> like.getUserId().equals(userInfo.id())
                             && like.getProductId().equals(product.getId()))
                     .count();
             assertThat(duplicateCount).isEqualTo(1);

@@ -85,4 +85,32 @@ public class ProductService {
         product.deductStock(quantity);
         return productRepository.save(product);
     }
+
+    /**
+     * 상품의 좋아요 수를 증가시킵니다.
+     *
+     * @param productId 상품 ID
+     * @return 좋아요 수가 증가된 상품 엔티티
+     * @throws CoreException 상품을 찾을 수 없는 경우
+     */
+    @Transactional
+    public ProductEntity increaseLikeCount(Long productId) {
+        ProductEntity product = getProductDetail(productId);
+        product.increaseLikeCount();
+        return productRepository.save(product);
+    }
+
+    /**
+     * 상품의 좋아요 수를 감소시킵니다.
+     *
+     * @param productId 상품 ID
+     * @return 좋아요 수가 감소된 상품 엔티티
+     * @throws CoreException 상품을 찾을 수 없는 경우
+     */
+    @Transactional
+    public ProductEntity decreaseLikeCount(Long productId) {
+        ProductEntity product = getProductDetail(productId);
+        product.decreaseLikeCount();
+        return productRepository.save(product);
+    }
 }
