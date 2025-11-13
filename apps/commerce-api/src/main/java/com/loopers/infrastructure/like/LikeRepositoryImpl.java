@@ -1,5 +1,6 @@
 package com.loopers.infrastructure.like;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
@@ -26,5 +27,10 @@ public class LikeRepositoryImpl implements LikeRepository {
     @Override
     public Optional<LikeEntity> findByUserIdAndProductId(Long userId, Long productId) {
         return likeJpaRepository.findByUserIdAndProductId(userId, productId);
+    }
+
+    @Override
+    public List<LikeEntity> findAll() {
+        return likeJpaRepository.findAll();
     }
 }

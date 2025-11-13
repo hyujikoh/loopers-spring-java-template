@@ -1,10 +1,15 @@
 package com.loopers.domain.like;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,26 +24,20 @@ import com.loopers.application.like.LikeInfo;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
-import com.loopers.domain.brand.BrandDomainCreateRequest;
-import com.loopers.domain.brand.BrandEntity;
-import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.ProductDomainCreateRequest;
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserRepository;
-import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
 import com.loopers.support.error.CoreException;
 import com.loopers.utils.DatabaseCleanUp;
 
-import jakarta.persistence.EntityManager;
-
 /**
  * LikeFacade 통합 테스트
- *
+ * <p>
  * 좋아요 등록 및 취소 기능을 파사드 레벨에서 검증합니다.
  * 각 도메인 서비스를 통해 트랜잭션이 적용된 데이터 저장을 수행합니다.
  *
@@ -304,7 +303,6 @@ public class LikeIntegrationTest {
             likeRepository.save(like);
 
 
-
             // Then
             assertThatThrownBy(
                     () -> likeFacade.unlikeProduct(user.getUsername(), 999L)
@@ -336,29 +334,238 @@ public class LikeIntegrationTest {
     @Nested
     @DisplayName("멱등성 테스트")
     class 멱등성_테스트 {
+
         @Test
         @DisplayName("동시에 같은 좋아요를 등록하면 중복이 생성되지 않는다")
         void 동시에_같은_좋아요를_등록하면_중복이_생성되지_않는다() throws InterruptedException {
+            // Given: 사용자와 상품 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
 
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(request);
+
+            // When: 동시에 10번 좋아요 등록 시도
+            int threadCount = 10;
+            CountDownLatch latch = new CountDownLatch(threadCount);
+            ExecutorService executorService = newFixedThreadPool(threadCount);
+            AtomicInteger successCount = new AtomicInteger(0);
+            AtomicInteger failCount = new AtomicInteger(0);
+
+            for (int i = 0; i < threadCount; i++) {
+                executorService.submit(() -> {
+                    try {
+                        likeFacade.upsertLike(userInfo.username(), product.getId());
+                        successCount.incrementAndGet();
+                    } catch (Exception e) {
+                        failCount.incrementAndGet();
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+
+            latch.await();
+            executorService.shutdown();
+
+            // Then: 좋아요는 1개만 생성되어야 함
+            java.util.List<LikeEntity> likes = likeRepository.findAll();
+            long userLikes = likes.stream()
+                    .filter(like -> like.getUserId().equals(userInfo.id())
+                            && like.getProductId().equals(product.getId())
+                            && like.getDeletedAt() == null)
+                    .count();
+
+            assertThat(userLikes).isEqualTo(1);
+            assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount);
         }
 
         @Test
         @DisplayName("동시에 같은 좋아요를 등록 및 취소하면 멱등성이 보장된다")
         void 동시에_같은_좋아요를_등록_및_취소하면_멱등성이_보장된다() throws InterruptedException {
+            // Given: 사용자와 상품 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
 
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(request);
+
+            // When: 동시에 등록과 취소를 반복
+            int threadCount = 20;
+            CountDownLatch latch = new CountDownLatch(threadCount);
+            ExecutorService executorService = newFixedThreadPool(threadCount);
+
+            for (int i = 0; i < threadCount; i++) {
+                final int index = i;
+                executorService.submit(() -> {
+                    try {
+                        if (index % 2 == 0) {
+                            // 짝수 스레드는 등록
+                            likeFacade.upsertLike(userInfo.username(), product.getId());
+                        } else {
+                            // 홀수 스레드는 취소
+                            likeFacade.unlikeProduct(userInfo.username(), product.getId());
+                        }
+                    } catch (Exception e) {
+                        // 동시성으로 인한 예외는 무시
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+
+            latch.await();
+            executorService.shutdown();
+
+            // Then: 최종 상태는 일관성이 있어야 함
+            Optional<LikeEntity> finalLike = likeRepository.findByUserIdAndProductId(
+                    userInfo.id(), product.getId()
+            );
+
+            // 좋아요 엔티티가 존재해야 함 (등록 또는 취소 중 하나의 상태)
+            assertThat(finalLike).isPresent();
+            
+            // 데이터베이스에 중복된 좋아요가 없어야 함
+            List<LikeEntity> allLikes = likeRepository.findAll();
+            long duplicateCount = allLikes.stream()
+                    .filter(like -> like.getUserId().equals(userInfo.id()) 
+                            && like.getProductId().equals(product.getId()))
+                    .count();
+            assertThat(duplicateCount).isEqualTo(1);
         }
-
 
         @Test
         @DisplayName("동시에 여러 번 좋아요 취소 시 중복 취소가 발생하지 않는다")
         void 동시에_여러_번_좋아요_취소_시_중복_취소가_발생하지_않는다() throws InterruptedException {
+            // Given: 사용자, 상품, 좋아요 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
 
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(request);
+
+            // 좋아요 등록
+            likeFacade.upsertLike(userInfo.username(), product.getId());
+
+            // When: 동시에 10번 취소 시도
+            int threadCount = 10;
+            CountDownLatch latch = new CountDownLatch(threadCount);
+            ExecutorService executorService = newFixedThreadPool(threadCount);
+            AtomicInteger successCount = new AtomicInteger(0);
+
+            for (int i = 0; i < threadCount; i++) {
+                executorService.submit(() -> {
+                    try {
+                        likeFacade.unlikeProduct(userInfo.username(), product.getId());
+                        successCount.incrementAndGet();
+                    } catch (Exception e) {
+                        // 예외 무시
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+
+            latch.await();
+            executorService.shutdown();
+
+            // Then: 좋아요는 삭제 상태여야 하며, 중복 삭제가 발생하지 않아야 함
+            Optional<LikeEntity> like = likeRepository.findByUserIdAndProductId(
+                    userInfo.id(), product.getId()
+            );
+
+            assertThat(like).isPresent();
+            assertThat(like.get().getDeletedAt()).isNotNull();
+
+            // 모든 취소 시도가 성공해야 함 (멱등성)
+            assertThat(successCount.get()).isEqualTo(threadCount);
         }
 
         @Test
         @DisplayName("복수의 사용자가 동시에 같은 상품에 좋아요하면 각각 독립적으로 등록된다")
-        void 복수의_사용자가_동시에_같은_상품에_좋아요하면_각각_독립적으로_등록된다() {
+        void 복수의_사용자가_동시에_같은_상품에_좋아요하면_각각_독립적으로_등록된다() throws InterruptedException {
+            // Given: 여러 사용자와 하나의 상품 생성
+            int userCount = 5;
+            List<UserInfo> users = new ArrayList<>();
 
+            for (int i = 0; i < userCount; i++) {
+                UserRegisterCommand command = UserTestFixture.createUserCommand(
+                        "user" + i,
+                        "user" + i + "@example.com",
+                        "1990-01-01",
+                        com.loopers.domain.user.Gender.MALE
+                );
+                UserInfo userInfo = userFacade.registerUser(command);
+                users.add(userInfo);
+            }
+
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "인기상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(request);
+
+            // When: 모든 사용자가 동시에 좋아요 등록
+            CountDownLatch latch = new CountDownLatch(userCount);
+            ExecutorService executorService = newFixedThreadPool(userCount);
+            AtomicInteger successCount = new AtomicInteger(0);
+
+            for (UserInfo user : users) {
+                executorService.submit(() -> {
+                    try {
+                        likeFacade.upsertLike(user.username(), product.getId());
+                        successCount.incrementAndGet();
+                    } catch (Exception e) {
+                        // 예외 무시
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+
+            latch.await();
+            executorService.shutdown();
+
+            // Then: 각 사용자별로 독립적인 좋아요가 생성되어야 함
+            java.util.List<LikeEntity> likes = likeRepository.findAll();
+            long activeLikes = likes.stream()
+                    .filter(like -> like.getProductId().equals(product.getId())
+                            && like.getDeletedAt() == null)
+                    .count();
+
+            assertThat(activeLikes).isEqualTo(userCount);
+            assertThat(successCount.get()).isEqualTo(userCount);
+
+            // 각 사용자별로 좋아요가 하나씩만 있는지 확인
+            for (UserInfo user : users) {
+                long userLikeCount = likes.stream()
+                        .filter(like -> like.getUserId().equals(user.id())
+                                && like.getProductId().equals(product.getId())
+                                && like.getDeletedAt() == null)
+                        .count();
+                assertThat(userLikeCount).isEqualTo(1);
+            }
         }
     }
 }

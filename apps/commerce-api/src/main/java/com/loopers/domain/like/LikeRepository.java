@@ -1,5 +1,6 @@
 package com.loopers.domain.like;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -10,4 +11,6 @@ public interface LikeRepository {
     LikeEntity save(LikeEntity entity);
 
     Optional<LikeEntity> findByUserIdAndProductId(Long userId, Long productId);
+
+    List<LikeEntity> findAll();
 }
