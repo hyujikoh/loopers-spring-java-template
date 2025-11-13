@@ -29,7 +29,7 @@ class ProductUnitTest {
         void 유효한_정보로_상품_엔티티를_생성하면_성공한다() {
             // given
             BrandEntity brand = BrandTestFixture.createEntity("Nike", "Just Do It");
-            ProductDomainRequest productDomainRequest = ProductDomainRequest.withoutDiscount(
+            ProductDomainCreateRequest productDomainRequest = ProductDomainCreateRequest.of(
                     brand.getId(), "Air Max", "Comfortable running shoes", new BigDecimal("100000"), 50
             );
 
@@ -47,7 +47,7 @@ class ProductUnitTest {
         void 할인가가_있는_상품_엔티티를_생성하면_성공한다() {
             // given
             BrandEntity brand = BrandTestFixture.createEntity("Nike", "Just Do It");
-            ProductDomainRequest productDomainRequest = new ProductDomainRequest(
+            ProductDomainCreateRequest productDomainRequest = new ProductDomainCreateRequest(
                     brand.getId(), "Air Max", "Comfortable running shoes", new BigDecimal("100000.00"), new BigDecimal("80000.00"), 50
             );
 
@@ -66,7 +66,7 @@ class ProductUnitTest {
         @Test
         @DisplayName("브랜드 ID가 null인 경우 예외가 발생한다")
         void 브랜드가_null인_경우_예외가_발생한다() {
-            ProductDomainRequest productDomainRequest = new ProductDomainRequest(
+            ProductDomainCreateRequest productDomainRequest = new ProductDomainCreateRequest(
                     null, "Air Max", "Comfortable running shoes", new BigDecimal("100000.00"), new BigDecimal("100000.00"), 50
             );
 
@@ -80,7 +80,7 @@ class ProductUnitTest {
         void 상품명이_null인_경우_예외가_발생한다() {
             BrandEntity brand = BrandTestFixture.createEntity("Nike", "Just Do It");
 
-            ProductDomainRequest productDomainRequest = new ProductDomainRequest(
+            ProductDomainCreateRequest productDomainRequest = new ProductDomainCreateRequest(
                     brand.getId(), null, "Comfortable running shoes", new BigDecimal("100000.00"), new BigDecimal("100000.00"), 50
             );
             Assertions.assertThatThrownBy(() -> ProductEntity.createEntity(productDomainRequest))
@@ -98,7 +98,7 @@ class ProductUnitTest {
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
-                        ProductDomainRequest request = new ProductDomainRequest(
+                        ProductDomainCreateRequest request = new ProductDomainCreateRequest(
                                 brand.getId(), tooLongName, "description",
                                 new BigDecimal("10000"), null, 100
                         );
@@ -115,7 +115,7 @@ class ProductUnitTest {
 
             // when & then
             Assertions.assertThatThrownBy(() -> {
-                        ProductDomainRequest request = new ProductDomainRequest(
+                        ProductDomainCreateRequest request = new ProductDomainCreateRequest(
                                 brand.getId(), "상품명", "description",
                                 new BigDecimal("10000"), null, -1
                         );
@@ -135,7 +135,7 @@ class ProductUnitTest {
         void setUp() {
             brand = BrandTestFixture.createEntity("Nike", "Just Do It");
             product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             new BigDecimal("10000"), 100
                     )
@@ -201,7 +201,7 @@ class ProductUnitTest {
         void 재고가_있으면_true를_반환한다() {
             // given
             product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             new BigDecimal("10000"), 100
                     )
@@ -216,7 +216,7 @@ class ProductUnitTest {
         void 재고가_0이면_false를_반환한다() {
             // given
             product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             new BigDecimal("10000"), 0
                     )
@@ -237,7 +237,7 @@ class ProductUnitTest {
         void setUp() {
             brand = BrandTestFixture.createEntity("Nike", "Just Do It");
             product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             new BigDecimal("10000"), 100
                     )
@@ -311,7 +311,7 @@ class ProductUnitTest {
         void 할인이_없는_경우_정가를_반환한다() {
             // given
             product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             ORIGIN_PRICE, 100
                     )
@@ -327,7 +327,7 @@ class ProductUnitTest {
         void 할인이_있는_경우_할인가를_반환한다() {
             // given
             product = ProductEntity.createEntity(
-                    new ProductDomainRequest(
+                    new ProductDomainCreateRequest(
                             brand.getId(), "Test Product", "Description",
                             ORIGIN_PRICE, DISCOUNT_PRICE, 100
                     )
@@ -357,7 +357,7 @@ class ProductUnitTest {
         void 할인이_적용된_상품이면_true를_반환한다() {
             // given
             product = ProductEntity.createEntity(
-                    new ProductDomainRequest(
+                    new ProductDomainCreateRequest(
                             brand.getId(), "Test Product", "Description",
                             ORIGIN_PRICE, DISCOUNT_PRICE, 100
                     )
@@ -372,7 +372,7 @@ class ProductUnitTest {
         void 할인이_없는_상품이면_false를_반환한다() {
             // given
             product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             ORIGIN_PRICE, 100
                     )
@@ -393,7 +393,7 @@ class ProductUnitTest {
         void setUp() {
             brand = BrandTestFixture.createEntity("Nike", "Just Do It");
             product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             new BigDecimal("10000"), 100
                     )
@@ -458,7 +458,7 @@ class ProductUnitTest {
         void 모든_필수_값이_유효하면_검증에_성공한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             ORIGIN_PRICE, STOCK_QUANTITY
                     )
@@ -474,7 +474,7 @@ class ProductUnitTest {
         void 브랜드_ID가_null이면_검증에_실패한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             ORIGIN_PRICE, STOCK_QUANTITY
                     )
@@ -496,7 +496,7 @@ class ProductUnitTest {
         void 가격_정보가_null이면_검증에_실패한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             ORIGIN_PRICE, STOCK_QUANTITY
                     )
@@ -518,7 +518,7 @@ class ProductUnitTest {
         void 상품명이_유효하지_않으면_검증에_실패한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             ORIGIN_PRICE, STOCK_QUANTITY
                     )
@@ -556,7 +556,7 @@ class ProductUnitTest {
         void 재고_수량이_음수이면_검증에_실패한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             ORIGIN_PRICE, STOCK_QUANTITY
                     )
@@ -578,7 +578,7 @@ class ProductUnitTest {
         void 좋아요_수가_음수이면_검증에_실패한다() {
             // given
             ProductEntity product = ProductEntity.createEntity(
-                    ProductDomainRequest.withoutDiscount(
+                    ProductDomainCreateRequest.of(
                             brand.getId(), "Test Product", "Description",
                             ORIGIN_PRICE, STOCK_QUANTITY
                     )

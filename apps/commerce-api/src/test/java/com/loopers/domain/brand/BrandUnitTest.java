@@ -17,8 +17,8 @@ class BrandUnitTest {
     void create_brand_entity_success() {
         String name = "Test Brand";
         String description = "This is a test brand.";
-
-        BrandEntity brandEntity = BrandEntity.createBrandEntity(name, description);
+        BrandDomainCreateRequest brandDomainCreateRequest = new BrandDomainCreateRequest(name, description);
+        BrandEntity brandEntity = BrandEntity.createBrandEntity(brandDomainCreateRequest);
 
         assertEquals(name, brandEntity.getName());
         assertEquals(description, brandEntity.getDescription());
@@ -30,8 +30,9 @@ class BrandUnitTest {
         // given
         String name = "Test Brand";
         String description = null;
+        BrandDomainCreateRequest brandDomainCreateRequest = new BrandDomainCreateRequest(name, description);
 
-        BrandEntity brandEntity = BrandEntity.createBrandEntity(name, description);
+        BrandEntity brandEntity = BrandEntity.createBrandEntity(brandDomainCreateRequest);
 
         assertEquals(name, brandEntity.getName());
         assertNull(brandEntity.getDescription());
@@ -43,9 +44,10 @@ class BrandUnitTest {
         // given
         String name = null;
         String description = "This is a test brand.";
+        BrandDomainCreateRequest brandDomainCreateRequest = new BrandDomainCreateRequest(name, description);
 
         assertThatThrownBy(() -> {
-            BrandEntity.createBrandEntity(name, description);
+            BrandEntity.createBrandEntity(brandDomainCreateRequest);
         }).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("브랜드 이름은 필수 입력값입니다.");
     }
