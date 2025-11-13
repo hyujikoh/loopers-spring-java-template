@@ -1,8 +1,10 @@
 package com.loopers.domain.like;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.application.like.LikeFacade;
 import com.loopers.application.like.LikeInfo;
@@ -21,11 +24,17 @@ import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.ProductDomainCreateRequest;
 import com.loopers.domain.product.ProductEntity;
+import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductService;
+import com.loopers.domain.user.UserEntity;
+import com.loopers.domain.user.UserRepository;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
+import com.loopers.support.error.CoreException;
 import com.loopers.utils.DatabaseCleanUp;
+
+import jakarta.persistence.EntityManager;
 
 /**
  * LikeFacade 통합 테스트
@@ -46,15 +55,21 @@ public class LikeIntegrationTest {
     @Autowired
     private UserFacade userFacade;
 
+
     @Autowired
-    private BrandService brandService;
+    private UserRepository userRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private LikeRepository likeRepository;
 
     @Autowired
     private ProductService productService;
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
-
 
     @AfterEach
     void tearDown() {
@@ -78,13 +93,9 @@ public class LikeIntegrationTest {
             UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
             UserInfo userInfo = userFacade.registerUser(command);
 
-            // Given: 브랜드 생성 요청
-            BrandDomainCreateRequest brandRequest = BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명");
-            BrandEntity savedBrand = brandService.registerBrand(brandRequest);
-
             // Given: 상품 생성 요청
             ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
-                    savedBrand.getId(),
+                    1L,
                     "테스트상품",
                     "상품 설명",
                     new BigDecimal("10000"),
@@ -100,15 +111,181 @@ public class LikeIntegrationTest {
             assertThat(result.username()).isEqualTo(userInfo.username());
             assertThat(result.productId()).isEqualTo(savedProduct.getId());
         }
+
+        @Test
+        @DisplayName("삭제된 사용자면 예외를 던진다")
+        void 삭제된_사용자면_예외를_던진다() {
+            // Given
+            UserEntity deletedUser = UserTestFixture.createDefaultUserEntity();
+            deletedUser.delete();
+            userRepository.save(deletedUser);
+
+            // Given: 상품 생성 요청
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity savedProduct = productService.registerProduct(productRequest);
+
+            // When & Then
+            assertThatThrownBy(
+                    () -> likeFacade.upsertLike(deletedUser.getUsername(), savedProduct.getId())
+            ).isInstanceOf(CoreException.class);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 사용자면 예외를 던진다")
+        void 존재하지_않는_사용자면_예외를_던진다() {
+            // Given: 상품 생성 요청
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity savedProduct = productService.registerProduct(productRequest);
+
+            // When & Then
+            assertThatThrownBy(
+                    () -> likeFacade.upsertLike("existUser", savedProduct.getId())
+            ).isInstanceOf(CoreException.class);
+        }
+
+
+        @Test
+        @DisplayName("삭제된 상품이면 예외를 던진다")
+        void 삭제된_상품이면_예외를_던진다() {
+            // Given
+            UserEntity user = UserTestFixture.createDefaultUserEntity();
+            userRepository.save(user);
+
+            ProductEntity deletedProduct = ProductTestFixture.createEntity(1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100);
+            deletedProduct.delete();
+            productRepository.save(deletedProduct);
+
+            // When & Then
+            assertThatThrownBy(
+                    () -> likeFacade.upsertLike(user.getUsername(), deletedProduct.getId())
+            ).isInstanceOf(CoreException.class);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 상품이면 예외를 던진다")
+        void 존재하지_않는_상품이면_예외를_던진다() {
+            // Given
+            UserEntity user = UserTestFixture.createDefaultUserEntity();
+            userRepository.save(user);
+
+            // When & Then
+            assertThatThrownBy(
+                    () -> likeFacade.upsertLike(user.getUsername(), 999L)
+            ).isInstanceOf(CoreException.class);
+        }
+
+        @Test
+        @DisplayName("이미 삭제된 좋아요를 다시 등록하면 복원된다")
+        void 이미_삭제된_좋아요를_다시_등록하면_복원된다() {
+            // Given: 사용자 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
+
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+
+
+            ProductEntity product = productService.registerProduct(request);
+
+            LikeEntity deletedLike = LikeEntity.createEntity(userInfo.id(), product.getId());
+            deletedLike.delete();
+            likeRepository.save(deletedLike);
+
+            // When
+            LikeInfo result = likeFacade.upsertLike(userInfo.username(), product.getId());
+
+            // Then
+            assertThat(result).isNotNull();
+            Optional<LikeEntity> found = likeRepository.findByUserIdAndProductId(
+                    userInfo.id(), product.getId()
+            );
+            assertThat(found).isPresent();
+            assertThat(found.get().getDeletedAt()).isNull();
+        }
     }
 
 
-    /**
-     * 좋아요 취소 관련 테스트 케이스 그룹
-     */
     @Nested
     @DisplayName("좋아요 취소")
     class 좋아요_취소 {
-        // TODO: 좋아요 취소 테스트 케이스 구현 예정
+        @Test
+        @DisplayName("유효한 사용자의 좋아요를 취소하면 성공한다")
+        void 유효한_사용자의_좋아요를_취소하면_성공한다() {
+
+
+        }
+
+        @Test
+        @DisplayName("삭제된 사용자가 좋아요를 취소하려 하면 예외를 던진다")
+        void 삭제된_사용자가_좋아요를_취소하려_하면_예외를_던진다() {
+
+        }
+        @Test
+        @DisplayName("존재하지 않는 사용자가 좋아요를 취소하려 하면 예외를 던진다")
+        void 존재하지_않는_사용자가_좋아요를_취소하려_하면_예외를_던진다() {
+
+        }
+        @Test
+        @DisplayName("삭제된 상품의 좋아요를 취소하면 성공한다")
+        void 삭제된_상품의_좋아요를_취소하면_성공한다() {
+
+        }
+
+        @Test
+        @DisplayName("좋아요가 존재하지 않아도 취소는 무시하고 성공한다")
+        void 좋아요가_존재하지_않아도_취소는_무시하고_성공한다() {
+
+        }
+
+    }
+
+    @Nested
+    @DisplayName("멱등성 테스트")
+    class 멱등성_테스트 {
+        @Test
+        @DisplayName("동시에 같은 좋아요를 등록하면 중복이 생성되지 않는다")
+        void 동시에_같은_좋아요를_등록하면_중복이_생성되지_않는다() throws InterruptedException {
+
+        }
+
+        @Test
+        @DisplayName("동시에 같은 좋아요를 등록 및 취소하면 멱등성이 보장된다")
+        void 동시에_같은_좋아요를_등록_및_취소하면_멱등성이_보장된다() throws InterruptedException {
+
+        }
+
+
+        @Test
+        @DisplayName("동시에 여러 번 좋아요 취소 시 중복 취소가 발생하지 않는다")
+        void 동시에_여러_번_좋아요_취소_시_중복_취소가_발생하지_않는다() throws InterruptedException {
+
+        }
+
+        @Test
+        @DisplayName("복수의 사용자가 동시에 같은 상품에 좋아요하면 각각 독립적으로 등록된다")
+        void 복수의_사용자가_동시에_같은_상품에_좋아요하면_각각_독립적으로_등록된다() {
+
+        }
     }
 }

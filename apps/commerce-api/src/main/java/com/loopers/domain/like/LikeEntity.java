@@ -39,7 +39,6 @@ public class LikeEntity extends BaseEntity {
     }
 
     public static LikeEntity createEntity(Long userId, Long productId) {
-        ;
         return new LikeEntity(userId, productId);
     }
 }
