@@ -20,11 +20,11 @@ class OrderItemUnitTest {
 
     @Nested
     @DisplayName("주문 항목 엔티티 생성")
-    class 주문_항목_엔티티_생성 {
+    class OrderItemCreation {
 
         @Test
         @DisplayName("유효한 정보로 주문 항목 엔티티를 생성하면 성공한다")
-        void 유효한_정보로_주문_항목_엔티티를_생성하면_성공한다() {
+        void should_create_order_item_successfully_with_valid_information() {
             // given
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
@@ -47,7 +47,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("주문 항목 생성 시 총 가격이 자동으로 계산된다")
-        void 주문_항목_생성_시_총_가격이_자동으로_계산된다() {
+        void should_calculate_total_price_automatically_when_creating_order_item() {
             // given
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
@@ -67,7 +67,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("주문 항목 생성 요청이 null인 경우 예외가 발생한다")
-        void 주문_항목_생성_요청이_null인_경우_예외가_발생한다() {
+        void should_throw_exception_when_create_request_is_null() {
             // given
             OrderItemDomainCreateRequest request = null;
             
@@ -79,7 +79,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("주문 ID가 null인 경우 예외가 발생한다")
-        void 주문_ID가_null인_경우_예외가_발생한다() {
+        void should_throw_exception_when_order_id_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 null,
@@ -93,7 +93,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("상품 ID가 null인 경우 예외가 발생한다")
-        void 상품_ID가_null인_경우_예외가_발생한다() {
+        void should_throw_exception_when_product_id_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
@@ -107,7 +107,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("주문 수량이 null인 경우 예외가 발생한다")
-        void 주문_수량이_null인_경우_예외가_발생한다() {
+        void should_throw_exception_when_quantity_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
@@ -121,7 +121,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("주문 수량이 0 이하인 경우 예외가 발생한다")
-        void 주문_수량이_0_이하인_경우_예외가_발생한다() {
+        void should_throw_exception_when_quantity_is_zero_or_negative() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
@@ -144,7 +144,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("주문 수량이 999를 초과하는 경우 예외가 발생한다")
-        void 주문_수량이_999를_초과하는_경우_예외가_발생한다() {
+        void should_throw_exception_when_quantity_exceeds_999() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
@@ -158,7 +158,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("단가가 null인 경우 예외가 발생한다")
-        void 단가가_null인_경우_예외가_발생한다() {
+        void should_throw_exception_when_unit_price_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
@@ -172,7 +172,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("단가가 0 이하인 경우 예외가 발생한다")
-        void 단가가_0_이하인_경우_예외가_발생한다() {
+        void should_throw_exception_when_unit_price_is_zero_or_negative() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
@@ -196,11 +196,11 @@ class OrderItemUnitTest {
 
     @Nested
     @DisplayName("항목 총액 계산")
-    class 항목_총액_계산 {
+    class ItemTotalCalculation {
 
         @Test
         @DisplayName("단가와 수량을 곱한 값이 총 가격으로 계산된다")
-        void 단가와_수량을_곱한_값이_총_가격으로_계산된다() {
+        void should_calculate_total_price_by_multiplying_unit_price_and_quantity() {
             // given
             BigDecimal unitPrice = new BigDecimal("25000.00");
             Integer quantity = 4;
@@ -223,7 +223,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("수량이 1인 경우 총 가격은 단가와 같다")
-        void 수량이_1인_경우_총_가격은_단가와_같다() {
+        void should_equal_unit_price_when_quantity_is_one() {
             // given
             BigDecimal unitPrice = new BigDecimal("50000.00");
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
@@ -243,7 +243,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("수량이 여러 개인 경우 총 가격이 정확히 계산된다")
-        void 수량이_여러_개인_경우_총_가격이_정확히_계산된다() {
+        void should_calculate_total_price_accurately_with_multiple_quantities() {
             // given
             OrderItemDomainCreateRequest request1 = new OrderItemDomainCreateRequest(
                 1L, 100L, 5, new BigDecimal("12000.00")
@@ -269,11 +269,11 @@ class OrderItemUnitTest {
 
     @Nested
     @DisplayName("엔티티 검증")
-    class 엔티티_검증 {
+    class EntityValidation {
 
         @Test
         @DisplayName("모든 필수 값이 유효하면 검증에 성공한다")
-        void 모든_필수_값이_유효하면_검증에_성공한다() {
+        void should_pass_validation_when_all_required_fields_are_valid() {
             // given
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
@@ -296,7 +296,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("주문 ID가 null이면 검증에 실패한다")
-        void 주문_ID가_null이면_검증에_실패한다() {
+        void should_fail_validation_when_order_id_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 null,
@@ -310,7 +310,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("상품 ID가 null이면 검증에 실패한다")
-        void 상품_ID가_null이면_검증에_실패한다() {
+        void should_fail_validation_when_product_id_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
@@ -324,7 +324,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("주문 수량이 null이면 검증에 실패한다")
-        void 주문_수량이_null이면_검증에_실패한다() {
+        void should_fail_validation_when_quantity_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
@@ -338,7 +338,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("주문 수량이 0 이하이면 검증에 실패한다")
-        void 주문_수량이_0_이하이면_검증에_실패한다() {
+        void should_fail_validation_when_quantity_is_zero_or_negative() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
@@ -352,7 +352,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("단가가 null이면 검증에 실패한다")
-        void 단가가_null이면_검증에_실패한다() {
+        void should_fail_validation_when_unit_price_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
@@ -366,7 +366,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("단가가 0 이하이면 검증에 실패한다")
-        void 단가가_0_이하이면_검증에_실패한다() {
+        void should_fail_validation_when_unit_price_is_zero_or_negative() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
@@ -380,7 +380,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("총 가격이 null이면 검증에 실패한다")
-        void 총_가격이_null이면_검증에_실패한다() {
+        void should_fail_validation_when_total_price_is_null() {
             // given
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
@@ -412,7 +412,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("총 가격이 0 이하이면 검증에 실패한다")
-        void 총_가격이_0_이하이면_검증에_실패한다() {
+        void should_fail_validation_when_total_price_is_zero_or_negative() {
             // given
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
@@ -444,7 +444,7 @@ class OrderItemUnitTest {
 
         @Test
         @DisplayName("총 가격이 단가_곱하기_수량과_일치하지_않으면_검증에_실패한다")
-        void 총_가격이_단가_곱하기_수량과_일치하지_않으면_검증에_실패한다() {
+        void should_fail_validation_when_total_price_does_not_match_unit_price_times_quantity() {
             // given
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,

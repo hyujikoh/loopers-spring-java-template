@@ -27,7 +27,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("유효한 정보로 주문 엔티티를 생성하면 성공한다")
-        void 유효한_정보로_주문_엔티티를_생성하면_성공한다() {
+        void should_create_order_entity_successfully_with_valid_information() {
             // given
             Long userId = 1L;
             BigDecimal totalAmount = new BigDecimal("50000");
@@ -44,7 +44,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("주문 생성 시 상태는 PENDING이다")
-        void 주문_생성_시_상태는_PENDING이다() {
+        void should_have_pending_status_when_order_is_created() {
             // given
             OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
             
@@ -58,7 +58,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("주문 생성 요청이 null인 경우 예외가 발생한다")
-        void 주문_생성_요청이_null인_경우_예외가_발생한다() {
+        void should_throw_exception_when_create_request_is_null() {
             // given & when & then
             Assertions.assertThatThrownBy(() -> OrderEntity.createOrder(null))
                     .isInstanceOf(NullPointerException.class)
@@ -67,7 +67,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("사용자 ID가 null인 경우 예외가 발생한다")
-        void 사용자_ID가_null인_경우_예외가_발생한다() {
+        void should_throw_exception_when_user_id_is_null() {
             // given & when & then
             Assertions.assertThatThrownBy(() -> 
                     new OrderDomainCreateRequest(null, new BigDecimal("50000")))
@@ -77,7 +77,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("주문 총액이 null인 경우 예외가 발생한다")
-        void 주문_총액이_null인_경우_예외가_발생한다() {
+        void should_throw_exception_when_total_amount_is_null() {
             // given & when & then
             Assertions.assertThatThrownBy(() -> 
                     new OrderDomainCreateRequest(1L, null))
@@ -87,7 +87,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("주문 총액이 0 이하인 경우 예외가 발생한다")
-        void 주문_총액이_0_이하인_경우_예외가_발생한다() {
+        void should_throw_exception_when_total_amount_is_zero_or_negative() {
             // given & when & then
             Assertions.assertThatThrownBy(() -> 
                     new OrderDomainCreateRequest(1L, BigDecimal.ZERO))
@@ -114,7 +114,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("PENDING 상태의 주문을 확정하면 CONFIRMED 상태로 변경된다")
-        void PENDING_상태의_주문을_확정하면_CONFIRMED_상태로_변경된다() {
+        void should_change_status_to_confirmed_when_confirming_pending_order() {
             // given
             Assertions.assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
             
@@ -128,7 +128,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("PENDING이 아닌 상태에서 확정하면 예외가 발생한다")
-        void PENDING이_아닌_상태에서_확정하면_예외가_발생한다() {
+        void should_throw_exception_when_confirming_non_pending_order() {
             // given
             order.confirmOrder(); // CONFIRMED 상태로 변경
             
@@ -153,7 +153,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("PENDING 상태의 주문은 isPending이 true를 반환한다")
-        void PENDING_상태의_주문은_isPending이_true를_반환한다() {
+        void should_return_true_for_is_pending_when_order_status_is_pending() {
             // given & when & then
             Assertions.assertThat(order.isPending()).isTrue();
             Assertions.assertThat(order.isConfirmed()).isFalse();
@@ -161,7 +161,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("CONFIRMED 상태의 주문은 isConfirmed가 true를 반환한다")
-        void CONFIRMED_상태의_주문은_isConfirmed가_true를_반환한다() {
+        void should_return_true_for_is_confirmed_when_order_status_is_confirmed() {
             // given
             order.confirmOrder();
             
@@ -172,7 +172,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("PENDING 상태의 주문은 isConfirmed가 false를 반환한다")
-        void PENDING_상태의_주문은_isConfirmed가_false를_반환한다() {
+        void should_return_false_for_is_confirmed_when_order_status_is_pending() {
             // given & when & then
             Assertions.assertThat(order.isConfirmed()).isFalse();
         }
@@ -184,7 +184,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("모든 필수 값이 유효하면 검증에 성공한다")
-        void 모든_필수_값이_유효하면_검증에_성공한다() {
+        void should_pass_validation_when_all_required_fields_are_valid() {
             // given
             OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
             OrderEntity order = OrderEntity.createOrder(request);
@@ -196,7 +196,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("사용자 ID가 null이면 검증에 실패한다")
-        void 사용자_ID가_null이면_검증에_실패한다() {
+        void should_fail_validation_when_user_id_is_null() {
             // given
             OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
             OrderEntity order = OrderEntity.createOrder(request);
@@ -213,7 +213,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("주문 총액이 null이면 검증에 실패한다")
-        void 주문_총액이_null이면_검증에_실패한다() {
+        void should_fail_validation_when_total_amount_is_null() {
             // given
             OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
             OrderEntity order = OrderEntity.createOrder(request);
@@ -230,7 +230,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("주문 총액이 0 이하이면 검증에 실패한다")
-        void 주문_총액이_0_이하이면_검증에_실패한다() {
+        void should_fail_validation_when_total_amount_is_zero_or_negative() {
             // given
             OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
             OrderEntity order = OrderEntity.createOrder(request);
@@ -247,7 +247,7 @@ class OrderUnitTest {
 
         @Test
         @DisplayName("주문 상태가 null이면 검증에 실패한다")
-        void 주문_상태가_null이면_검증에_실패한다() {
+        void should_fail_validation_when_order_status_is_null() {
             // given
             OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
             OrderEntity order = OrderEntity.createOrder(request);
