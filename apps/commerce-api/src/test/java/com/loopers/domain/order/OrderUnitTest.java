@@ -136,7 +136,7 @@ class OrderUnitTest {
             Assertions.assertThatThrownBy(() -> order.confirmOrder())
                     .isInstanceOf(CoreException.class)
                     .hasFieldOrPropertyWithValue("errorType", ErrorType.INVALID_ORDER_STATUS)
-                    .hasMessageContaining("주문 확정은 대기 상태에서만 가능합니다");
+                    .hasMessageContaining("주문 확정은 대기 상태 또는 활성화된 주문만 가능합니다.");
         }
     }
 

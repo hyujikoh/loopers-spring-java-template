@@ -15,4 +15,20 @@ public record OrderDomainCreateRequest(
         Long userId,
         BigDecimal totalAmount
 ) {
+    /**
+     * 레코드 생성자 - 유효성 검증
+     */
+    public OrderDomainCreateRequest {
+        if (userId == null) {
+            throw new IllegalArgumentException("사용자 ID는 필수입니다.");
+        }
+
+        if (totalAmount == null) {
+            throw new IllegalArgumentException("주문 총액은 필수입니다.");
+        }
+
+        if (totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("주문 총액은 0보다 커야 합니다.");
+        }
+    }
 }
