@@ -1,12 +1,17 @@
 package com.loopers.domain.order;
 
+import java.math.BigDecimal;
+
 import com.loopers.domain.BaseEntity;
-import jakarta.persistence.*;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
 /**
  * @author hyunjikoh
@@ -38,7 +43,7 @@ public class OrderItemEntity extends BaseEntity {
 
     /**
      * 주문 항목 엔티티 생성자
-     * 
+     *
      * @param request 주문 항목 생성 요청 DTO
      * @throws IllegalArgumentException request가 null이거나 필수 값이 누락된 경우
      */
@@ -54,7 +59,7 @@ public class OrderItemEntity extends BaseEntity {
 
     /**
      * 주문 항목 생성 요청의 유효성을 검증합니다.
-     * 
+     *
      * @param request 주문 항목 생성 요청 DTO
      * @throws IllegalArgumentException 유효하지 않은 값이 포함된 경우
      */
@@ -90,7 +95,7 @@ public class OrderItemEntity extends BaseEntity {
 
     /**
      * 주문 항목을 생성합니다.
-     * 
+     *
      * @param request 주문 항목 생성 요청 DTO
      * @return 생성된 주문 항목 엔티티
      */
@@ -100,7 +105,7 @@ public class OrderItemEntity extends BaseEntity {
 
     /**
      * 주문 항목의 총액을 계산합니다.
-     * 
+     *
      * @return 항목 총액 (단가 × 수량)
      */
     public BigDecimal calculateItemTotal() {

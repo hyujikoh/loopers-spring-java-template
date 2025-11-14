@@ -15,7 +15,7 @@ import jakarta.validation.Valid;
 
 /**
  * 브랜드 도메인 서비스
- *
+ * <p>
  * 브랜드 도메인의 비즈니스 로직을 처리합니다.
  * 단일 책임 원칙에 따라 브랜드 Repository에만 의존합니다.
  *
@@ -73,7 +73,7 @@ public class BrandService {
     /**
      * 검색 필터 조건으로 브랜드를 조회합니다.
      *
-     * @param filter 검색 필터
+     * @param filter   검색 필터
      * @param pageable 페이징 정보
      * @return 검색된 브랜드 목록 페이지
      */
@@ -84,7 +84,7 @@ public class BrandService {
 
     /**
      * 브랜드를 등록합니다.
-     *
+     * <p>
      * 브랜드 등록은 단일 도메인 작업이므로 도메인 서비스에서 트랜잭션 처리합니다.
      *
      * @param request 브랜드 생성 요청 정보

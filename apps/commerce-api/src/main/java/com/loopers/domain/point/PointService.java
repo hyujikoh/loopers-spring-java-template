@@ -64,8 +64,8 @@ public class PointService {
     /**
      * 사용자의 포인트를 사용합니다.
      *
-     * @param user 사용자명
-     * @param amount   사용할 금액
+     * @param user   사용자명
+     * @param amount 사용할 금액
      * @return 사용 후 포인트 잔액
      */
     @Transactional

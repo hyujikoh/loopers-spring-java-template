@@ -35,7 +35,7 @@ public class ProductRepositoryImpl implements ProductRepository {
     public Optional<ProductEntity> findById(Long id) {
         return productJpaRepository.findByIdAndDeletedAtIsNull(id);
     }
-    
+
     @Override
     public Optional<ProductEntity> findByIdWithLock(Long id) {
         return productJpaRepository.findByIdWithLock(id);

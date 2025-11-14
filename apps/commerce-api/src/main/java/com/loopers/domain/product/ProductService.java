@@ -14,7 +14,7 @@ import jakarta.validation.Valid;
 
 /**
  * 상품 도메인 서비스
- *
+ * <p>
  * 상품 도메인의 비즈니스 로직을 처리합니다.
  * 단일 책임 원칙에 따라 상품 Repository에만 의존합니다.
  *
@@ -71,7 +71,7 @@ public class ProductService {
 
     /**
      * 상품을 등록합니다.
-     *
+     * <p>
      * 상품 등록은 단일 도메인 작업이므로 도메인 서비스에서 트랜잭션 처리합니다.
      *
      * @param request 상품 생성 요청 정보
@@ -87,11 +87,11 @@ public class ProductService {
 
     /**
      * 상품 재고를 차감합니다.
-     *
+     * <p>
      * 재고 차감은 상품 도메인의 핵심 비즈니스 로직입니다.
      *
      * @param productId 상품 ID
-     * @param quantity 차감할 재고 수량
+     * @param quantity  차감할 재고 수량
      * @return 재고가 차감된 상품 엔티티
      * @throws CoreException 상품을 찾을 수 없거나 재고가 부족한 경우
      */
@@ -100,17 +100,17 @@ public class ProductService {
         // 비관적 락을 사용하여 동시성 제어
         ProductEntity product = productRepository.findByIdWithLock(productId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다. ID: " + productId));
-        
+
         product.deductStock(quantity);
         return productRepository.save(product);
     }
 
     /**
      * 상품 엔티티의 재고를 차감합니다.
-     *
+     * <p>
      * 이미 조회된 상품 엔티티의 재고를 차감할 때 사용합니다.
      *
-     * @param product 재고를 차감할 상품 엔티티
+     * @param product  재고를 차감할 상품 엔티티
      * @param quantity 차감할 재고 수량
      * @return 재고가 차감된 상품 엔티티
      */
@@ -122,11 +122,11 @@ public class ProductService {
 
     /**
      * 상품 재고를 원복합니다.
-     *
+     * <p>
      * 주문 취소 시 차감된 재고를 다시 복구합니다.
      *
      * @param productId 상품 ID
-     * @param quantity 원복할 재고 수량
+     * @param quantity  원복할 재고 수량
      * @return 재고가 원복된 상품 엔티티
      * @throws CoreException 상품을 찾을 수 없는 경우
      */
@@ -135,7 +135,7 @@ public class ProductService {
         // 비관적 락을 사용하여 동시성 제어
         ProductEntity product = productRepository.findByIdWithLock(productId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다. ID: " + productId));
-        
+
         product.restoreStock(quantity);
         return productRepository.save(product);
     }

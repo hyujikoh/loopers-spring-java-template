@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 주문 도메인 서비스
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 11. 14.
  */
@@ -21,13 +21,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class OrderService {
-    
+
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
     /**
      * 주문을 생성합니다.
-     * 
+     *
      * @param request 주문 생성 요청
      * @return 생성된 주문 엔티티
      */
@@ -36,10 +36,10 @@ public class OrderService {
         OrderEntity order = OrderEntity.createOrder(request);
         return orderRepository.save(order);
     }
-    
+
     /**
      * 주문 ID로 주문을 조회합니다.
-     * 
+     *
      * @param orderId 주문 ID
      * @return 조회된 주문 엔티티
      * @throws CoreException 주문을 찾을 수 없는 경우
@@ -93,7 +93,7 @@ public class OrderService {
 
     /**
      * 사용자 ID로 주문 목록을 조회합니다.
-     * 
+     *
      * @param userId 사용자 ID
      * @return 주문 목록
      */
@@ -103,20 +103,20 @@ public class OrderService {
 
     /**
      * 사용자 ID로 주문 목록을 페이징하여 조회합니다.
-     * 
-     * @param userId 사용자 ID
+     *
+     * @param userId   사용자 ID
      * @param pageable 페이징 정보
      * @return 페이징된 주문 목록
      */
     public org.springframework.data.domain.Page<OrderEntity> getOrdersByUserId(
-            Long userId, 
+            Long userId,
             Pageable pageable) {
         return orderRepository.findByUserId(userId, pageable);
     }
 
     /**
      * 사용자 ID와 주문 상태로 주문 목록을 조회합니다.
-     * 
+     *
      * @param userId 사용자 ID
      * @param status 주문 상태
      * @return 주문 목록
@@ -124,26 +124,26 @@ public class OrderService {
     public List<OrderEntity> getOrdersByUserIdAndStatus(Long userId, OrderStatus status) {
         return orderRepository.findByUserIdAndStatus(userId, status);
     }
-    
+
     /**
      * 주문 ID로 주문 항목 개수를 조회합니다.
-     * 
+     *
      * @param orderId 주문 ID
      * @return 주문 항목 개수
      */
     public int countOrderItems(Long orderId) {
         return orderItemRepository.countByOrderId(orderId);
     }
-    
+
     /**
      * 주문 ID로 주문 항목 목록을 페이징하여 조회합니다.
-     * 
-     * @param orderId 주문 ID
+     *
+     * @param orderId  주문 ID
      * @param pageable 페이징 정보
      * @return 페이징된 주문 항목 목록
      */
     public org.springframework.data.domain.Page<OrderItemEntity> getOrderItemsByOrderId(
-            Long orderId, 
+            Long orderId,
             Pageable pageable) {
         return orderItemRepository.findByOrderId(orderId, pageable);
     }

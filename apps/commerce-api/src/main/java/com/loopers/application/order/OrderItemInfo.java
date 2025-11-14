@@ -1,13 +1,13 @@
 package com.loopers.application.order;
 
-import com.loopers.domain.order.OrderItemEntity;
-
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 
+import com.loopers.domain.order.OrderItemEntity;
+
 /**
  * 주문 항목 정보 DTO
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 11. 14.
  */
@@ -21,10 +21,10 @@ public record OrderItemInfo(
         ZonedDateTime createdAt,
         ZonedDateTime updatedAt
 ) {
-    
+
     /**
      * OrderItemEntity로부터 OrderItemInfo를 생성합니다.
-     * 
+     *
      * @param orderItem 주문 항목 엔티티
      * @return OrderItemInfo
      */

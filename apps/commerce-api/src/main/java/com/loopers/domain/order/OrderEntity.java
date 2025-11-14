@@ -1,15 +1,17 @@
 package com.loopers.domain.order;
 
+import java.math.BigDecimal;
+import java.util.Objects;
+
 import com.loopers.domain.BaseEntity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import jakarta.persistence.*;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.util.Objects;
+import jakarta.persistence.*;
 
 /**
  * @author hyunjikoh
@@ -36,7 +38,7 @@ public class OrderEntity extends BaseEntity {
 
     /**
      * 주문 엔티티 생성자
-     * 
+     *
      * @param request 주문 생성 요청 DTO
      * @throws IllegalArgumentException request가 null인 경우
      */
@@ -56,7 +58,7 @@ public class OrderEntity extends BaseEntity {
 
     /**
      * 주문을 생성합니다.
-     * 
+     *
      * @param request 주문 생성 요청 DTO
      * @return 생성된 주문 엔티티
      */
@@ -76,13 +78,13 @@ public class OrderEntity extends BaseEntity {
                     String.format("주문 확정은 대기 상태 또는 활성화된 주문만 가능합니다. (현재 상태: %s)", this.status)
             );
         }
-        
+
         this.status = OrderStatus.CONFIRMED;
     }
 
     /**
      * 주문이 대기 상태인지 확인합니다.
-     * 
+     *
      * @return 대기 상태 여부
      */
     public boolean isPending() {
@@ -91,7 +93,7 @@ public class OrderEntity extends BaseEntity {
 
     /**
      * 주문이 확정 상태인지 확인합니다.
-     * 
+     *
      * @return 확정 상태 여부
      */
     public boolean isConfirmed() {
@@ -100,15 +102,15 @@ public class OrderEntity extends BaseEntity {
 
     /**
      * 주문을 취소합니다.
-     * 
+     *
      * <p>PENDING 또는 CONFIRMED 상태의 주문만 취소할 수 있습니다.</p>
-     * 
+     *
      * @throws IllegalStateException 취소할 수 없는 상태인 경우
      */
     public void cancelOrder() {
         if (this.status != OrderStatus.PENDING && this.status != OrderStatus.CONFIRMED) {
             throw new IllegalStateException(
-                String.format("PENDING 또는 CONFIRMED 상태의 주문만 취소할 수 있습니다. 현재 상태: %s", this.status)
+                    String.format("PENDING 또는 CONFIRMED 상태의 주문만 취소할 수 있습니다. 현재 상태: %s", this.status)
             );
         }
         this.status = OrderStatus.CANCELLED;
@@ -116,7 +118,7 @@ public class OrderEntity extends BaseEntity {
 
     /**
      * 주문이 취소 상태인지 확인합니다.
-     * 
+     *
      * @return 취소 상태 여부
      */
     public boolean isCancelled() {
