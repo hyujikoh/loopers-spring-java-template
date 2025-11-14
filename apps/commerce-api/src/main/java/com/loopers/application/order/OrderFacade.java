@@ -168,72 +168,38 @@ public class OrderFacade {
     }
 
     /**
-     * 사용자 ID로 주문 목록 조회
-     *
-     * @param userId 사용자 ID
-     * @return 주문 목록
-     */
-    public List<OrderInfo> getOrdersByUserId(Long userId) {
-        List<OrderEntity> orders = orderService.getOrdersByUserId(userId);
-        return orders.stream()
-                .map(order -> {
-                    List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order.getId());
-                    return OrderInfo.from(order, orderItems);
-                })
-                .toList();
-    }
-
-    /**
-     * 사용자 ID로 주문 목록 페이징 조회
+     * 사용자 ID로 주문 요약 목록을 페이징하여 조회합니다.
+     * 주문 항목 정보는 포함하지 않고 항목 개수만 포함합니다.
      *
      * @param userId   사용자 ID
      * @param pageable 페이징 정보
-     * @return 페이징된 주문 목록
+     * @return 페이징된 주문 요약 정보 목록
      */
-    public Page<OrderInfo> getOrdersByUserId(
-            Long userId,
-            Pageable pageable) {
-        org.springframework.data.domain.Page<OrderEntity> orderPage =
-                orderService.getOrdersByUserId(userId, pageable);
-
+    public Page<OrderSummary> getOrderSummariesByUserId(Long userId, Pageable pageable) {
+        Page<OrderEntity> orderPage = orderService.getOrdersByUserId(userId, pageable);
         return orderPage.map(order -> {
-            List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order.getId());
-            return OrderInfo.from(order, orderItems);
+            int itemCount = orderService.countOrderItems(order.getId());
+            return OrderSummary.from(order, itemCount);
         });
     }
 
     /**
-     * 사용자 ID와 주문 상태로 주문 목록 조회
+     * 사용자 ID와 주문 상태로 주문 요약 목록을 페이징하여 조회합니다.
      *
-     * @param userId 사용자 ID
-     * @param status 주문 상태
-     * @return 주문 목록
+     * @param userId   사용자 ID
+     * @param status   주문 상태
+     * @param pageable 페이징 정보
+     * @return 페이징된 주문 요약 정보 목록
      */
-    public List<OrderInfo> getOrdersByUserIdAndStatus(Long userId, OrderStatus status) {
-        List<OrderEntity> orders = orderService.getOrdersByUserIdAndStatus(userId, status);
-        return orders.stream()
-                .map(order -> {
-                    List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order.getId());
-                    return OrderInfo.from(order, orderItems);
-                })
-                .toList();
-    }
-
-    /**
-     * 사용자 ID로 주문 요약 목록을 조회합니다.
-     * 주문 항목 정보는 포함하지 않고 항목 개수만 포함합니다.
-     *
-     * @param userId 사용자 ID
-     * @return 주문 요약 정보 목록
-     */
-    public List<OrderSummary> getOrderSummariesByUserId(Long userId) {
-        List<OrderEntity> orders = orderService.getOrdersByUserId(userId);
-        return orders.stream()
-                .map(order -> {
-                    int itemCount = orderService.countOrderItems(order.getId());
-                    return OrderSummary.from(order, itemCount);
-                })
-                .toList();
+    public Page<OrderSummary> getOrderSummariesByUserIdAndStatus(
+            Long userId,
+            OrderStatus status,
+            Pageable pageable) {
+        Page<OrderEntity> orderPage = orderService.getOrdersByUserIdAndStatus(userId, status, pageable);
+        return orderPage.map(order -> {
+            int itemCount = orderService.countOrderItems(order.getId());
+            return OrderSummary.from(order, itemCount);
+        });
     }
 
     /**

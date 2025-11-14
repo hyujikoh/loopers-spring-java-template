@@ -50,11 +50,12 @@ public interface OrderRepository {
             Pageable pageable);
 
     /**
-     * 사용자 ID와 주문 상태로 주문 목록을 조회합니다.
+     * 사용자 ID와 주문 상태로 주문 목록을 페이징하여 조회합니다.
      *
-     * @param userId 사용자 ID
-     * @param status 주문 상태
-     * @return 주문 목록
+     * @param userId   사용자 ID
+     * @param status   주문 상태
+     * @param pageable 페이징 정보
+     * @return 페이징된 주문 목록
      */
-    List<OrderEntity> findByUserIdAndStatus(Long userId, OrderStatus status);
+    Page<OrderEntity> findByUserIdAndStatus(Long userId, OrderStatus status, Pageable pageable);
 }

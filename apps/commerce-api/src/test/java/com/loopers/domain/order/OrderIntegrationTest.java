@@ -613,8 +613,8 @@ public class OrderIntegrationTest {
         }
 
         @Test
-        @DisplayName("사용자 ID로 주문 목록을 조회할 수 있다")
-        void should_retrieve_orders_by_user_id() {
+        @DisplayName("사용자 ID로 주문 요약 목록을 페이징하여 조회할 수 있다")
+        void should_retrieve_order_summaries_by_user_id_with_pagination() {
             // Given: 브랜드 생성
             BrandEntity brand = brandService.registerBrand(
                     BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
@@ -644,14 +644,18 @@ public class OrderIntegrationTest {
                     .orderItems(List.of(OrderItemCommand.builder().productId(product2.getId()).quantity(2).build()))
                     .build());
 
-            // When: 사용자 ID로 주문 목록 조회
-            List<OrderInfo> orders = orderFacade.getOrdersByUserId(userInfo.id());
+            // When: 사용자 ID로 주문 요약 목록 페이징 조회
+            Page<OrderSummary> orderPage = orderFacade.getOrderSummariesByUserId(
+                    userInfo.id(),
+                    PageRequest.of(0, 10)
+            );
 
             // Then: 해당 사용자의 모든 주문이 조회되는지 검증
-            assertThat(orders).isNotNull();
-            assertThat(orders).hasSize(2);
-            assertThat(orders).extracting("id").containsExactlyInAnyOrder(order1.id(), order2.id());
-            assertThat(orders).allMatch(order -> order.userId().equals(userInfo.id()));
+            assertThat(orderPage).isNotNull();
+            assertThat(orderPage.getContent()).hasSize(2);
+            assertThat(orderPage.getTotalElements()).isEqualTo(2);
+            assertThat(orderPage.getContent()).extracting("id").containsExactlyInAnyOrder(order1.id(), order2.id());
+            assertThat(orderPage.getContent()).allMatch(order -> order.userId().equals(userInfo.id()));
         }
 
         @Test
@@ -750,8 +754,8 @@ public class OrderIntegrationTest {
         }
 
         @Test
-        @DisplayName("사용자의 주문 목록을 페이징하여 조회할 수 있다")
-        void should_retrieve_user_orders_with_pagination() {
+        @DisplayName("사용자의 주문 요약 목록을 페이징하여 조회할 수 있다")
+        void should_retrieve_user_order_summaries_with_pagination() {
             // Given: 브랜드 생성
             BrandEntity brand = brandService.registerBrand(
                     BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
@@ -776,9 +780,10 @@ public class OrderIntegrationTest {
             }
 
             // When: 페이지 크기 2로 첫 번째 페이지 조회
-            Page<OrderInfo> firstPage =
-                    orderFacade.getOrdersByUserId(userInfo.id(),
-                            PageRequest.of(0, 2));
+            Page<OrderSummary> firstPage = orderFacade.getOrderSummariesByUserId(
+                    userInfo.id(),
+                    PageRequest.of(0, 2)
+            );
 
             // Then: 페이징 결과 검증
             assertThat(firstPage).isNotNull();
@@ -786,11 +791,12 @@ public class OrderIntegrationTest {
             assertThat(firstPage.getTotalElements()).isEqualTo(5);
             assertThat(firstPage.getTotalPages()).isEqualTo(3);
             assertThat(firstPage.getNumber()).isEqualTo(0);
+            assertThat(firstPage.getContent()).allMatch(summary -> summary.itemCount() == 1);
         }
 
         @Test
-        @DisplayName("주문 상태별로 필터링하여 조회할 수 있다")
-        void should_filter_orders_by_status() {
+        @DisplayName("주문 상태별로 필터링하여 페이징 조회할 수 있다")
+        void should_filter_orders_by_status_with_pagination() {
             // Given: 브랜드 생성
             BrandEntity brand = brandService.registerBrand(
                     BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
@@ -826,23 +832,33 @@ public class OrderIntegrationTest {
             orderFacade.confirmOrder(order1.id());
             orderFacade.confirmOrder(order2.id());
 
-            // When: CONFIRMED 상태의 주문만 조회
-            List<OrderInfo> confirmedOrders = orderFacade.getOrdersByUserIdAndStatus(userInfo.id(), OrderStatus.CONFIRMED);
+            // When: CONFIRMED 상태의 주문만 페이징 조회
+            Page<OrderSummary> confirmedOrders = orderFacade.getOrderSummariesByUserIdAndStatus(
+                    userInfo.id(),
+                    OrderStatus.CONFIRMED,
+                    PageRequest.of(0, 10)
+            );
 
             // Then: CONFIRMED 상태의 주문만 조회되는지 검증
             assertThat(confirmedOrders).isNotNull();
-            assertThat(confirmedOrders).hasSize(2);
-            assertThat(confirmedOrders).allMatch(order -> order.status() == OrderStatus.CONFIRMED);
-            assertThat(confirmedOrders).extracting("id").containsExactlyInAnyOrder(order1.id(), order2.id());
+            assertThat(confirmedOrders.getContent()).hasSize(2);
+            assertThat(confirmedOrders.getTotalElements()).isEqualTo(2);
+            assertThat(confirmedOrders.getContent()).allMatch(order -> order.status() == OrderStatus.CONFIRMED);
+            assertThat(confirmedOrders.getContent()).extracting("id").containsExactlyInAnyOrder(order1.id(), order2.id());
 
-            // When: PENDING 상태의 주문만 조회
-            List<OrderInfo> pendingOrders = orderFacade.getOrdersByUserIdAndStatus(userInfo.id(), OrderStatus.PENDING);
+            // When: PENDING 상태의 주문만 페이징 조회
+            Page<OrderSummary> pendingOrders = orderFacade.getOrderSummariesByUserIdAndStatus(
+                    userInfo.id(),
+                    OrderStatus.PENDING,
+                    PageRequest.of(0, 10)
+            );
 
             // Then: PENDING 상태의 주문만 조회되는지 검증
             assertThat(pendingOrders).isNotNull();
-            assertThat(pendingOrders).hasSize(1);
-            assertThat(pendingOrders.get(0).id()).isEqualTo(order3.id());
-            assertThat(pendingOrders.get(0).status()).isEqualTo(OrderStatus.PENDING);
+            assertThat(pendingOrders.getContent()).hasSize(1);
+            assertThat(pendingOrders.getTotalElements()).isEqualTo(1);
+            assertThat(pendingOrders.getContent().get(0).id()).isEqualTo(order3.id());
+            assertThat(pendingOrders.getContent().get(0).status()).isEqualTo(OrderStatus.PENDING);
         }
     }
 
@@ -851,8 +867,8 @@ public class OrderIntegrationTest {
     class OrderItemManagement {
 
         @Test
-        @DisplayName("주문 목록 조회 시 주문 항목 정보는 포함하지 않는다")
-        void should_not_include_order_items_when_retrieving_order_list() {
+        @DisplayName("주문 요약 목록 조회 시 주문 항목 정보는 포함하지 않고 항목 개수만 포함한다")
+        void should_not_include_order_items_when_retrieving_order_summary_list() {
             // Given: 브랜드 생성
             BrandEntity brand = brandService.registerBrand(
                     BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
@@ -880,14 +896,18 @@ public class OrderIntegrationTest {
                     ))
                     .build());
 
-            // When: 주문 목록 조회 (요약 정보만)
-            List<OrderSummary> orderSummaries = orderFacade.getOrderSummariesByUserId(userInfo.id());
+            // When: 주문 요약 목록 페이징 조회
+            Page<OrderSummary> orderSummaries = orderFacade.getOrderSummariesByUserId(
+                    userInfo.id(),
+                    PageRequest.of(0, 10)
+            );
 
             // Then: 주문 항목 정보는 포함하지 않고 항목 개수만 포함
             assertThat(orderSummaries).isNotNull();
-            assertThat(orderSummaries).hasSize(1);
-            assertThat(orderSummaries.get(0).itemCount()).isEqualTo(2);
-            assertThat(orderSummaries.get(0).totalAmount()).isEqualTo(new BigDecimal("80000.00"));
+            assertThat(orderSummaries.getContent()).hasSize(1);
+            assertThat(orderSummaries.getTotalElements()).isEqualTo(1);
+            assertThat(orderSummaries.getContent().get(0).itemCount()).isEqualTo(2);
+            assertThat(orderSummaries.getContent().get(0).totalAmount()).isEqualTo(new BigDecimal("80000.00"));
         }
 
         @Test
