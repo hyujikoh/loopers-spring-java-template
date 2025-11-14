@@ -25,4 +25,6 @@ public interface OrderItemRepository {
      * @return 주문 항목 목록
      */
     List<OrderItemEntity> findByOrderId(Long orderId);
+
+    void saveAll(List<OrderItemEntity> orderItemsByOrderId);
 }

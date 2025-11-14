@@ -68,6 +68,8 @@ public class OrderIntegrationTest {
 
     @Autowired
     private PointService pointService;
+    @Autowired
+    private OrderService orderService;
 
     @BeforeEach
     void setUp() {
@@ -407,68 +409,149 @@ public class OrderIntegrationTest {
         @Test
         @DisplayName("PENDING 상태의 주문을 확정하면 CONFIRMED 상태로 변경된다")
         void should_change_status_to_confirmed_when_confirming_pending_order() {
-            // TODO: TDD - 구현 필요
-        }
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
 
-        @Test
-        @DisplayName("주문 확정 시 상품 재고가 차감된다")
-        void should_decrease_product_stock_when_confirming_order() {
-            // TODO: TDD - 구현 필요
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("50000"));
+
+            // Given: 상품 생성
+            ProductEntity product = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "테스트상품",
+                            "상품 설명",
+                            new BigDecimal("10000"),
+                            100
+                    )
+            );
+
+            // Given: 주문 생성
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(2)
+                                    .build()
+                    ))
+                    .build();
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+
+            // When: 주문 확정
+            OrderInfo confirmedOrder = orderFacade.confirmOrder(createdOrder.id());
+
+            // Then: 주문 상태가 CONFIRMED로 변경되었는지 검증
+            assertThat(confirmedOrder.status()).isEqualTo(OrderStatus.CONFIRMED);
+            assertThat(confirmedOrder.id()).isEqualTo(createdOrder.id());
         }
 
         @Test
         @DisplayName("PENDING이 아닌 상태의 주문 확정 시 예외가 발생한다")
         void should_throw_exception_when_confirming_non_pending_order() {
-            // TODO: TDD - 구현 필요
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("50000"));
+
+            // Given: 상품 생성
+            ProductEntity product = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "테스트상품",
+                            "상품 설명",
+                            new BigDecimal("10000"),
+                            100
+                    )
+            );
+
+            // Given: 주문 생성 및 확정
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(1)
+                                    .build()
+                    ))
+                    .build();
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+            orderFacade.confirmOrder(createdOrder.id());  // 첫 번째 확정
+
+            // When & Then: 이미 확정된 주문을 다시 확정하려고 하면 예외 발생
+            assertThatThrownBy(() -> orderFacade.confirmOrder(createdOrder.id()))
+                    .isInstanceOf(Exception.class)
+                    .hasMessageContaining("주문 확정은 대기 상태 또는 활성화된 주문만 가능합니다. ");
         }
 
         @Test
         @DisplayName("존재하지 않는 주문 확정 시 예외가 발생한다")
         void should_throw_exception_when_confirming_non_existent_order() {
-            // TODO: TDD - 구현 필요
+            // Given: 존재하지 않는 주문 ID
+            Long nonExistentOrderId = 99999L;
+
+            // When & Then: 존재하지 않는 주문 확정 시 예외 발생
+            assertThatThrownBy(() -> orderFacade.confirmOrder(nonExistentOrderId))
+                    .isInstanceOf(Exception.class)
+                    .hasMessageContaining("주문을 찾을 수 없습니다");
         }
 
         @Test
         @DisplayName("삭제된 주문 확정 시 예외가 발생한다")
         void should_throw_exception_when_confirming_deleted_order() {
-            // TODO: TDD - 구현 필요
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("50000"));
+
+            // Given: 상품 생성
+            ProductEntity product = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "테스트상품",
+                            "상품 설명",
+                            new BigDecimal("10000"),
+                            100
+                    )
+            );
+
+            // Given: 주문 생성
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(1)
+                                    .build()
+                    ))
+                    .build();
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+
+            // Given: 주문 삭제 (소프트 삭제)
+            orderService.deleteOrder(createdOrder.id());
+
+            // When & Then: 삭제된 주문 확정 시 예외 발생
+            assertThatThrownBy(() -> orderFacade.confirmOrder(createdOrder.id()))
+                    .isInstanceOf(Exception.class)
+                    .hasMessageContaining("주문 확정은 대기 상태 또는 활성화된 주문만 가능합니다. (현재 상태: PENDING)");
         }
     }
 
-    @Nested
-    @DisplayName("주문 취소")
-    class OrderCancellation {
 
-        @Test
-        @DisplayName("PENDING 상태의 주문을 취소하면 CANCELLED 상태로 변경된다")
-        void should_change_status_to_cancelled_when_cancelling_pending_order() {
-            // TODO: TDD - 구현 필요
-        }
-
-        @Test
-        @DisplayName("CONFIRMED 상태의 주문을 취소하면 CANCELLED 상태로 변경된다")
-        void should_change_status_to_cancelled_when_cancelling_confirmed_order() {
-            // TODO: TDD - 구현 필요
-        }
-
-        @Test
-        @DisplayName("주문 취소 시 상품 재고가 복원된다")
-        void should_restore_product_stock_when_cancelling_order() {
-            // TODO: TDD - 구현 필요
-        }
-
-        @Test
-        @DisplayName("이미 취소된 주문을 다시 취소하면 예외가 발생한다")
-        void should_throw_exception_when_cancelling_already_cancelled_order() {
-            // TODO: TDD - 구현 필요
-        }
-
-        @Test
-        @DisplayName("존재하지 않는 주문 취소 시 예외가 발생한다")
-        void should_throw_exception_when_cancelling_non_existent_order() {
-            // TODO: TDD - 구현 필요
-        }
-    }
 
     @Nested
     @DisplayName("주문 조회")

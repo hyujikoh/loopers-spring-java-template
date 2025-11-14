@@ -2,11 +2,13 @@ package com.loopers.domain.order;
 
 import java.util.List;
 
-import com.loopers.support.error.CoreException;
-import com.loopers.support.error.ErrorType;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * 주문 도메인 서비스
@@ -69,5 +71,22 @@ public class OrderService {
      */
     public List<OrderItemEntity> getOrderItemsByOrderId(Long orderId) {
         return orderItemRepository.findByOrderId(orderId);
+    }
+
+    /**
+     * 주문을 삭제합니다 (소프트 삭제).
+     *
+     * @param orderId 주문 ID
+     * @throws CoreException 주문을 찾을 수 없는 경우
+     */
+    @Transactional
+    public void deleteOrder(Long orderId) {
+        OrderEntity order = getOrderById(orderId);
+        order.delete();
+
+        List<OrderItemEntity> orderItemsByOrderId = getOrderItemsByOrderId(orderId);
+
+        orderRepository.save(order);
+        orderItemRepository.saveAll(orderItemsByOrderId);
     }
 }

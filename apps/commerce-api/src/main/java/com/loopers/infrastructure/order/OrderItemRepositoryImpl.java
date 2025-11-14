@@ -28,4 +28,9 @@ public class OrderItemRepositoryImpl implements OrderItemRepository {
     public List<OrderItemEntity> findByOrderId(Long orderId) {
         return orderItemJpaRepository.findByOrderId(orderId);
     }
+
+    @Override
+    public void saveAll(List<OrderItemEntity> orderItemsByOrderId) {
+        orderItemJpaRepository.saveAll(orderItemsByOrderId);
+    }
 }

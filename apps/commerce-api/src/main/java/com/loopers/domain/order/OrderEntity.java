@@ -70,10 +70,10 @@ public class OrderEntity extends BaseEntity {
      * PENDING 상태에서만 CONFIRMED로 변경 가능합니다.
      */
     public void confirmOrder() {
-        if (this.status != OrderStatus.PENDING) {
+        if (this.status != OrderStatus.PENDING || this.getDeletedAt() != null) {
             throw new CoreException(
                     ErrorType.INVALID_ORDER_STATUS,
-                    String.format("주문 확정은 대기 상태에서만 가능합니다. (현재 상태: %s)", this.status)
+                    String.format("주문 확정은 대기 상태 또는 활성화된 주문만 가능합니다. (현재 상태: %s)", this.status)
             );
         }
         

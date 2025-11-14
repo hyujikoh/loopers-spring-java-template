@@ -97,4 +97,30 @@ public class OrderFacade {
         
         return OrderInfo.from(order, orderItems);
     }
+
+    /**
+     * 주문 확정
+     * 
+     * <p>주문을 확정하고 상품 재고를 차감합니다.</p>
+     * 
+     * @param orderId 주문 ID
+     * @return 확정된 주문 정보
+     */
+    @Transactional
+    public OrderInfo confirmOrder(Long orderId) {
+        // 1. 주문 확정
+        OrderEntity order = orderService.getOrderById(orderId);
+        order.confirmOrder();
+
+
+        // 2. 주문 항목 조회
+        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
+        
+        // 3. 상품 재고 차감
+        for (OrderItemEntity orderItem : orderItems) {
+            productService.deductStock(orderItem.getProductId(), orderItem.getQuantity());
+        }
+        
+        return OrderInfo.from(order, orderItems);
+    }
 }
