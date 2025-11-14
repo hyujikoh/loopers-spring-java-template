@@ -97,8 +97,8 @@ public class OrderFacade {
 
         // 5. 주문 항목 생성 및 재고 차감 처리
         List<OrderItemEntity> orderItems = new ArrayList<>();
-        IntStream.range(0, command.orderItems().size()).forEach(i -> {
-            OrderItemCommand itemCommand = command.orderItems().get(i);
+        IntStream.range(0, sortedItems.size()).forEach(i -> {
+            OrderItemCommand itemCommand = sortedItems.get(i);
             ProductEntity product = orderableProducts.get(i);
 
             // 재고 차감 (도메인 서비스를 통해 처리)
