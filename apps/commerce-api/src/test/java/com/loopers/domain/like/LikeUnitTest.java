@@ -241,8 +241,8 @@ class LikeUnitTest {
 
             // Then: 이미 삭제된 상태이므로 ifPresent 조건 만족하지만 delete() 재호출됨
             // Product는 여전히 저장 시도됨 (멱등성 처리)
-            assertEquals(initialLikeCount - 1, product.getLikeCount(), "취소 시 좋아요 수가 감소함");
-            verify(productRepository, times(1)).save(product);
+            assertEquals(initialLikeCount, product.getLikeCount(), "이미 삭제된 좋아요의 경우 좋아요 수가 변하지 않아야 함");
+            verify(productRepository, times(0)).save(product);
         }
     }
 }
