@@ -33,40 +33,43 @@ public class OrderFacade {
 
     /**
      * 주문 생성
+     * 
+     * @param command 주문 생성 명령
+     * @return 생성된 주문 정보
+     * @throws IllegalArgumentException 재고 부족 또는 주문 불가능한 경우
      */
     @Transactional
     public OrderInfo createOrder(OrderCreateCommand command) {
         // 1. 사용자 조회
         UserEntity user = userService.getUserByUsername(command.username());
         
-        // 2. 상품 조회 및 총액 계산 (주문 생성 전에 먼저 계산)
-        BigDecimal totalAmount = BigDecimal.ZERO;
+        // 2. 상품 조회 및 주문 가능 여부 검증
         List<ProductEntity> products = new ArrayList<>();
+        BigDecimal totalAmount = BigDecimal.ZERO;
         
         for (OrderItemCommand itemCommand : command.orderItems()) {
-            // 상품 조회
             ProductEntity product = productService.getProductDetail(itemCommand.productId());
             
-            // 재고 확인
-            if (product.getStockQuantity() < itemCommand.quantity()) {
+            // 엔티티의 canOrder 메서드로 주문 가능 여부 확인
+            if (!product.canOrder(itemCommand.quantity())) {
                 throw new IllegalArgumentException(
-                    String.format("상품 재고가 부족합니다. (상품 ID: %d, 요청 수량: %d, 재고: %d)",
+                    String.format("상품을 주문할 수 없습니다. (상품 ID: %d, 요청 수량: %d, 재고: %d)",
                         product.getId(), itemCommand.quantity(), product.getStockQuantity())
                 );
             }
             
             products.add(product);
             
-            // 총액 계산
-            BigDecimal itemTotal = product.getPrice().getSellingPrice()
+            // 엔티티의 getSellingPrice 메서드로 판매가 조회
+            BigDecimal itemTotal = product.getSellingPrice()
                 .multiply(BigDecimal.valueOf(itemCommand.quantity()));
             totalAmount = totalAmount.add(itemTotal);
         }
         
-        // 3. 포인트 차감 (주문 생성 전에 먼저 차감)
+        // 3. 포인트 차감
         pointService.use(user, totalAmount);
         
-        // 4. 주문 생성 (계산된 총액으로 생성)
+        // 4. 주문 엔티티 생성 (정적 팩토리 메서드 사용)
         OrderEntity order = orderService.createOrder(
             new OrderDomainCreateRequest(user.getId(), totalAmount)
         );
@@ -77,16 +80,16 @@ public class OrderFacade {
             OrderItemCommand itemCommand = command.orderItems().get(i);
             ProductEntity product = products.get(i);
             
-            // 재고 차감
+            // 엔티티의 deductStock 메서드로 재고 차감
             product.deductStock(itemCommand.quantity());
             
-            // 주문 항목 생성
+            // 주문 항목 엔티티 생성 (정적 팩토리 메서드 사용)
             OrderItemEntity orderItem = orderService.createOrderItem(
                 new OrderItemDomainCreateRequest(
                     order.getId(),
                     product.getId(),
                     itemCommand.quantity(),
-                    product.getPrice().getSellingPrice()
+                    product.getSellingPrice()
                 )
             );
             orderItems.add(orderItem);
