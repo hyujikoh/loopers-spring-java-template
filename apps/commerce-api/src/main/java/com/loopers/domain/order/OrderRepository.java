@@ -3,6 +3,9 @@ package com.loopers.domain.order;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 /**
  * 주문 Repository 인터페이스
  * 
@@ -42,9 +45,9 @@ public interface OrderRepository {
      * @param pageable 페이징 정보
      * @return 페이징된 주문 목록
      */
-    org.springframework.data.domain.Page<OrderEntity> findByUserId(
+    Page<OrderEntity> findByUserId(
             Long userId, 
-            org.springframework.data.domain.Pageable pageable);
+            Pageable pageable);
 
     /**
      * 사용자 ID와 주문 상태로 주문 목록을 조회합니다.

@@ -2,6 +2,7 @@ package com.loopers.domain.order;
 
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -109,7 +110,7 @@ public class OrderService {
      */
     public org.springframework.data.domain.Page<OrderEntity> getOrdersByUserId(
             Long userId, 
-            org.springframework.data.domain.Pageable pageable) {
+            Pageable pageable) {
         return orderRepository.findByUserId(userId, pageable);
     }
 
@@ -143,7 +144,7 @@ public class OrderService {
      */
     public org.springframework.data.domain.Page<OrderItemEntity> getOrderItemsByOrderId(
             Long orderId, 
-            org.springframework.data.domain.Pageable pageable) {
+            Pageable pageable) {
         return orderItemRepository.findByOrderId(orderId, pageable);
     }
 }

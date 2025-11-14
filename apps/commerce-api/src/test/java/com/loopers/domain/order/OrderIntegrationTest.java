@@ -2,21 +2,22 @@ package com.loopers.domain.order;
 
 import static org.assertj.core.api.Assertions.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
-import com.loopers.application.order.OrderCreateCommand;
-import com.loopers.application.order.OrderFacade;
-import com.loopers.application.order.OrderInfo;
-import com.loopers.application.order.OrderItemCommand;
-import com.loopers.application.order.OrderSummary;
-import com.loopers.application.order.OrderItemInfo;
+import com.loopers.application.order.*;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
@@ -27,22 +28,14 @@ import com.loopers.domain.product.ProductDomainCreateRequest;
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductService;
+import com.loopers.domain.user.Gender;
+import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserRepository;
 import com.loopers.domain.user.UserService;
-import com.loopers.domain.user.UserEntity;
-import com.loopers.domain.user.Gender;
-import com.loopers.domain.user.UserDomainCreateRequest;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
 import com.loopers.utils.DatabaseCleanUp;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.ArrayList;
-import java.time.LocalDate;
 
 /**
  * Order 도메인 통합 테스트
@@ -325,7 +318,7 @@ public class OrderIntegrationTest {
             // When & Then: 주문 생성 시 예외 발생
             assertThatThrownBy(() -> orderFacade.createOrder(orderCommand))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("상품을 주문할 수 없습니다")
+                    .hasMessageContaining("주문할 수 없는 상품입니다.")
                     .hasMessageContaining("요청 수량: 10")
                     .hasMessageContaining("재고: 5");
         }
@@ -567,14 +560,13 @@ public class OrderIntegrationTest {
     }
 
 
-
     @Nested
     @DisplayName("주문 조회")
     class OrderRetrieval {
 
         @Test
-        @DisplayName("주문 ID로 주문을 조회할 수 있다")
-        void should_retrieve_order_by_id() {
+        @DisplayName("주문 ID로 주문 요약 정보를 조회할 수 있다")
+        void should_retrieve_order_summary_by_id() {
             // Given: 브랜드 생성
             BrandEntity brand = brandService.registerBrand(
                     BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
@@ -608,15 +600,16 @@ public class OrderIntegrationTest {
                     .build();
             OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
 
-            // When: 주문 ID로 조회
-            OrderInfo retrievedOrder = orderFacade.getOrderById(createdOrder.id());
+            // When: 주문 ID로 요약 정보 조회
+            OrderSummary retrievedOrder = orderFacade.getOrderSummaryById(createdOrder.id());
 
-            // Then: 주문 정보가 정확히 조회되는지 검증
+            // Then: 주문 요약 정보가 정확히 조회되는지 검증
             assertThat(retrievedOrder).isNotNull();
             assertThat(retrievedOrder.id()).isEqualTo(createdOrder.id());
             assertThat(retrievedOrder.userId()).isEqualTo(userInfo.id());
             assertThat(retrievedOrder.totalAmount()).isEqualTo(new BigDecimal("20000.00"));
             assertThat(retrievedOrder.status()).isEqualTo(OrderStatus.PENDING);
+            assertThat(retrievedOrder.itemCount()).isEqualTo(1);
         }
 
         @Test
@@ -718,7 +711,7 @@ public class OrderIntegrationTest {
             Long nonExistentOrderId = 99999L;
 
             // When & Then: 존재하지 않는 주문 조회 시 예외 발생
-            assertThatThrownBy(() -> orderFacade.getOrderById(nonExistentOrderId))
+            assertThatThrownBy(() -> orderFacade.getOrderSummaryById(nonExistentOrderId))
                     .isInstanceOf(Exception.class)
                     .hasMessageContaining("주문을 찾을 수 없습니다");
         }
@@ -751,7 +744,7 @@ public class OrderIntegrationTest {
             orderService.deleteOrder(createdOrder.id());
 
             // When & Then: 삭제된 주문 조회 시 예외 발생
-            assertThatThrownBy(() -> orderFacade.getOrderById(createdOrder.id()))
+            assertThatThrownBy(() -> orderFacade.getOrderSummaryById(createdOrder.id()))
                     .isInstanceOf(Exception.class)
                     .hasMessageContaining("주문을 찾을 수 없습니다");
         }
@@ -784,8 +777,8 @@ public class OrderIntegrationTest {
 
             // When: 페이지 크기 2로 첫 번째 페이지 조회
             Page<OrderInfo> firstPage =
-                    orderFacade.getOrdersByUserId(userInfo.id(), 
-                            org.springframework.data.domain.PageRequest.of(0, 2));
+                    orderFacade.getOrdersByUserId(userInfo.id(),
+                            PageRequest.of(0, 2));
 
             // Then: 페이징 결과 검증
             assertThat(firstPage).isNotNull();
@@ -942,7 +935,7 @@ public class OrderIntegrationTest {
             Page<OrderItemInfo> firstPage =
                     orderFacade.getOrderItemsByOrderId(
                             createdOrder.id(),
-                            org.springframework.data.domain.PageRequest.of(0, 3)
+                            PageRequest.of(0, 3)
                     );
 
             // Then: 페이징 결과 검증
@@ -956,7 +949,7 @@ public class OrderIntegrationTest {
             Page<OrderItemInfo> secondPage =
                     orderFacade.getOrderItemsByOrderId(
                             createdOrder.id(),
-                            org.springframework.data.domain.PageRequest.of(1, 3)
+                            PageRequest.of(1, 3)
                     );
 
             // Then: 두 번째 페이지 검증
@@ -1022,7 +1015,7 @@ public class OrderIntegrationTest {
             // When & Then: 존재하지 않는 주문의 항목 조회 시 예외 발생
             assertThatThrownBy(() -> orderFacade.getOrderItemsByOrderId(
                     nonExistentOrderId,
-                    org.springframework.data.domain.PageRequest.of(0, 10)
+                    PageRequest.of(0, 10)
             ))
                     .isInstanceOf(Exception.class)
                     .hasMessageContaining("주문을 찾을 수 없습니다");
@@ -1085,7 +1078,7 @@ public class OrderIntegrationTest {
             // When & Then: 주문 생성 실패
             assertThatThrownBy(() -> orderFacade.createOrder(orderCommand))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("상품을 주문할 수 없습니다");
+                    .hasMessageContaining("주문할 수 없는 상품입니다.");
 
             // Then: 첫 번째 상품의 재고가 원래대로 복구되었는지 확인
             ProductEntity product1AfterFail = productService.getProductDetail(product1.getId());
@@ -1296,18 +1289,18 @@ public class OrderIntegrationTest {
 
             // Then: 최소 1개 이상의 주문이 성공했는지 확인
             assertThat(successCount.get()).isGreaterThan(0);
-            
+
             // Then: 성공한 주문 수와 실패한 주문 수의 합이 전체 시도 수와 같은지 확인
             assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount);
 
             // Then: 최종 재고가 초기 재고보다 작거나 같은지 확인 (재고 차감이 발생했는지)
             ProductEntity finalProduct = productService.getProductDetail(product.getId());
             assertThat(finalProduct.getStockQuantity()).isLessThanOrEqualTo(initialStock);
-            
+
             // Then: 재고 차감량이 성공한 주문 수량과 일치하는지 확인 (동시성 제어가 완벽하지 않을 수 있음)
             int expectedDeductedStock = successCount.get() * orderQuantityPerUser;
             int actualDeductedStock = initialStock - finalProduct.getStockQuantity();
-            
+
             // 동시성 제어가 없으면 실제 차감량이 예상보다 적을 수 있음 (race condition)
             assertThat(actualDeductedStock).isLessThanOrEqualTo(expectedDeductedStock);
         }
@@ -1386,14 +1379,14 @@ public class OrderIntegrationTest {
             // Then: 일부 주문만 성공했는지 확인 (재고 부족으로 모두 성공할 수 없음)
             assertThat(successCount.get()).isLessThan(threadCount);
             assertThat(failCount.get()).isGreaterThan(0);
-            
+
             // Then: 성공 + 실패 = 전체 시도 수
             assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount);
 
             // Then: 최종 재고 확인 (재고가 소진되었거나 거의 소진됨)
             ProductEntity finalProduct = productService.getProductDetail(product.getId());
             assertThat(finalProduct.getStockQuantity()).isLessThanOrEqualTo(initialStock);
-            
+
             // Then: 최소한 일부 재고는 차감되었는지 확인
             assertThat(finalProduct.getStockQuantity()).isLessThan(initialStock);
         }
