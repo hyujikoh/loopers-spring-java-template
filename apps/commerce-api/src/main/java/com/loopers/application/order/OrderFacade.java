@@ -48,7 +48,7 @@ public class OrderFacade {
         BigDecimal totalAmount = BigDecimal.ZERO;
         
         for (OrderItemCommand itemCommand : command.orderItems()) {
-            ProductEntity product = productService.getProductDetail(itemCommand.productId());
+            ProductEntity product = productService.getProductDetailLock(itemCommand.productId());
             
             // 엔티티의 canOrder 메서드로 주문 가능 여부 확인
             if (!product.canOrder(itemCommand.quantity())) {
@@ -80,8 +80,8 @@ public class OrderFacade {
             OrderItemCommand itemCommand = command.orderItems().get(i);
             ProductEntity product = products.get(i);
             
-            // 엔티티의 deductStock 메서드로 재고 차감
-            product.deductStock(itemCommand.quantity());
+            // ProductService를 통한 재고 차감 (도메인 서비스 활용)
+            productService.deductStock(product, itemCommand.quantity());
             
             // 주문 항목 엔티티 생성 (정적 팩토리 메서드 사용)
             OrderItemEntity orderItem = orderService.createOrderItem(
@@ -101,7 +101,7 @@ public class OrderFacade {
     /**
      * 주문 확정
      * 
-     * <p>주문을 확정하고 상품 재고를 차감합니다.</p>
+     * <p>주문을 확정합니다. (재고는 이미 주문 생성 시 차감되었음)</p>
      * 
      * @param orderId 주문 ID
      * @return 확정된 주문 정보
@@ -112,14 +112,37 @@ public class OrderFacade {
         OrderEntity order = orderService.getOrderById(orderId);
         order.confirmOrder();
 
-
         // 2. 주문 항목 조회
         List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
         
-        // 3. 상품 재고 차감
+        return OrderInfo.from(order, orderItems);
+    }
+
+    /**
+     * 주문 취소
+     * 
+     * <p>주문을 취소하고 차감된 재고를 원복하며 포인트를 환불합니다.</p>
+     * 
+     * @param orderId 주문 ID
+     * @param username 사용자명 (포인트 환불용)
+     * @return 취소된 주문 정보
+     */
+    @Transactional
+    public OrderInfo cancelOrder(Long orderId, String username) {
+        // 1. 주문 취소
+        OrderEntity order = orderService.getOrderById(orderId);
+        order.cancelOrder();
+        
+        // 2. 주문 항목 조회
+        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
+        
+        // 3. 재고 원복
         for (OrderItemEntity orderItem : orderItems) {
-            productService.deductStock(orderItem.getProductId(), orderItem.getQuantity());
+            productService.restoreStock(orderItem.getProductId(), orderItem.getQuantity());
         }
+        
+        // 4. 포인트 환불
+        pointService.charge(username, order.getTotalAmount());
         
         return OrderInfo.from(order, orderItems);
     }

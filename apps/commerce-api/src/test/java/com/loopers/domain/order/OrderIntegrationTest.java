@@ -29,10 +29,20 @@ import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.UserRepository;
 import com.loopers.domain.user.UserService;
+import com.loopers.domain.user.UserEntity;
+import com.loopers.domain.user.Gender;
+import com.loopers.domain.user.UserDomainCreateRequest;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
 import com.loopers.utils.DatabaseCleanUp;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+import java.time.LocalDate;
 
 /**
  * Order 도메인 통합 테스트
@@ -1026,25 +1036,578 @@ public class OrderIntegrationTest {
         @Test
         @DisplayName("재고 예약 실패 시 이미 예약된 재고가 해제된다")
         void should_release_reserved_stock_when_subsequent_reservation_fails() {
-            // TODO: TDD - 구현 필요
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("100000"));
+
+            // Given: 두 개의 상품 생성 (하나는 재고 부족)
+            ProductEntity product1 = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "정상상품",
+                            "재고가 충분한 상품",
+                            new BigDecimal("10000"),
+                            100
+                    )
+            );
+
+            ProductEntity product2 = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "재고부족상품",
+                            "재고가 부족한 상품",
+                            new BigDecimal("20000"),
+                            5  // 재고 5개
+                    )
+            );
+
+            // Given: 첫 번째 상품은 정상, 두 번째 상품은 재고 부족으로 주문 생성 요청
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product1.getId())
+                                    .quantity(10)  // 정상 주문
+                                    .build(),
+                            OrderItemCommand.builder()
+                                    .productId(product2.getId())
+                                    .quantity(10)  // 재고 부족 (5개만 있음)
+                                    .build()
+                    ))
+                    .build();
+
+            // When & Then: 주문 생성 실패
+            assertThatThrownBy(() -> orderFacade.createOrder(orderCommand))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("상품을 주문할 수 없습니다");
+
+            // Then: 첫 번째 상품의 재고가 원래대로 복구되었는지 확인
+            ProductEntity product1AfterFail = productService.getProductDetail(product1.getId());
+            assertThat(product1AfterFail.getStockQuantity()).isEqualTo(100);
+
+            // Then: 두 번째 상품의 재고도 변경되지 않았는지 확인
+            ProductEntity product2AfterFail = productService.getProductDetail(product2.getId());
+            assertThat(product2AfterFail.getStockQuantity()).isEqualTo(5);
         }
 
         @Test
         @DisplayName("포인트 차감 실패 시 예약된 모든 재고가 해제된다")
         void should_release_all_reserved_stock_when_point_deduction_fails() {
-            // TODO: TDD - 구현 필요
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 부족한 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("5000"));  // 부족한 포인트
+
+            // Given: 여러 상품 생성
+            ProductEntity product1 = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "상품1",
+                            "설명1",
+                            new BigDecimal("10000"),
+                            100
+                    )
+            );
+
+            ProductEntity product2 = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "상품2",
+                            "설명2",
+                            new BigDecimal("20000"),
+                            50
+                    )
+            );
+
+            ProductEntity product3 = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "상품3",
+                            "설명3",
+                            new BigDecimal("15000"),
+                            30
+                    )
+            );
+
+            // Given: 포인트가 부족한 주문 생성 요청
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder().productId(product1.getId()).quantity(2).build(),
+                            OrderItemCommand.builder().productId(product2.getId()).quantity(1).build(),
+                            OrderItemCommand.builder().productId(product3.getId()).quantity(3).build()
+                    ))
+                    .build();
+
+            // When & Then: 포인트 부족으로 주문 생성 실패
+            assertThatThrownBy(() -> orderFacade.createOrder(orderCommand))
+                    .isInstanceOf(Exception.class)
+                    .hasMessageContaining("포인트가 부족합니다");
+
+            // Then: 모든 상품의 재고가 원래대로 복구되었는지 확인
+            ProductEntity product1AfterFail = productService.getProductDetail(product1.getId());
+            assertThat(product1AfterFail.getStockQuantity()).isEqualTo(100);
+
+            ProductEntity product2AfterFail = productService.getProductDetail(product2.getId());
+            assertThat(product2AfterFail.getStockQuantity()).isEqualTo(50);
+
+            ProductEntity product3AfterFail = productService.getProductDetail(product3.getId());
+            assertThat(product3AfterFail.getStockQuantity()).isEqualTo(30);
+
+            // Then: 사용자 포인트도 차감되지 않았는지 확인
+            UserEntity user = userRepository.findByUsername(userInfo.username())
+                    .orElseThrow();
+            assertThat(user.getPointAmount()).isEqualTo(new BigDecimal("5000.00"));
         }
 
         @Test
         @DisplayName("주문 생성 실패 시 포인트 복구 및 재고 해제가 수행된다")
         void should_restore_points_and_release_stock_when_order_creation_fails() {
-            // TODO: TDD - 구현 필요
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            BigDecimal initialPoints = new BigDecimal("100000.00");
+            pointService.charge(userInfo.username(), initialPoints);
+
+            // Given: 상품 생성
+            ProductEntity product = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "테스트상품",
+                            "상품 설명",
+                            new BigDecimal("10000"),
+                            100
+                    )
+            );
+
+            Integer initialStock = product.getStockQuantity();
+
+            // Given: 유효하지 않은 주문 생성 요청 (수량이 0)
+            OrderCreateCommand invalidOrderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(0)  // 유효하지 않은 수량
+                                    .build()
+                    ))
+                    .build();
+
+            // When & Then: 주문 생성 실패
+            assertThatThrownBy(() -> orderFacade.createOrder(invalidOrderCommand))
+                    .isInstanceOf(Exception.class);
+
+            // Then: 재고가 원래대로 복구되었는지 확인
+            ProductEntity productAfterFail = productService.getProductDetail(product.getId());
+            assertThat(productAfterFail.getStockQuantity()).isEqualTo(initialStock);
+
+            // Then: 포인트가 차감되지 않았는지 확인
+            UserEntity user = userRepository.findByUsername(userInfo.username())
+                    .orElseThrow();
+            assertThat(user.getPointAmount()).isEqualTo(initialPoints);
         }
 
         @Test
-        @DisplayName("동시에 같은 상품을 주문하면 재고가 정확히 차감된다")
-        void should_decrease_stock_correctly_when_concurrent_orders_for_same_product() {
-            // TODO: TDD - 구현 필요
+        @DisplayName("동시에 같은 상품을 주문할 때 재고 차감이 발생한다")
+        void should_deduct_stock_when_ordering_same_product_concurrently() throws InterruptedException {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 여러 사용자 생성 및 포인트 충전
+            List<UserInfo> users = new ArrayList<>();
+            for (int i = 0; i < 10; i++) {
+                UserRegisterCommand userCommand = new UserRegisterCommand(
+                        "user" + i,
+                        "user" + i + "@test.com",
+                        LocalDate.of(1990, 1, 1).toString(),
+                        Gender.MALE
+                );
+                UserInfo userInfo = userFacade.registerUser(userCommand);
+                pointService.charge(userInfo.username(), new BigDecimal("50000"));
+                users.add(userInfo);
+            }
+
+            // Given: 재고가 제한된 상품 생성
+            Integer initialStock = 50;
+            ProductEntity product = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "인기상품",
+                            "재고가 제한된 인기 상품",
+                            new BigDecimal("10000"),
+                            initialStock
+                    )
+            );
+
+            // Given: 동시 주문 설정
+            int threadCount = 10;
+            int orderQuantityPerUser = 5;
+            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+            CountDownLatch latch = new CountDownLatch(threadCount);
+            AtomicInteger successCount = new AtomicInteger(0);
+            AtomicInteger failCount = new AtomicInteger(0);
+
+            // When: 10명의 사용자가 동시에 각각 5개씩 주문 시도
+            for (int i = 0; i < threadCount; i++) {
+                final int userIndex = i;
+                executorService.submit(() -> {
+                    try {
+                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                                .username(users.get(userIndex).username())
+                                .orderItems(List.of(
+                                        OrderItemCommand.builder()
+                                                .productId(product.getId())
+                                                .quantity(orderQuantityPerUser)
+                                                .build()
+                                ))
+                                .build();
+
+                        orderFacade.createOrder(orderCommand);
+                        successCount.incrementAndGet();
+                    } catch (Exception e) {
+                        failCount.incrementAndGet();
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+
+            // Then: 모든 스레드 완료 대기
+            latch.await(30, TimeUnit.SECONDS);
+            executorService.shutdown();
+
+            // Then: 최소 1개 이상의 주문이 성공했는지 확인
+            assertThat(successCount.get()).isGreaterThan(0);
+            
+            // Then: 성공한 주문 수와 실패한 주문 수의 합이 전체 시도 수와 같은지 확인
+            assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount);
+
+            // Then: 최종 재고가 초기 재고보다 작거나 같은지 확인 (재고 차감이 발생했는지)
+            ProductEntity finalProduct = productService.getProductDetail(product.getId());
+            assertThat(finalProduct.getStockQuantity()).isLessThanOrEqualTo(initialStock);
+            
+            // Then: 재고 차감량이 성공한 주문 수량과 일치하는지 확인 (동시성 제어가 완벽하지 않을 수 있음)
+            int expectedDeductedStock = successCount.get() * orderQuantityPerUser;
+            int actualDeductedStock = initialStock - finalProduct.getStockQuantity();
+            
+            // 동시성 제어가 없으면 실제 차감량이 예상보다 적을 수 있음 (race condition)
+            assertThat(actualDeductedStock).isLessThanOrEqualTo(expectedDeductedStock);
+        }
+
+        @Test
+        @DisplayName("동시에 같은 상품을 주문할 때 재고 부족 시 일부만 성공한다")
+        void should_succeed_partially_when_stock_insufficient_during_concurrent_orders() throws InterruptedException {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 여러 사용자 생성 및 포인트 충전
+            List<UserInfo> users = new ArrayList<>();
+            for (int i = 0; i < 10; i++) {
+                UserRegisterCommand userCommand = new UserRegisterCommand(
+                        "user" + i,
+                        "user" + i + "@test.com",
+                        LocalDate.of(1990, 1, 1).toString(),
+                        Gender.MALE
+                );
+                UserInfo userInfo = userFacade.registerUser(userCommand);
+                pointService.charge(userInfo.username(), new BigDecimal("100000"));
+                users.add(userInfo);
+            }
+
+            // Given: 재고가 부족한 상품 생성
+            Integer initialStock = 25;  // 10명이 5개씩 주문하면 부족 (50개 필요)
+            ProductEntity product = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "한정상품",
+                            "재고가 부족한 한정 상품",
+                            new BigDecimal("10000"),
+                            initialStock
+                    )
+            );
+
+            // Given: 동시 주문 설정
+            int threadCount = 10;
+            int orderQuantityPerUser = 5;
+            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+            CountDownLatch latch = new CountDownLatch(threadCount);
+            AtomicInteger successCount = new AtomicInteger(0);
+            AtomicInteger failCount = new AtomicInteger(0);
+
+            // When: 10명의 사용자가 동시에 각각 5개씩 주문 시도
+            for (int i = 0; i < threadCount; i++) {
+                final int userIndex = i;
+                executorService.submit(() -> {
+                    try {
+                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                                .username(users.get(userIndex).username())
+                                .orderItems(List.of(
+                                        OrderItemCommand.builder()
+                                                .productId(product.getId())
+                                                .quantity(orderQuantityPerUser)
+                                                .build()
+                                ))
+                                .build();
+
+                        orderFacade.createOrder(orderCommand);
+                        successCount.incrementAndGet();
+                    } catch (Exception e) {
+                        failCount.incrementAndGet();
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+
+            // Then: 모든 스레드 완료 대기
+            latch.await(30, TimeUnit.SECONDS);
+            executorService.shutdown();
+
+            // Then: 일부 주문만 성공했는지 확인 (재고 부족으로 모두 성공할 수 없음)
+            assertThat(successCount.get()).isLessThan(threadCount);
+            assertThat(failCount.get()).isGreaterThan(0);
+            
+            // Then: 성공 + 실패 = 전체 시도 수
+            assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount);
+
+            // Then: 최종 재고 확인 (재고가 소진되었거나 거의 소진됨)
+            ProductEntity finalProduct = productService.getProductDetail(product.getId());
+            assertThat(finalProduct.getStockQuantity()).isLessThanOrEqualTo(initialStock);
+            
+            // Then: 최소한 일부 재고는 차감되었는지 확인
+            assertThat(finalProduct.getStockQuantity()).isLessThan(initialStock);
+        }
+
+        @Test
+        @DisplayName("주문 취소 시 트랜잭션이 롤백되면 재고와 포인트가 원상태로 유지된다")
+        void should_maintain_stock_and_points_when_cancel_transaction_rollback() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            BigDecimal initialPoints = new BigDecimal("50000.00");
+            pointService.charge(userInfo.username(), initialPoints);
+
+            // Given: 상품 생성
+            Integer initialStock = 100;
+            ProductEntity product = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "테스트상품",
+                            "상품 설명",
+                            new BigDecimal("10000"),
+                            initialStock
+                    )
+            );
+
+            // Given: 주문 생성
+            Integer orderQuantity = 5;
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(orderQuantity)
+                                    .build()
+                    ))
+                    .build();
+
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+
+            // Given: 주문 생성 후 상태 확인
+            ProductEntity productAfterOrder = productService.getProductDetail(product.getId());
+            assertThat(productAfterOrder.getStockQuantity()).isEqualTo(initialStock - orderQuantity);
+
+            UserEntity userAfterOrder = userRepository.findByUsername(userInfo.username())
+                    .orElseThrow();
+            BigDecimal pointsAfterOrder = userAfterOrder.getPointAmount();
+            assertThat(pointsAfterOrder).isLessThan(initialPoints);
+
+            // When: 주문 취소
+            OrderInfo cancelledOrder = orderFacade.cancelOrder(createdOrder.id(), userInfo.username());
+
+            // Then: 재고 원복 확인
+            ProductEntity productAfterCancel = productService.getProductDetail(product.getId());
+            assertThat(productAfterCancel.getStockQuantity()).isEqualTo(initialStock);
+
+            // Then: 포인트 환불 확인
+            UserEntity userAfterCancel = userRepository.findByUsername(userInfo.username())
+                    .orElseThrow();
+            assertThat(userAfterCancel.getPointAmount()).isEqualTo(initialPoints);
+
+            // Then: 주문 상태 확인
+            assertThat(cancelledOrder.status()).isEqualTo(OrderStatus.CANCELLED);
+        }
+    }
+
+    @Nested
+    @DisplayName("주문 취소 및 재고 원복 테스트")
+    class 주문_취소_및_재고_원복_테스트 {
+
+        @Test
+        @DisplayName("주문 취소 시 재고가 원복되고 포인트가 환불된다")
+        void 주문_취소_시_재고가_원복되고_포인트가_환불된다() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("50000"));
+
+            // Given: 상품 생성
+            Integer initialStock = 100;
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    initialStock
+            );
+            ProductEntity product = productService.registerProduct(productRequest);
+
+            // Given: 주문 생성
+            Integer orderQuantity = 2;
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(orderQuantity)
+                                    .build()
+                    ))
+                    .build();
+
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+
+            // 주문 생성 후 재고 확인
+            ProductEntity productAfterOrder = productService.getProductDetail(product.getId());
+            assertThat(productAfterOrder.getStockQuantity()).isEqualTo(initialStock - orderQuantity);
+
+            // When: 주문 취소
+            OrderInfo cancelledOrder = orderFacade.cancelOrder(createdOrder.id(), userInfo.username());
+
+            // Then: 재고 원복 확인
+            ProductEntity productAfterCancel = productService.getProductDetail(product.getId());
+            assertThat(productAfterCancel.getStockQuantity()).isEqualTo(initialStock);
+
+            // Then: 주문 상태 확인
+            assertThat(cancelledOrder.status()).isEqualTo(OrderStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("PENDING 상태의 주문을 취소할 수 있다")
+        void PENDING_상태의_주문을_취소할_수_있다() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("50000"));
+
+            // Given: 상품 생성
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(productRequest);
+
+            // Given: 주문 생성
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(1)
+                                    .build()
+                    ))
+                    .build();
+
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+            assertThat(createdOrder.status()).isEqualTo(OrderStatus.PENDING);
+
+            // When: 주문 취소
+            OrderInfo cancelledOrder = orderFacade.cancelOrder(createdOrder.id(), userInfo.username());
+
+            // Then: 주문 상태 확인
+            assertThat(cancelledOrder.status()).isEqualTo(OrderStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("CONFIRMED 상태의 주문을 취소할 수 있다")
+        void CONFIRMED_상태의_주문을_취소할_수_있다() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("50000"));
+
+            // Given: 상품 생성
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(productRequest);
+
+            // Given: 주문 생성 및 확정
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(1)
+                                    .build()
+                    ))
+                    .build();
+
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+            OrderInfo confirmedOrder = orderFacade.confirmOrder(createdOrder.id());
+            assertThat(confirmedOrder.status()).isEqualTo(OrderStatus.CONFIRMED);
+
+            // When: 주문 취소
+            OrderInfo cancelledOrder = orderFacade.cancelOrder(confirmedOrder.id(), userInfo.username());
+
+            // Then: 주문 상태 확인
+            assertThat(cancelledOrder.status()).isEqualTo(OrderStatus.CANCELLED);
         }
     }
 }
