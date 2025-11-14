@@ -9,11 +9,6 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * 주문 항목 엔티티
- * 
- * <p>주문에 포함된 개별 상품 정보를 관리하는 도메인 객체입니다.
- * 주문 시점의 상품 가격을 스냅샷으로 저장하여 가격 변동에 영향받지 않습니다.</p>
- * 
  * @author hyunjikoh
  * @since 2025. 11. 14.
  */
@@ -45,13 +40,52 @@ public class OrderItemEntity extends BaseEntity {
      * 주문 항목 엔티티 생성자
      * 
      * @param request 주문 항목 생성 요청 DTO
+     * @throws IllegalArgumentException request가 null이거나 필수 값이 누락된 경우
      */
     private OrderItemEntity(OrderItemDomainCreateRequest request) {
+        validateRequest(request);
+
         this.orderId = request.orderId();
         this.productId = request.productId();
         this.quantity = request.quantity();
         this.unitPrice = request.unitPrice();
         this.totalPrice = calculateItemTotal();
+    }
+
+    /**
+     * 주문 항목 생성 요청의 유효성을 검증합니다.
+     * 
+     * @param request 주문 항목 생성 요청 DTO
+     * @throws IllegalArgumentException 유효하지 않은 값이 포함된 경우
+     */
+    private void validateRequest(OrderItemDomainCreateRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("주문 항목 생성 요청은 필수입니다.");
+        }
+
+        if (request.orderId() == null) {
+            throw new IllegalArgumentException("주문 ID는 필수입니다.");
+        }
+
+        if (request.productId() == null) {
+            throw new IllegalArgumentException("상품 ID는 필수입니다.");
+        }
+
+        if (request.quantity() == null) {
+            throw new IllegalArgumentException("주문 수량은 필수입니다.");
+        }
+
+        if (request.quantity() <= 0) {
+            throw new IllegalArgumentException("주문 수량은 1 이상이어야 합니다.");
+        }
+
+        if (request.unitPrice() == null) {
+            throw new IllegalArgumentException("단가는 필수입니다.");
+        }
+
+        if (request.unitPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("단가는 0보다 커야 합니다.");
+        }
     }
 
     /**

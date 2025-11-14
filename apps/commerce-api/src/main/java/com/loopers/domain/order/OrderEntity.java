@@ -9,14 +9,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.ZonedDateTime;
+import java.util.Objects;
 
 /**
- * 주문 엔티티
- * 
- * <p>사용자의 주문 정보를 관리하는 도메인 객체입니다.
- * 주문 생성, 확정, 총액 계산 등의 비즈니스 로직을 담당합니다.</p>
- * 
  * @author hyunjikoh
  * @since 2025. 11. 14.
  */
@@ -24,7 +19,6 @@ import java.time.ZonedDateTime;
 @Table(name = "orders", indexes = {
         @Index(name = "idx_order_user_id", columnList = "user_id"),
         @Index(name = "idx_order_status", columnList = "status"),
-        @Index(name = "idx_order_ordered_at", columnList = "ordered_at")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -40,19 +34,24 @@ public class OrderEntity extends BaseEntity {
     @Column(name = "status", length = 20, nullable = false)
     private OrderStatus status;
 
-    @Column(name = "ordered_at", nullable = false)
-    private ZonedDateTime orderedAt;
-
     /**
      * 주문 엔티티 생성자
      * 
      * @param request 주문 생성 요청 DTO
+     * @throws IllegalArgumentException request가 null인 경우
      */
     private OrderEntity(OrderDomainCreateRequest request) {
+        Objects.requireNonNull(request, "주문 생성 요청은 필수입니다.");
+        Objects.requireNonNull(request.userId(), "사용자 ID는 필수입니다.");
+        Objects.requireNonNull(request.totalAmount(), "주문 총액은 필수입니다.");
+
+        if (request.totalAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("주문 총액은 0보다 커야 합니다.");
+        }
+
         this.userId = request.userId();
         this.totalAmount = request.totalAmount();
         this.status = OrderStatus.PENDING;
-        this.orderedAt = ZonedDateTime.now();
     }
 
     /**
@@ -62,6 +61,7 @@ public class OrderEntity extends BaseEntity {
      * @return 생성된 주문 엔티티
      */
     public static OrderEntity createOrder(OrderDomainCreateRequest request) {
+        Objects.requireNonNull(request, "주문 생성 요청은 null일 수 없습니다.");
         return new OrderEntity(request);
     }
 
@@ -112,8 +112,5 @@ public class OrderEntity extends BaseEntity {
             throw new IllegalStateException("주문 상태는 필수입니다.");
         }
 
-        if (this.orderedAt == null) {
-            throw new IllegalStateException("주문 일시는 필수입니다.");
-        }
     }
 }
