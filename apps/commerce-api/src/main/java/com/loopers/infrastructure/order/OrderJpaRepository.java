@@ -49,5 +49,5 @@ public interface OrderJpaRepository extends JpaRepository<OrderEntity, Long> {
      * @param status 주문 상태
      * @return 주문 목록
      */
-    List<OrderEntity> findByUserIdAndStatusAndDeletedAtIsNull(Long userId, OrderStatus status);
+    Page<OrderEntity> findByUserIdAndStatusAndDeletedAtIsNull(Long userId, OrderStatus status, Pageable pageable);
 }

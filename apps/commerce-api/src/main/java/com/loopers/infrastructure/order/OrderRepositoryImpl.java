@@ -46,7 +46,7 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public List<OrderEntity> findByUserIdAndStatus(Long userId, OrderStatus status) {
-        return orderJpaRepository.findByUserIdAndStatusAndDeletedAtIsNull(userId, status);
+    public Page<OrderEntity> findByUserIdAndStatus(Long userId, OrderStatus status, Pageable pageable) {
+        return orderJpaRepository.findByUserIdAndStatusAndDeletedAtIsNull(userId, status, pageable);
     }
 }
