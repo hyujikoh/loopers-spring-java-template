@@ -239,8 +239,7 @@ class LikeUnitTest {
             // When: 좋아요 취소 메서드 호출
             likeService.unlikeProduct(user, product);
 
-            // Then: 이미 삭제된 상태이므로 ifPresent 조건 만족하지만 delete() 호출 안됨
-            // Product는 여전히 저장 시도됨 (멱등성 처리)
+            // Then: 이미 삭제된 상태이므로 아무 작업도 수행되지 않음 (멱등성 보장)
             assertEquals(initialLikeCount, product.getLikeCount(), "이미 삭제된 좋아요의 경우 좋아요 수가 변하지 않아야 함");
             verify(productRepository, times(0)).save(product);
         }

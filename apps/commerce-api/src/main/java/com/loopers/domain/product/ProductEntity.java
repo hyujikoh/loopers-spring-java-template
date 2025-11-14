@@ -101,11 +101,11 @@ public class ProductEntity extends BaseEntity {
             throw new IllegalArgumentException("정가는 0보다 커야 합니다.");
         }
 
-        if (request.discountPrice() != null && request.discountPrice().compareTo(BigDecimal.ZERO) < 0) {
+        if (request.discountPrice() != null && request.discountPrice().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("할인가는 음수일 수 없습니다.");
         }
 
-        if (request.discountPrice() != null && request.discountPrice().compareTo(request.originPrice()) > 0) {
+        if (request.discountPrice() != null && request.discountPrice().compareTo(request.originPrice()) >= 0) {
             throw new IllegalArgumentException("할인가는 정가보다 클 수 없습니다.");
         }
 
