@@ -36,7 +36,7 @@ public record ProductDetailInfo(
      *
      * @param product 상품 엔티티
      * @param brand   브랜드 엔티티
-     * @param isLiked 사용자의 좋아요 여부 (null: 비로그인)
+     * @param isLiked 사용자의 좋아요 여부 (false: 비로그인)
      * @return ProductDetailInfo
      */
     public static ProductDetailInfo of(ProductEntity product, BrandEntity brand, Boolean isLiked) {
