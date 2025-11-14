@@ -16,7 +16,7 @@ public record ProductDetailInfo(
         Integer stockQuantity,
         ProductPriceInfo price,
         BrandInfo brand,
-        Boolean isLiked  // 사용자의 좋아요 여부 (null: 비로그인, true: 좋아요함, false: 좋아요 안함)
+        Boolean isLiked  // 사용자의 좋아요 여부 (false: 비로그인 또는 좋아요 안함 , true: 좋아요함)
 ) {
 
     /**
