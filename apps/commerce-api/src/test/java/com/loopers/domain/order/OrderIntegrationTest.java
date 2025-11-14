@@ -360,7 +360,7 @@ public class OrderIntegrationTest {
 
             // When & Then: 주문 생성 시 포인트 부족 예외 발생
             assertThatThrownBy(() -> orderFacade.createOrder(orderCommand))
-                    .isInstanceOf(Exception.class)
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("포인트가 부족합니다");
         }
 
@@ -1165,7 +1165,7 @@ public class OrderIntegrationTest {
 
             // When & Then: 포인트 부족으로 주문 생성 실패
             assertThatThrownBy(() -> orderFacade.createOrder(orderCommand))
-                    .isInstanceOf(Exception.class)
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("포인트가 부족합니다");
 
             // Then: 모든 상품의 재고가 원래대로 복구되었는지 확인
