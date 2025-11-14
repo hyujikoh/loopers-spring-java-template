@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 좋아요 도메인 서비스
- *
+ * <p>
  * 좋아요 도메인의 비즈니스 로직을 처리합니다.
  * 단일 책임 원칙에 따라 좋아요 Repository에만 의존합니다.
  *
@@ -24,7 +24,7 @@ public class LikeService {
     /**
      * 사용자와 상품의 좋아요 관계를 조회합니다.
      *
-     * @param userId 사용자 ID
+     * @param userId    사용자 ID
      * @param productId 상품 ID
      * @return 좋아요 엔티티 (Optional)
      */
@@ -35,12 +35,12 @@ public class LikeService {
 
     /**
      * 좋아요를 등록하거나 복원합니다 (Upsert).
-     *
+     * <p>
      * - 좋아요 관계가 없으면: 새로 생성
      * - 삭제된 좋아요가 있으면: 복원
      * - 활성 좋아요가 있으면: 기존 엔티티 반환 (중복 방지)
      *
-     * @param userId 사용자 ID
+     * @param userId    사용자 ID
      * @param productId 상품 ID
      * @return 생성 또는 복원된 좋아요 엔티티
      */
@@ -61,7 +61,7 @@ public class LikeService {
     /**
      * 좋아요를 취소합니다 (소프트 삭제).
      *
-     * @param userId 사용자 ID
+     * @param userId    사용자 ID
      * @param productId 상품 ID
      */
     @Transactional

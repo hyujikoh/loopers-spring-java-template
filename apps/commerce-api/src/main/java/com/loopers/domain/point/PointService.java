@@ -60,4 +60,24 @@ public class PointService {
 
         return user.getPointAmount();
     }
+
+    /**
+     * 사용자의 포인트를 사용합니다.
+     *
+     * @param user   사용자명
+     * @param amount 사용할 금액
+     * @return 사용 후 포인트 잔액
+     */
+    @Transactional
+    public BigDecimal use(UserEntity user, BigDecimal amount) {
+        user.usePoint(amount);
+
+        // 포인트 이력 생성 (사용)
+        PointHistoryEntity history = PointHistoryEntity.createUseHistory(user, amount, user.getPointAmount());
+        pointHistoryRepository.save(history);
+
+        userRepository.save(user);
+
+        return user.getPointAmount();
+    }
 }

@@ -31,7 +31,7 @@ public class LikeEntity extends BaseEntity {
     private Long productId;
 
     private LikeEntity(Long userId, Long productId) {
-        requireNonNull(userId, "브랜드 ID는 필수입니다.");
+        requireNonNull(userId, "user ID는 필수입니다.");
         requireNonNull(productId, "상품명은 필수입니다.");
 
         this.userId = userId;

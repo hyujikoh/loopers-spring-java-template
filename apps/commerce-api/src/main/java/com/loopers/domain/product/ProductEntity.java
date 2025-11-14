@@ -141,6 +141,21 @@ public class ProductEntity extends BaseEntity {
         this.stockQuantity -= quantity;
     }
 
+    /**
+     * 재고를 원복한다.
+     *
+     * <p>주문 취소 시 차감된 재고를 다시 복구합니다.</p>
+     *
+     * @param quantity 원복할 재고 수량
+     */
+    public void restoreStock(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("원복할 재고 수량은 0보다 커야 합니다.");
+        }
+
+        this.stockQuantity += quantity;
+    }
+
 
     /**
      * 좋아요 수를 증가시킨다.
