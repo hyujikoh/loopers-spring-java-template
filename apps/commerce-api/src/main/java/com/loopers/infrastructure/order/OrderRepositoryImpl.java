@@ -36,11 +36,6 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public List<OrderEntity> findByUserId(Long userId) {
-        return orderJpaRepository.findByUserIdAndDeletedAtIsNull(userId);
-    }
-
-    @Override
     public Page<OrderEntity> findByUserId(Long userId, Pageable pageable) {
         return orderJpaRepository.findByUserIdAndDeletedAtIsNull(userId, pageable);
     }

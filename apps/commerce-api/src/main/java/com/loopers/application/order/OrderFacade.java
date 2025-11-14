@@ -2,6 +2,7 @@ package com.loopers.application.order;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -53,7 +54,20 @@ public class OrderFacade {
         List<ProductEntity> orderableProducts = new ArrayList<>();
         BigDecimal totalOrderAmount = BigDecimal.ZERO;
 
-        for (OrderItemCommand itemCommand : command.orderItems()) {
+        // 주문 항목을 상품 ID 기준으로 정렬하여 교착 상태 방지
+        /**
+         * 데드락 시나리오:
+         *
+         * 스레드 A: [상품 1, 상품 2] 순서로 락 획득 → 락 1 획득 → 락 2 대기 중
+         * 스레드 B: [상품 2, 상품 1] 순서로 락 획득 → 락 2 획득 → 락 1 대기 중
+         * 결과: DB 수준의 원형 대기(circular wait) 발생
+         * 이를 방지하기 위해, 주문 항목을 productId 기준으로 정렬한 뒤 처리하세요:
+         */
+        List<OrderItemCommand> sortedItems = command.orderItems().stream()
+                .sorted(Comparator.comparing(OrderItemCommand::productId))
+                .toList();
+
+        for (OrderItemCommand itemCommand : sortedItems) {
             // 상품 정보 조회 (재고 잠금 적용)
             ProductEntity product = productService.getProductDetailLock(itemCommand.productId());
 
@@ -142,7 +156,16 @@ public class OrderFacade {
         order.cancelOrder();
 
         // 2. 주문 항목 조회
-        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
+        /**
+         * 데드락 시나리오:
+         * 스레드 A: [상품 1, 상품 2] 순서로 락 획득 → 락 1 획득 → 락 2 대기 중
+         * 스레드 B: [상품 2, 상품 1] 순서로 락 획득 → 락 2 획득 → 락 1 대기 중
+         * 결과: DB 수준의 원형 대기(circular wait) 발생
+         * 이를 방지하기 위해, 주문 항목을 productId 기준으로 정렬한 뒤 처리하세요:
+         */
+        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId)
+                .stream().sorted(Comparator.comparing(OrderItemEntity::getProductId))
+                .toList();
 
         // 3. 재고 원복
         for (OrderItemEntity orderItem : orderItems) {

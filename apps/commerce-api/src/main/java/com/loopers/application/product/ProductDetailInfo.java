@@ -18,9 +18,10 @@ public record ProductDetailInfo(
         BrandInfo brand,
         Boolean isLiked  // 사용자의 좋아요 여부 (null: 비로그인, true: 좋아요함, false: 좋아요 안함)
 ) {
+
     /**
      * ProductEntity와 BrandEntity를 조합하여 ProductDetailInfo를 생성한다.
-     * (비로그인 사용자용 - isLiked는 null)
+     * 좋아요 여부는 false로 기본 설정된다.
      *
      * @param product 상품 엔티티
      * @param brand   브랜드 엔티티

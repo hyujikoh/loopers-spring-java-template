@@ -319,7 +319,7 @@ public class LikeIntegrationTest {
 
             // Then
             assertThatThrownBy(
-                    () -> likeFacade.unlikeProduct(user.getUsername(), 999L)
+                    () -> likeFacade.unlikeProduct(user.getUsername(), deletedProduct.getId())
             ).isInstanceOf(CoreException.class);
         }
 

@@ -163,7 +163,7 @@ public class ProductIntegrationTest {
             // given
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 1, 5); // 1개 브랜드, 5개 상품 생성
 
-            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "생성일시"));
+            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
             ProductSearchFilter productSearchFilter = new ProductSearchFilter(null, null, pageable);
 
             // when
@@ -319,7 +319,7 @@ public class ProductIntegrationTest {
 
         @Test
         @DisplayName("비로그인 사용자가 상품 조회 시 isLiked가 false이다")
-        void should_return_is_liked_null_when_anonymous_user() {
+        void should_return_is_liked_false_when_anonymous_user() {
             // Given: 브랜드와 상품 생성
             BrandEntity brand = BrandTestFixture.createAndSave(brandRepository, "Test Brand", "Test Description");
             ProductEntity product = ProductTestFixture.createAndSave(
@@ -337,7 +337,7 @@ public class ProductIntegrationTest {
                     null  // 비로그인
             );
 
-            // Then: 좋아요 여부는 null, 카운트는 0
+            // Then: 좋아요 여부는 false, 카운트는 0
             assertThat(result.isLiked()).isFalse();
             assertThat(result.likeCount()).isEqualTo(0L);
         }

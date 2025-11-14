@@ -56,10 +56,6 @@ public class OrderIntegrationTest {
     private OrderFacade orderFacade;
 
     @Autowired
-    private UserService userService;
-
-
-    @Autowired
     private ProductRepository productRepository;
 
     @Autowired
@@ -360,7 +356,7 @@ public class OrderIntegrationTest {
 
             // When & Then: 주문 생성 시 포인트 부족 예외 발생
             assertThatThrownBy(() -> orderFacade.createOrder(orderCommand))
-                    .isInstanceOf(Exception.class)
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("포인트가 부족합니다");
         }
 
@@ -1165,7 +1161,7 @@ public class OrderIntegrationTest {
 
             // When & Then: 포인트 부족으로 주문 생성 실패
             assertThatThrownBy(() -> orderFacade.createOrder(orderCommand))
-                    .isInstanceOf(Exception.class)
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("포인트가 부족합니다");
 
             // Then: 모든 상품의 재고가 원래대로 복구되었는지 확인
@@ -1237,8 +1233,8 @@ public class OrderIntegrationTest {
         }
 
         @Test
-        @DisplayName("동시에 같은 상품을 주문할 때 재고 차감이 발생한다")
-        void should_deduct_stock_when_ordering_same_product_concurrently() throws InterruptedException {
+        @DisplayName("동시에 같은 상품을 주문할 때 재고 차감이 정확하게 발생한다")
+        void should_deduct_stock_accurately_when_ordering_same_product_concurrently() throws InterruptedException {
             // Given: 브랜드 생성
             BrandEntity brand = brandService.registerBrand(
                     BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
@@ -1258,13 +1254,13 @@ public class OrderIntegrationTest {
                 users.add(userInfo);
             }
 
-            // Given: 재고가 제한된 상품 생성
+            // Given: 재고가 충분한 상품 생성
             Integer initialStock = 50;
             ProductEntity product = productService.registerProduct(
                     ProductTestFixture.createRequest(
                             brand.getId(),
                             "인기상품",
-                            "재고가 제한된 인기 상품",
+                            "동시성 테스트용 상품",
                             new BigDecimal("10000"),
                             initialStock
                     )
@@ -1307,22 +1303,23 @@ public class OrderIntegrationTest {
             latch.await(30, TimeUnit.SECONDS);
             executorService.shutdown();
 
-            // Then: 최소 1개 이상의 주문이 성공했는지 확인
-            assertThat(successCount.get()).isGreaterThan(0);
+            // Then: 재고가 충분하므로 모든 주문이 성공해야 함
+            assertThat(successCount.get()).isEqualTo(threadCount);
+            assertThat(failCount.get()).isZero();
 
-            // Then: 성공한 주문 수와 실패한 주문 수의 합이 전체 시도 수와 같은지 확인
-            assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount);
-
-            // Then: 최종 재고가 초기 재고보다 작거나 같은지 확인 (재고 차감이 발생했는지)
+            // Then: 최종 재고가 정확히 차감되었는지 검증 (동시성 제어 완벽)
             ProductEntity finalProduct = productService.getProductDetail(product.getId());
-            assertThat(finalProduct.getStockQuantity()).isLessThanOrEqualTo(initialStock);
+            int expectedFinalStock = initialStock - (threadCount * orderQuantityPerUser);
 
-            // Then: 재고 차감량이 성공한 주문 수량과 일치하는지 확인 (동시성 제어가 완벽하지 않을 수 있음)
-            int expectedDeductedStock = successCount.get() * orderQuantityPerUser;
-            int actualDeductedStock = initialStock - finalProduct.getStockQuantity();
+            // ✅ 엄격한 검증: 정확히 일치해야 함
+            assertThat(finalProduct.getStockQuantity())
+                    .as("비관적 락으로 동시성이 보호되므로 재고는 정확히 일치해야 함")
+                    .isEqualTo(expectedFinalStock);
 
-            // 동시성 제어가 없으면 실제 차감량이 예상보다 적을 수 있음 (race condition)
-            assertThat(actualDeductedStock).isLessThanOrEqualTo(expectedDeductedStock);
+            // ✅ 추가 검증: Oversell 절대 발생하지 않음
+            assertThat(finalProduct.getStockQuantity())
+                    .as("재고는 절대 음수가 될 수 없음")
+                    .isGreaterThanOrEqualTo(0);
         }
 
         @Test
