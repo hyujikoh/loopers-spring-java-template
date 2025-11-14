@@ -1,6 +1,7 @@
 package com.loopers.domain.order;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Objects;
 
 import com.loopers.domain.BaseEntity;
@@ -52,7 +53,7 @@ public class OrderEntity extends BaseEntity {
         }
 
         this.userId = request.userId();
-        this.totalAmount = request.totalAmount();
+        this.totalAmount = request.totalAmount().setScale(2, RoundingMode.HALF_UP);
         this.status = OrderStatus.PENDING;
     }
 
