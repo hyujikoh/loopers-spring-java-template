@@ -46,10 +46,7 @@ public class LikeFacade {
         ProductEntity product = productService.getProductDetail(productId);
 
         // 3. 좋아요 등록/복원
-        LikeEntity likeEntity = likeService.upsertLike(user.getId(), product.getId());
-
-        // 4. 상품의 좋아요 수 증가
-        productService.increaseLikeCount(product.getId());
+        LikeEntity likeEntity = likeService.upsertLike(user, product);
 
         // 5. DTO 변환 후 반환
         return LikeInfo.of(likeEntity, product, user);
@@ -57,6 +54,8 @@ public class LikeFacade {
 
     /**
      * 좋아요를 취소합니다.
+     * <p>
+     * 좋아요를 삭제하고 상품의 좋아요 카운트를 감소시킵니다.
      *
      * @param username  사용자명
      * @param productId 상품 ID
@@ -70,12 +69,7 @@ public class LikeFacade {
         // 2. 상품 검증
         ProductEntity product = productService.getProductDetail(productId);
 
-        // 3. 좋아요 취소
-        likeService.findLike(user.getId(), productId)
-                .ifPresent(like -> {
-                    like.delete();
-                    // 4. 상품의 좋아요 수 감소
-                    productService.decreaseLikeCount(product.getId());
-                });
+        // 3. 좋아요 취소 (Product 카운트 감소 포함)
+        likeService.unlikeProduct(user, product);
     }
 }
