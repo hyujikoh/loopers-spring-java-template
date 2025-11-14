@@ -89,4 +89,61 @@ public class OrderService {
         orderRepository.save(order);
         orderItemRepository.saveAll(orderItemsByOrderId);
     }
+
+    /**
+     * 사용자 ID로 주문 목록을 조회합니다.
+     * 
+     * @param userId 사용자 ID
+     * @return 주문 목록
+     */
+    public List<OrderEntity> getOrdersByUserId(Long userId) {
+        return orderRepository.findByUserId(userId);
+    }
+
+    /**
+     * 사용자 ID로 주문 목록을 페이징하여 조회합니다.
+     * 
+     * @param userId 사용자 ID
+     * @param pageable 페이징 정보
+     * @return 페이징된 주문 목록
+     */
+    public org.springframework.data.domain.Page<OrderEntity> getOrdersByUserId(
+            Long userId, 
+            org.springframework.data.domain.Pageable pageable) {
+        return orderRepository.findByUserId(userId, pageable);
+    }
+
+    /**
+     * 사용자 ID와 주문 상태로 주문 목록을 조회합니다.
+     * 
+     * @param userId 사용자 ID
+     * @param status 주문 상태
+     * @return 주문 목록
+     */
+    public List<OrderEntity> getOrdersByUserIdAndStatus(Long userId, OrderStatus status) {
+        return orderRepository.findByUserIdAndStatus(userId, status);
+    }
+    
+    /**
+     * 주문 ID로 주문 항목 개수를 조회합니다.
+     * 
+     * @param orderId 주문 ID
+     * @return 주문 항목 개수
+     */
+    public int countOrderItems(Long orderId) {
+        return orderItemRepository.countByOrderId(orderId);
+    }
+    
+    /**
+     * 주문 ID로 주문 항목 목록을 페이징하여 조회합니다.
+     * 
+     * @param orderId 주문 ID
+     * @param pageable 페이징 정보
+     * @return 페이징된 주문 항목 목록
+     */
+    public org.springframework.data.domain.Page<OrderItemEntity> getOrderItemsByOrderId(
+            Long orderId, 
+            org.springframework.data.domain.Pageable pageable) {
+        return orderItemRepository.findByOrderId(orderId, pageable);
+    }
 }

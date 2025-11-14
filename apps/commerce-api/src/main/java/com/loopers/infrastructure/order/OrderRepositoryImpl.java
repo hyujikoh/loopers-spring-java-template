@@ -2,9 +2,13 @@ package com.loopers.infrastructure.order;
 
 import com.loopers.domain.order.OrderEntity;
 import com.loopers.domain.order.OrderRepository;
+import com.loopers.domain.order.OrderStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -26,6 +30,21 @@ public class OrderRepositoryImpl implements OrderRepository {
     
     @Override
     public Optional<OrderEntity> findById(Long id) {
-        return orderJpaRepository.findById(id);
+        return orderJpaRepository.findByIdAndDeletedAtIsNull(id);
+    }
+
+    @Override
+    public List<OrderEntity> findByUserId(Long userId) {
+        return orderJpaRepository.findByUserIdAndDeletedAtIsNull(userId);
+    }
+
+    @Override
+    public Page<OrderEntity> findByUserId(Long userId, Pageable pageable) {
+        return orderJpaRepository.findByUserIdAndDeletedAtIsNull(userId, pageable);
+    }
+
+    @Override
+    public List<OrderEntity> findByUserIdAndStatus(Long userId, OrderStatus status) {
+        return orderJpaRepository.findByUserIdAndStatusAndDeletedAtIsNull(userId, status);
     }
 }

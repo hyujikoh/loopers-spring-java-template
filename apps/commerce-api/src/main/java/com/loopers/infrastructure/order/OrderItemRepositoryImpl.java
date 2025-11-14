@@ -33,4 +33,16 @@ public class OrderItemRepositoryImpl implements OrderItemRepository {
     public void saveAll(List<OrderItemEntity> orderItemsByOrderId) {
         orderItemJpaRepository.saveAll(orderItemsByOrderId);
     }
+    
+    @Override
+    public int countByOrderId(Long orderId) {
+        return orderItemJpaRepository.countByOrderId(orderId);
+    }
+    
+    @Override
+    public org.springframework.data.domain.Page<OrderItemEntity> findByOrderId(
+            Long orderId, 
+            org.springframework.data.domain.Pageable pageable) {
+        return orderItemJpaRepository.findByOrderId(orderId, pageable);
+    }
 }

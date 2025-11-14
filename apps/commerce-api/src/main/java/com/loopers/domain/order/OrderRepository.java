@@ -1,5 +1,6 @@
 package com.loopers.domain.order;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -25,4 +26,32 @@ public interface OrderRepository {
      * @return 조회된 주문 엔티티 (Optional)
      */
     Optional<OrderEntity> findById(Long id);
+
+    /**
+     * 사용자 ID로 주문 목록을 조회합니다.
+     * 
+     * @param userId 사용자 ID
+     * @return 주문 목록
+     */
+    List<OrderEntity> findByUserId(Long userId);
+
+    /**
+     * 사용자 ID로 주문 목록을 페이징하여 조회합니다.
+     * 
+     * @param userId 사용자 ID
+     * @param pageable 페이징 정보
+     * @return 페이징된 주문 목록
+     */
+    org.springframework.data.domain.Page<OrderEntity> findByUserId(
+            Long userId, 
+            org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * 사용자 ID와 주문 상태로 주문 목록을 조회합니다.
+     * 
+     * @param userId 사용자 ID
+     * @param status 주문 상태
+     * @return 주문 목록
+     */
+    List<OrderEntity> findByUserIdAndStatus(Long userId, OrderStatus status);
 }

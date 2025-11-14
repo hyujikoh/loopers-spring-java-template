@@ -7,11 +7,16 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import com.loopers.application.order.OrderCreateCommand;
 import com.loopers.application.order.OrderFacade;
 import com.loopers.application.order.OrderInfo;
 import com.loopers.application.order.OrderItemCommand;
+import com.loopers.application.order.OrderSummary;
+import com.loopers.application.order.OrderItemInfo;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
@@ -544,10 +549,10 @@ public class OrderIntegrationTest {
             // Given: 주문 삭제 (소프트 삭제)
             orderService.deleteOrder(createdOrder.id());
 
-            // When & Then: 삭제된 주문 확정 시 예외 발생
+            // When & Then: 삭제된 주문 확정 시 예외 발생 (삭제된 주문은 조회되지 않음)
             assertThatThrownBy(() -> orderFacade.confirmOrder(createdOrder.id()))
                     .isInstanceOf(Exception.class)
-                    .hasMessageContaining("주문 확정은 대기 상태 또는 활성화된 주문만 가능합니다. (현재 상태: PENDING)");
+                    .hasMessageContaining("주문을 찾을 수 없습니다");
         }
     }
 
@@ -560,43 +565,281 @@ public class OrderIntegrationTest {
         @Test
         @DisplayName("주문 ID로 주문을 조회할 수 있다")
         void should_retrieve_order_by_id() {
-            // TODO: TDD - 구현 필요
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("50000"));
+
+            // Given: 상품 생성
+            ProductEntity product = productService.registerProduct(
+                    ProductTestFixture.createRequest(
+                            brand.getId(),
+                            "테스트상품",
+                            "상품 설명",
+                            new BigDecimal("10000"),
+                            100
+                    )
+            );
+
+            // Given: 주문 생성
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(2)
+                                    .build()
+                    ))
+                    .build();
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+
+            // When: 주문 ID로 조회
+            OrderInfo retrievedOrder = orderFacade.getOrderById(createdOrder.id());
+
+            // Then: 주문 정보가 정확히 조회되는지 검증
+            assertThat(retrievedOrder).isNotNull();
+            assertThat(retrievedOrder.id()).isEqualTo(createdOrder.id());
+            assertThat(retrievedOrder.userId()).isEqualTo(userInfo.id());
+            assertThat(retrievedOrder.totalAmount()).isEqualTo(new BigDecimal("20000.00"));
+            assertThat(retrievedOrder.status()).isEqualTo(OrderStatus.PENDING);
         }
 
         @Test
         @DisplayName("사용자 ID로 주문 목록을 조회할 수 있다")
         void should_retrieve_orders_by_user_id() {
-            // TODO: TDD - 구현 필요
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("100000"));
+
+            // Given: 상품 생성
+            ProductEntity product1 = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "상품1", "설명1", new BigDecimal("10000"), 100)
+            );
+            ProductEntity product2 = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "상품2", "설명2", new BigDecimal("20000"), 100)
+            );
+
+            // Given: 여러 개의 주문 생성
+            OrderInfo order1 = orderFacade.createOrder(OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(OrderItemCommand.builder().productId(product1.getId()).quantity(1).build()))
+                    .build());
+
+            OrderInfo order2 = orderFacade.createOrder(OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(OrderItemCommand.builder().productId(product2.getId()).quantity(2).build()))
+                    .build());
+
+            // When: 사용자 ID로 주문 목록 조회
+            List<OrderInfo> orders = orderFacade.getOrdersByUserId(userInfo.id());
+
+            // Then: 해당 사용자의 모든 주문이 조회되는지 검증
+            assertThat(orders).isNotNull();
+            assertThat(orders).hasSize(2);
+            assertThat(orders).extracting("id").containsExactlyInAnyOrder(order1.id(), order2.id());
+            assertThat(orders).allMatch(order -> order.userId().equals(userInfo.id()));
         }
 
         @Test
         @DisplayName("주문 조회 시 주문 항목들이 함께 조회된다")
         void should_retrieve_order_with_order_items() {
-            // TODO: TDD - 구현 필요
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("100000"));
+
+            // Given: 여러 상품 생성
+            ProductEntity product1 = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "상품1", "설명1", new BigDecimal("10000"), 100)
+            );
+            ProductEntity product2 = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "상품2", "설명2", new BigDecimal("20000"), 100)
+            );
+            ProductEntity product3 = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "상품3", "설명3", new BigDecimal("15000"), 100)
+            );
+
+            // Given: 여러 항목을 포함한 주문 생성
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder().productId(product1.getId()).quantity(2).build(),
+                            OrderItemCommand.builder().productId(product2.getId()).quantity(1).build(),
+                            OrderItemCommand.builder().productId(product3.getId()).quantity(3).build()
+                    ))
+                    .build();
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+
+            // When: 주문 조회
+            OrderInfo retrievedOrder = orderFacade.getOrderById(createdOrder.id());
+
+            // Then: 주문 항목들이 함께 조회되는지 검증
+            assertThat(retrievedOrder.orderItems()).isNotNull();
+            assertThat(retrievedOrder.orderItems()).hasSize(3);
+            assertThat(retrievedOrder.orderItems())
+                    .extracting("productId", "quantity")
+                    .containsExactlyInAnyOrder(
+                            tuple(product1.getId(), 2),
+                            tuple(product2.getId(), 1),
+                            tuple(product3.getId(), 3)
+                    );
         }
 
         @Test
         @DisplayName("존재하지 않는 주문 조회 시 예외가 발생한다")
         void should_throw_exception_when_retrieving_non_existent_order() {
-            // TODO: TDD - 구현 필요
+            // Given: 존재하지 않는 주문 ID
+            Long nonExistentOrderId = 99999L;
+
+            // When & Then: 존재하지 않는 주문 조회 시 예외 발생
+            assertThatThrownBy(() -> orderFacade.getOrderById(nonExistentOrderId))
+                    .isInstanceOf(Exception.class)
+                    .hasMessageContaining("주문을 찾을 수 없습니다");
         }
 
         @Test
         @DisplayName("삭제된 주문은 조회되지 않는다")
         void should_not_retrieve_deleted_orders() {
-            // TODO: TDD - 구현 필요
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("50000"));
+
+            // Given: 상품 생성
+            ProductEntity product = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "테스트상품", "설명", new BigDecimal("10000"), 100)
+            );
+
+            // Given: 주문 생성
+            OrderInfo createdOrder = orderFacade.createOrder(OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(OrderItemCommand.builder().productId(product.getId()).quantity(1).build()))
+                    .build());
+
+            // Given: 주문 삭제
+            orderService.deleteOrder(createdOrder.id());
+
+            // When & Then: 삭제된 주문 조회 시 예외 발생
+            assertThatThrownBy(() -> orderFacade.getOrderById(createdOrder.id()))
+                    .isInstanceOf(Exception.class)
+                    .hasMessageContaining("주문을 찾을 수 없습니다");
         }
 
         @Test
         @DisplayName("사용자의 주문 목록을 페이징하여 조회할 수 있다")
         void should_retrieve_user_orders_with_pagination() {
-            // TODO: TDD - 구현 필요
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("500000"));
+
+            // Given: 상품 생성
+            ProductEntity product = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "테스트상품", "설명", new BigDecimal("10000"), 1000)
+            );
+
+            // Given: 5개의 주문 생성
+            for (int i = 0; i < 5; i++) {
+                orderFacade.createOrder(OrderCreateCommand.builder()
+                        .username(userInfo.username())
+                        .orderItems(List.of(OrderItemCommand.builder().productId(product.getId()).quantity(1).build()))
+                        .build());
+            }
+
+            // When: 페이지 크기 2로 첫 번째 페이지 조회
+            Page<OrderInfo> firstPage =
+                    orderFacade.getOrdersByUserId(userInfo.id(), 
+                            org.springframework.data.domain.PageRequest.of(0, 2));
+
+            // Then: 페이징 결과 검증
+            assertThat(firstPage).isNotNull();
+            assertThat(firstPage.getContent()).hasSize(2);
+            assertThat(firstPage.getTotalElements()).isEqualTo(5);
+            assertThat(firstPage.getTotalPages()).isEqualTo(3);
+            assertThat(firstPage.getNumber()).isEqualTo(0);
         }
 
         @Test
         @DisplayName("주문 상태별로 필터링하여 조회할 수 있다")
         void should_filter_orders_by_status() {
-            // TODO: TDD - 구현 필요
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("100000"));
+
+            // Given: 상품 생성
+            ProductEntity product = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "테스트상품", "설명", new BigDecimal("10000"), 100)
+            );
+
+            // Given: 여러 주문 생성 (일부는 확정)
+            OrderInfo order1 = orderFacade.createOrder(OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(OrderItemCommand.builder().productId(product.getId()).quantity(1).build()))
+                    .build());
+
+            OrderInfo order2 = orderFacade.createOrder(OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(OrderItemCommand.builder().productId(product.getId()).quantity(1).build()))
+                    .build());
+
+            OrderInfo order3 = orderFacade.createOrder(OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(OrderItemCommand.builder().productId(product.getId()).quantity(1).build()))
+                    .build());
+
+            // Given: 일부 주문 확정
+            orderFacade.confirmOrder(order1.id());
+            orderFacade.confirmOrder(order2.id());
+
+            // When: CONFIRMED 상태의 주문만 조회
+            List<OrderInfo> confirmedOrders = orderFacade.getOrdersByUserIdAndStatus(userInfo.id(), OrderStatus.CONFIRMED);
+
+            // Then: CONFIRMED 상태의 주문만 조회되는지 검증
+            assertThat(confirmedOrders).isNotNull();
+            assertThat(confirmedOrders).hasSize(2);
+            assertThat(confirmedOrders).allMatch(order -> order.status() == OrderStatus.CONFIRMED);
+            assertThat(confirmedOrders).extracting("id").containsExactlyInAnyOrder(order1.id(), order2.id());
+
+            // When: PENDING 상태의 주문만 조회
+            List<OrderInfo> pendingOrders = orderFacade.getOrdersByUserIdAndStatus(userInfo.id(), OrderStatus.PENDING);
+
+            // Then: PENDING 상태의 주문만 조회되는지 검증
+            assertThat(pendingOrders).isNotNull();
+            assertThat(pendingOrders).hasSize(1);
+            assertThat(pendingOrders.get(0).id()).isEqualTo(order3.id());
+            assertThat(pendingOrders.get(0).status()).isEqualTo(OrderStatus.PENDING);
         }
     }
 
@@ -605,27 +848,174 @@ public class OrderIntegrationTest {
     class OrderItemManagement {
 
         @Test
-        @DisplayName("주문에 여러 개의 주문 항목을 추가할 수 있다")
-        void should_add_multiple_order_items_to_order() {
-            // TODO: TDD - 구현 필요
+        @DisplayName("주문 목록 조회 시 주문 항목 정보는 포함하지 않는다")
+        void should_not_include_order_items_when_retrieving_order_list() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("100000"));
+
+            // Given: 여러 상품 생성
+            ProductEntity product1 = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "상품1", "설명1", new BigDecimal("10000"), 100)
+            );
+            ProductEntity product2 = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "상품2", "설명2", new BigDecimal("20000"), 100)
+            );
+
+            // Given: 여러 항목을 포함한 주문 생성
+            orderFacade.createOrder(OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder().productId(product1.getId()).quantity(2).build(),
+                            OrderItemCommand.builder().productId(product2.getId()).quantity(3).build()
+                    ))
+                    .build());
+
+            // When: 주문 목록 조회 (요약 정보만)
+            List<OrderSummary> orderSummaries = orderFacade.getOrderSummariesByUserId(userInfo.id());
+
+            // Then: 주문 항목 정보는 포함하지 않고 항목 개수만 포함
+            assertThat(orderSummaries).isNotNull();
+            assertThat(orderSummaries).hasSize(1);
+            assertThat(orderSummaries.get(0).itemCount()).isEqualTo(2);
+            assertThat(orderSummaries.get(0).totalAmount()).isEqualTo(new BigDecimal("80000.00"));
         }
 
         @Test
-        @DisplayName("주문 항목의 총액이 정확히 계산된다")
-        void should_calculate_order_item_total_correctly() {
-            // TODO: TDD - 구현 필요
+        @DisplayName("주문 ID로 주문 항목 목록을 페이징하여 조회할 수 있다")
+        void should_retrieve_order_items_with_pagination() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("500000"));
+
+            // Given: 10개의 상품 생성
+            List<Long> productIds = new java.util.ArrayList<>();
+            for (int i = 1; i <= 10; i++) {
+                ProductEntity product = productService.registerProduct(
+                        ProductTestFixture.createRequest(
+                                brand.getId(),
+                                "상품" + i,
+                                "설명" + i,
+                                new BigDecimal("10000"),
+                                100
+                        )
+                );
+                productIds.add(product.getId());
+            }
+
+            // Given: 10개 항목을 포함한 주문 생성
+            List<OrderItemCommand> itemCommands = productIds.stream()
+                    .map(productId -> OrderItemCommand.builder()
+                            .productId(productId)
+                            .quantity(1)
+                            .build())
+                    .toList();
+
+            OrderInfo createdOrder = orderFacade.createOrder(OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(itemCommands)
+                    .build());
+
+            // When: 주문 항목을 페이지 크기 3으로 첫 번째 페이지 조회
+            Page<OrderItemInfo> firstPage =
+                    orderFacade.getOrderItemsByOrderId(
+                            createdOrder.id(),
+                            org.springframework.data.domain.PageRequest.of(0, 3)
+                    );
+
+            // Then: 페이징 결과 검증
+            assertThat(firstPage).isNotNull();
+            assertThat(firstPage.getContent()).hasSize(3);
+            assertThat(firstPage.getTotalElements()).isEqualTo(10);
+            assertThat(firstPage.getTotalPages()).isEqualTo(4);
+            assertThat(firstPage.getNumber()).isEqualTo(0);
+
+            // When: 두 번째 페이지 조회
+            Page<OrderItemInfo> secondPage =
+                    orderFacade.getOrderItemsByOrderId(
+                            createdOrder.id(),
+                            org.springframework.data.domain.PageRequest.of(1, 3)
+                    );
+
+            // Then: 두 번째 페이지 검증
+            assertThat(secondPage.getContent()).hasSize(3);
+            assertThat(secondPage.getNumber()).isEqualTo(1);
         }
 
         @Test
-        @DisplayName("주문 항목들의 총액 합계가 주문 총액과 일치한다")
-        void should_match_order_total_with_sum_of_item_totals() {
-            // TODO: TDD - 구현 필요
+        @DisplayName("주문 상세 조회 시에만 주문 항목 전체를 조회한다")
+        void should_retrieve_all_order_items_only_when_getting_order_detail() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("100000"));
+
+            // Given: 여러 상품 생성
+            ProductEntity product1 = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "상품1", "설명1", new BigDecimal("10000"), 100)
+            );
+            ProductEntity product2 = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "상품2", "설명2", new BigDecimal("20000"), 100)
+            );
+            ProductEntity product3 = productService.registerProduct(
+                    ProductTestFixture.createRequest(brand.getId(), "상품3", "설명3", new BigDecimal("15000"), 100)
+            );
+
+            // Given: 여러 항목을 포함한 주문 생성
+            OrderInfo createdOrder = orderFacade.createOrder(OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder().productId(product1.getId()).quantity(2).build(),
+                            OrderItemCommand.builder().productId(product2.getId()).quantity(1).build(),
+                            OrderItemCommand.builder().productId(product3.getId()).quantity(3).build()
+                    ))
+                    .build());
+
+            // When: 주문 상세 조회
+            OrderInfo orderDetail = orderFacade.getOrderById(createdOrder.id());
+
+            // Then: 주문 항목 전체가 조회됨
+            assertThat(orderDetail.orderItems()).isNotNull();
+            assertThat(orderDetail.orderItems()).hasSize(3);
+            assertThat(orderDetail.orderItems())
+                    .extracting("productId", "quantity")
+                    .containsExactlyInAnyOrder(
+                            tuple(product1.getId(), 2),
+                            tuple(product2.getId(), 1),
+                            tuple(product3.getId(), 3)
+                    );
         }
 
         @Test
-        @DisplayName("주문 항목이 없는 주문은 생성할 수 없다")
-        void should_not_create_order_without_order_items() {
-            // TODO: TDD - 구현 필요
+        @DisplayName("존재하지 않는 주문의 주문 항목 조회 시 예외가 발생한다")
+        void should_throw_exception_when_retrieving_items_of_non_existent_order() {
+            // Given: 존재하지 않는 주문 ID
+            Long nonExistentOrderId = 99999L;
+
+            // When & Then: 존재하지 않는 주문의 항목 조회 시 예외 발생
+            assertThatThrownBy(() -> orderFacade.getOrderItemsByOrderId(
+                    nonExistentOrderId,
+                    org.springframework.data.domain.PageRequest.of(0, 10)
+            ))
+                    .isInstanceOf(Exception.class)
+                    .hasMessageContaining("주문을 찾을 수 없습니다");
         }
     }
 
@@ -654,29 +1044,6 @@ public class OrderIntegrationTest {
         @Test
         @DisplayName("동시에 같은 상품을 주문하면 재고가 정확히 차감된다")
         void should_decrease_stock_correctly_when_concurrent_orders_for_same_product() {
-            // TODO: TDD - 구현 필요
-        }
-    }
-
-    @Nested
-    @DisplayName("주문 총액 계산")
-    class OrderTotalCalculation {
-
-        @Test
-        @DisplayName("단일 항목 주문의 총액이 정확히 계산된다")
-        void should_calculate_total_correctly_for_single_item_order() {
-            // TODO: TDD - 구현 필요
-        }
-
-        @Test
-        @DisplayName("다중 항목 주문의 총액이 정확히 계산된다")
-        void should_calculate_total_correctly_for_multiple_items_order() {
-            // TODO: TDD - 구현 필요
-        }
-
-        @Test
-        @DisplayName("수량이 많은 주문의 총액이 정확히 계산된다")
-        void should_calculate_total_correctly_for_large_quantity_order() {
             // TODO: TDD - 구현 필요
         }
     }

@@ -123,4 +123,116 @@ public class OrderFacade {
         
         return OrderInfo.from(order, orderItems);
     }
+
+    /**
+     * 주문 ID로 주문 조회
+     * 
+     * @param orderId 주문 ID
+     * @return 주문 정보
+     */
+    public OrderInfo getOrderById(Long orderId) {
+        OrderEntity order = orderService.getOrderById(orderId);
+        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
+        return OrderInfo.from(order, orderItems);
+    }
+
+    /**
+     * 사용자 ID로 주문 목록 조회
+     * 
+     * @param userId 사용자 ID
+     * @return 주문 목록
+     */
+    public List<OrderInfo> getOrdersByUserId(Long userId) {
+        List<OrderEntity> orders = orderService.getOrdersByUserId(userId);
+        return orders.stream()
+            .map(order -> {
+                List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order.getId());
+                return OrderInfo.from(order, orderItems);
+            })
+            .toList();
+    }
+
+    /**
+     * 사용자 ID로 주문 목록 페이징 조회
+     * 
+     * @param userId 사용자 ID
+     * @param pageable 페이징 정보
+     * @return 페이징된 주문 목록
+     */
+    public org.springframework.data.domain.Page<OrderInfo> getOrdersByUserId(
+            Long userId, 
+            org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<OrderEntity> orderPage = 
+                orderService.getOrdersByUserId(userId, pageable);
+        
+        return orderPage.map(order -> {
+            List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order.getId());
+            return OrderInfo.from(order, orderItems);
+        });
+    }
+
+    /**
+     * 사용자 ID와 주문 상태로 주문 목록 조회
+     * 
+     * @param userId 사용자 ID
+     * @param status 주문 상태
+     * @return 주문 목록
+     */
+    public List<OrderInfo> getOrdersByUserIdAndStatus(Long userId, OrderStatus status) {
+        List<OrderEntity> orders = orderService.getOrdersByUserIdAndStatus(userId, status);
+        return orders.stream()
+            .map(order -> {
+                List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order.getId());
+                return OrderInfo.from(order, orderItems);
+            })
+            .toList();
+    }
+    
+    /**
+     * 사용자 ID로 주문 요약 목록을 조회합니다.
+     * 주문 항목 정보는 포함하지 않고 항목 개수만 포함합니다.
+     *
+     * @param userId 사용자 ID
+     * @return 주문 요약 정보 목록
+     */
+    public List<OrderSummary> getOrderSummariesByUserId(Long userId) {
+        List<OrderEntity> orders = orderService.getOrdersByUserId(userId);
+        return orders.stream()
+                .map(order -> {
+                    int itemCount = orderService.countOrderItems(order.getId());
+                    return OrderSummary.from(order, itemCount);
+                })
+                .toList();
+    }
+    
+    /**
+     * 주문 ID로 주문 요약 정보를 조회합니다.
+     *
+     * @param orderId 주문 ID
+     * @return 주문 요약 정보
+     */
+    public OrderSummary getOrderSummaryById(Long orderId) {
+        OrderEntity order = orderService.getOrderById(orderId);
+        int itemCount = orderService.countOrderItems(orderId);
+        return OrderSummary.from(order, itemCount);
+    }
+    
+    /**
+     * 주문 ID로 주문 항목 목록을 페이징하여 조회합니다.
+     *
+     * @param orderId 주문 ID
+     * @param pageable 페이징 정보
+     * @return 주문 항목 정보 페이지
+     */
+    public org.springframework.data.domain.Page<OrderItemInfo> getOrderItemsByOrderId(
+            Long orderId, 
+            org.springframework.data.domain.Pageable pageable) {
+        // 주문 존재 여부 확인
+        orderService.getOrderById(orderId);
+        
+        // 주문 항목 페이징 조회
+        org.springframework.data.domain.Page<OrderItemEntity> orderItemsPage = 
+                orderService.getOrderItemsByOrderId(orderId, pageable);
+        return orderItemsPage.map(OrderItemInfo::from);
+    }
 }
