@@ -31,14 +31,6 @@ public interface OrderRepository {
     Optional<OrderEntity> findById(Long id);
 
     /**
-     * 사용자 ID로 주문 목록을 조회합니다.
-     *
-     * @param userId 사용자 ID
-     * @return 주문 목록
-     */
-    List<OrderEntity> findByUserId(Long userId);
-
-    /**
      * 사용자 ID로 주문 목록을 페이징하여 조회합니다.
      *
      * @param userId   사용자 ID
