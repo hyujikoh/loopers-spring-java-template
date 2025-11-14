@@ -84,6 +84,10 @@ public class LikeService {
     public void unlikeProduct(UserEntity user, ProductEntity product) {
         likeRepository.findByUserIdAndProductId(user.getId(), product.getId())
                 .ifPresent(like -> {
+                    // 이미 삭제된 좋아요인 경우 무시 (멱등성 보장)
+                    if (like.getDeletedAt() != null) {
+                        return;
+                    }
                     like.delete();
                     product.decreaseLikeCount();
                     productRepository.save(product);
