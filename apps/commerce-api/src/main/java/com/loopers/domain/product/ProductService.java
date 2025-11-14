@@ -140,20 +140,6 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    /**
-     * 상품 엔티티의 재고를 원복합니다.
-     *
-     * 이미 조회된 상품 엔티티의 재고를 원복할 때 사용합니다.
-     *
-     * @param product 재고를 원복할 상품 엔티티
-     * @param quantity 원복할 재고 수량
-     * @return 재고가 원복된 상품 엔티티
-     */
-    @Transactional
-    public ProductEntity restoreStock(ProductEntity product, int quantity) {
-        product.restoreStock(quantity);
-        return productRepository.save(product);
-    }
 
     /**
      * 상품의 좋아요 수를 증가시킵니다.
