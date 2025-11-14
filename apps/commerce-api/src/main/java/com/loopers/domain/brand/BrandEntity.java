@@ -38,12 +38,22 @@ public class BrandEntity extends BaseEntity {
 
     }
 
-    public static BrandEntity createBrandEntity(String name, String description) {
-        if (Objects.isNull(name)) {
+    /**
+     * 브랜드 엔티티를 생성합니다.
+     *
+     * @param request 브랜드 생성 요청 정보
+     * @return 생성된 브랜드 엔티티
+     */
+    public static BrandEntity createBrandEntity(BrandDomainCreateRequest request) {
+        if (Objects.isNull(request)) {
+            throw new IllegalArgumentException("브랜드 생성 요청 정보는 필수입니다.");
+        }
+
+        if (Objects.isNull(request.name()) || request.name().isBlank()) {
             throw new IllegalArgumentException("브랜드 이름은 필수 입력값입니다.");
         }
 
-        return new BrandEntity(name, description);
+        return new BrandEntity(request.name(), request.description());
     }
 
     @Override

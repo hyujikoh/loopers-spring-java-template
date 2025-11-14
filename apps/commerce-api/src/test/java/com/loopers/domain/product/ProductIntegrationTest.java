@@ -16,14 +16,21 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import com.loopers.application.like.LikeFacade;
 import com.loopers.application.product.ProductDetailInfo;
 import com.loopers.application.product.ProductFacade;
 import com.loopers.application.product.ProductInfo;
+import com.loopers.application.user.UserFacade;
+import com.loopers.application.user.UserInfo;
+import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandRepository;
+import com.loopers.domain.like.LikeEntity;
+import com.loopers.domain.like.LikeRepository;
 import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
+import com.loopers.fixtures.UserTestFixture;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
 
@@ -44,6 +51,15 @@ public class ProductIntegrationTest {
 
     @Autowired
     private ProductFacade productFacade;
+
+    @Autowired
+    private UserFacade userFacade;
+
+    @Autowired
+    private LikeFacade likeFacade;
+
+    @Autowired
+    private LikeRepository likeRepository;
 
     @AfterEach
     void tearDown() {
@@ -195,7 +211,7 @@ public class ProductIntegrationTest {
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
 
             // when
-            ProductDetailInfo productDetail = productFacade.getProductDetail(1L);
+            ProductDetailInfo productDetail = productFacade.getProductDetail(1L , null);
 
             // then
             assertThat(productDetail).isNotNull();
@@ -213,7 +229,7 @@ public class ProductIntegrationTest {
             // when & then
             assertThat(org.junit.jupiter.api.Assertions.assertThrows(
                     com.loopers.support.error.CoreException.class,
-                    () -> productFacade.getProductDetail(nonExistentId)
+                    () -> productFacade.getProductDetail(nonExistentId, null)
             ).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_PRODUCT);
         }
 
@@ -231,8 +247,211 @@ public class ProductIntegrationTest {
             // when & then
             assertThat(org.junit.jupiter.api.Assertions.assertThrows(
                     com.loopers.support.error.CoreException.class,
-                    () -> productFacade.getProductDetail(product.getId())
+                    () -> productFacade.getProductDetail(product.getId(), null)
             ).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_BRAND); // 적절한 에러 타입으로 변경
+        }
+    }
+
+    @Nested
+    @DisplayName("상품 상세 조회 - 좋아요 정보 포함")
+    class ProductDetailWithLikeInfoTest {
+
+        @Test
+        @DisplayName("로그인한 사용자가 좋아요한 상품 조회 시 isLiked가 true다")
+        void should_return_is_liked_true_when_user_liked_product() {
+            // Given: 사용자 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
+
+            // Given: 브랜드와 상품 생성
+            BrandEntity brand = BrandTestFixture.createAndSave(brandRepository, "Test Brand", "Test Description");
+            ProductEntity product = ProductTestFixture.createAndSave(
+                    productRepository,
+                    brand,
+                    "Test Product",
+                    "Product Description",
+                    new BigDecimal("10000"),
+                    100
+            );
+
+            // Given: 좋아요 등록
+            likeFacade.upsertLike(userInfo.username(), product.getId());
+
+            // When: 상품 상세 조회 (사용자 정보 포함)
+            ProductDetailInfo result = productFacade.getProductDetail(
+                    product.getId(),
+                    userInfo.username()
+            );
+
+            // Then: 좋아요 여부 및 카운트 확인
+            assertThat(result.isLiked()).isTrue();
+            assertThat(result.likeCount()).isEqualTo(1L);
+        }
+
+        @Test
+        @DisplayName("로그인한 사용자가 좋아요하지 않은 상품 조회 시 isLiked가 false다")
+        void should_return_is_liked_false_when_user_not_liked_product() {
+            // Given: 사용자 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
+
+            // Given: 브랜드와 상품 생성 (좋아요는 등록하지 않음)
+            BrandEntity brand = BrandTestFixture.createAndSave(brandRepository, "Test Brand", "Test Description");
+            ProductEntity product = ProductTestFixture.createAndSave(
+                    productRepository,
+                    brand,
+                    "Test Product",
+                    "Product Description",
+                    new BigDecimal("10000"),
+                    100
+            );
+
+            // When: 상품 상세 조회 (사용자 정보 포함)
+            ProductDetailInfo result = productFacade.getProductDetail(
+                    product.getId(),
+                    userInfo.username()
+            );
+
+            // Then: 좋아요 여부 및 카운트 확인
+            assertThat(result.isLiked()).isFalse();
+            assertThat(result.likeCount()).isEqualTo(0L);
+        }
+
+        @Test
+        @DisplayName("비로그인 사용자가 상품 조회 시 isLiked가 false이다")
+        void should_return_is_liked_null_when_anonymous_user() {
+            // Given: 브랜드와 상품 생성
+            BrandEntity brand = BrandTestFixture.createAndSave(brandRepository, "Test Brand", "Test Description");
+            ProductEntity product = ProductTestFixture.createAndSave(
+                    productRepository,
+                    brand,
+                    "Test Product",
+                    "Product Description",
+                    new BigDecimal("10000"),
+                    100
+            );
+
+            // When: 비로그인 상태로 상품 조회
+            ProductDetailInfo result = productFacade.getProductDetail(
+                    product.getId(),
+                    null  // 비로그인
+            );
+
+            // Then: 좋아요 여부는 null, 카운트는 0
+            assertThat(result.isLiked()).isFalse();
+            assertThat(result.likeCount()).isEqualTo(0L);
+        }
+
+        @Test
+        @DisplayName("여러 사용자가 좋아요한 상품의 좋아요 수가 정확히 표시된다")
+        void should_show_correct_like_count_when_multiple_users_liked() {
+            // Given: 여러 사용자 생성
+            UserRegisterCommand command1 = UserTestFixture.createUserCommand(
+                    "user1", "user1@example.com", "1990-01-01", com.loopers.domain.user.Gender.MALE
+            );
+            UserRegisterCommand command2 = UserTestFixture.createUserCommand(
+                    "user2", "user2@example.com", "1990-01-01", com.loopers.domain.user.Gender.FEMALE
+            );
+            UserRegisterCommand command3 = UserTestFixture.createUserCommand(
+                    "user3", "user3@example.com", "1990-01-01", com.loopers.domain.user.Gender.MALE
+            );
+
+            UserInfo user1 = userFacade.registerUser(command1);
+            UserInfo user2 = userFacade.registerUser(command2);
+            UserInfo user3 = userFacade.registerUser(command3);
+
+            // Given: 브랜드와 상품 생성
+            BrandEntity brand = BrandTestFixture.createAndSave(brandRepository, "Test Brand", "Test Description");
+            ProductEntity product = ProductTestFixture.createAndSave(
+                    productRepository,
+                    brand,
+                    "Popular Product",
+                    "Product Description",
+                    new BigDecimal("10000"),
+                    100
+            );
+
+            // Given: 세 명의 사용자가 좋아요 등록
+            likeFacade.upsertLike(user1.username(), product.getId());
+            likeFacade.upsertLike(user2.username(), product.getId());
+            likeFacade.upsertLike(user3.username(), product.getId());
+
+            // When: user1이 상품 조회
+            ProductDetailInfo result = productFacade.getProductDetail(
+                    product.getId(),
+                    user1.username()
+            );
+
+            // Then: user1은 좋아요 했고, 총 좋아요 수는 3
+            assertThat(result.isLiked()).isTrue();
+            assertThat(result.likeCount()).isEqualTo(3L);
+        }
+
+        @Test
+        @DisplayName("좋아요 취소 후 상품 조회 시 isLiked가 false이고 카운트가 감소한다")
+        void should_return_is_liked_false_and_decreased_count_after_unlike() {
+            // Given: 사용자 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
+
+            // Given: 브랜드와 상품 생성
+            BrandEntity brand = BrandTestFixture.createAndSave(brandRepository, "Test Brand", "Test Description");
+            ProductEntity product = ProductTestFixture.createAndSave(
+                    productRepository,
+                    brand,
+                    "Test Product",
+                    "Product Description",
+                    new BigDecimal("10000"),
+                    100
+            );
+
+            // Given: 좋아요 등록 후 취소
+            likeFacade.upsertLike(userInfo.username(), product.getId());
+            likeFacade.unlikeProduct(userInfo.username(), product.getId());
+
+            // When: 상품 상세 조회
+            ProductDetailInfo result = productFacade.getProductDetail(
+                    product.getId(),
+                    userInfo.username()
+            );
+
+            // Then: 좋아요 취소 상태 확인
+            assertThat(result.isLiked()).isFalse();
+            assertThat(result.likeCount()).isEqualTo(0L);
+        }
+
+        @Test
+        @DisplayName("삭제된 좋아요는 isLiked false로 표시되고 카운트에 포함되지 않는다")
+        void should_not_count_deleted_likes() {
+            // Given: 사용자 생성
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
+
+            // Given: 브랜드와 상품 생성
+            BrandEntity brand = BrandTestFixture.createAndSave(brandRepository, "Test Brand", "Test Description");
+            ProductEntity product = ProductTestFixture.createAndSave(
+                    productRepository,
+                    brand,
+                    "Test Product",
+                    "Product Description",
+                    new BigDecimal("10000"),
+                    100
+            );
+
+            // Given: 삭제된 좋아요 엔티티 직접 생성
+            LikeEntity deletedLike = LikeEntity.createEntity(userInfo.id(), product.getId());
+            deletedLike.delete();
+            likeRepository.save(deletedLike);
+
+            // When: 상품 상세 조회
+            ProductDetailInfo result = productFacade.getProductDetail(
+                    product.getId(),
+                    userInfo.username()
+            );
+
+            // Then: 삭제된 좋아요는 카운트되지 않음
+            assertThat(result.isLiked()).isFalse();
+            assertThat(result.likeCount()).isEqualTo(0L);
         }
     }
 }
