@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * 상품 엔티티
@@ -39,6 +40,7 @@ public class ProductEntity extends BaseEntity {
     private String description;
 
     @Embedded
+    @NotNull
     private Price price;
 
     @Column(name = "stock_quantity", nullable = false)
