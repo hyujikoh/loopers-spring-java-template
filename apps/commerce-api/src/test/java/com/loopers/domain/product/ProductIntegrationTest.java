@@ -163,7 +163,7 @@ public class ProductIntegrationTest {
             // given
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 1, 5); // 1개 브랜드, 5개 상품 생성
 
-            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "생성일시"));
+            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
             ProductSearchFilter productSearchFilter = new ProductSearchFilter(null, null, pageable);
 
             // when
