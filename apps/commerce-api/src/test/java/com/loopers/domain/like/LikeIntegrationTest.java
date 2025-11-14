@@ -473,8 +473,8 @@ public class LikeIntegrationTest {
         }
 
         @Test
-        @DisplayName("좋아요가 0일 때 취소해도 음수가 되지 않는다")
-        void should_not_become_negative_when_cancel_like_with_zero_count() {
+        @DisplayName("좋아요 등록 후 취소하면 카운트가 정확히 0으로 감소한다")
+        void should_decrease_to_zero_when_cancel_single_like() {
             // Given: 사용자와 상품 생성
             UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
             UserInfo userInfo = userFacade.registerUser(command);
@@ -488,18 +488,55 @@ public class LikeIntegrationTest {
             );
             ProductEntity product = productService.registerProduct(request);
 
-            // Given: 좋아요 엔티티만 생성 (카운트는 증가시키지 않음)
-            LikeEntity like = LikeEntity.createEntity(userInfo.id(), product.getId());
-            likeRepository.save(like);
+            // Given: 정상적인 flow로 좋아요 등록 (엔티티 생성 + 카운트 증가)
+            likeFacade.upsertLike(userInfo.username(), product.getId());
 
-            assertThat(product.getLikeCount()).isEqualTo(0L);
+            // Then: 좋아요 수가 1 증가
+            ProductEntity productAfterLike = productService.getProductDetail(product.getId());
+            assertThat(productAfterLike.getLikeCount()).isEqualTo(1L);
 
             // When: 좋아요 취소
             likeFacade.unlikeProduct(userInfo.username(), product.getId());
 
-            // Then: 좋아요 수가 음수가 되지 않음
+            // Then: 좋아요 수가 정확히 0으로 감소
             ProductEntity updatedProduct = productService.getProductDetail(product.getId());
-            assertThat(updatedProduct.getLikeCount()).isGreaterThanOrEqualTo(0L);
+            assertThat(updatedProduct.getLikeCount())
+                    .as("좋아요 1개를 취소하면 카운트는 정확히 0이어야 함")
+                    .isEqualTo(0L);
+
+            // Then: 좋아요 수가 음수가 되지 않음을 추가 검증
+            assertThat(updatedProduct.getLikeCount())
+                    .as("좋아요 수는 절대 음수가 될 수 없음")
+                    .isGreaterThanOrEqualTo(0L);
+        }
+
+        @Test
+        @DisplayName("좋아요가 없는 상태에서 취소를 시도해도 카운트는 0을 유지한다")
+        void should_keep_zero_count_when_cancel_non_existent_like() {
+            // Given: 사용자와 상품 생성 (좋아요 없음)
+            UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(command);
+
+            ProductDomainCreateRequest request = ProductTestFixture.createRequest(
+                    1L,
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(request);
+
+            // Then: 초기 좋아요 수가 0
+            assertThat(product.getLikeCount()).isEqualTo(0L);
+
+            // When: 좋아요가 없는 상태에서 취소 시도 (멱등성)
+            likeFacade.unlikeProduct(userInfo.username(), product.getId());
+
+            // Then: 카운트는 여전히 0 (음수가 되지 않음)
+            ProductEntity updatedProduct = productService.getProductDetail(product.getId());
+            assertThat(updatedProduct.getLikeCount())
+                    .as("좋아요가 없는 상태에서 취소해도 카운트는 0을 유지해야 함")
+                    .isEqualTo(0L);
         }
     }
 
