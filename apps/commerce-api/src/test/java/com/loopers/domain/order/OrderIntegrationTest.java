@@ -1,6 +1,7 @@
 package com.loopers.domain.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -80,7 +81,6 @@ public class OrderIntegrationTest {
     class OrderCreation {
 
         @Test
-        @Transactional
         @DisplayName("유효한 사용자와 상품으로 주문을 생성하면 성공한다")
         void should_create_order_successfully_with_valid_user_and_products() {
             // Given: 브랜드 생성
@@ -125,10 +125,94 @@ public class OrderIntegrationTest {
         }
 
         @Test
-        @Transactional
         @DisplayName("주문 생성 시 주문 항목들이 함께 저장된다")
         void should_save_order_items_when_creating_order() {
-            // TODO: TDD - 구현 필요
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("100000"));
+
+            // Given: 여러 상품 생성
+            ProductEntity product1 = productService.registerProduct(
+                ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "상품1",
+                    "상품1 설명",
+                    new BigDecimal("10000"),
+                    100
+                )
+            );
+            
+            ProductEntity product2 = productService.registerProduct(
+                ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "상품2",
+                    "상품2 설명",
+                    new BigDecimal("20000"),
+                    50
+                )
+            );
+            
+            ProductEntity product3 = productService.registerProduct(
+                ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "상품3",
+                    "상품3 설명",
+                    new BigDecimal("15000"),
+                    30
+                )
+            );
+
+            // Given: 여러 상품을 포함한 주문 생성 요청
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                .username(userInfo.username())
+                .orderItems(List.of(
+                    OrderItemCommand.builder()
+                        .productId(product1.getId())
+                        .quantity(2)
+                        .build(),
+                    OrderItemCommand.builder()
+                        .productId(product2.getId())
+                        .quantity(1)
+                        .build(),
+                    OrderItemCommand.builder()
+                        .productId(product3.getId())
+                        .quantity(3)
+                        .build()
+                ))
+                .build();
+
+            // When: 주문 생성
+            OrderInfo result = orderFacade.createOrder(orderCommand);
+
+            // Then: 주문 항목들이 모두 저장되었는지 검증
+            assertThat(result.orderItems()).isNotNull();
+            assertThat(result.orderItems()).hasSize(3);
+            
+            // Then: 각 주문 항목의 정보가 정확한지 검증
+            assertThat(result.orderItems())
+                .extracting("productId", "quantity", "unitPrice")
+                .containsExactlyInAnyOrder(
+                    tuple(product1.getId(), 2, new BigDecimal("10000.00")),
+                    tuple(product2.getId(), 1, new BigDecimal("20000.00")),
+                    tuple(product3.getId(), 3, new BigDecimal("15000.00"))
+                );
+            
+            // Then: 각 주문 항목의 총액이 정확한지 검증
+            assertThat(result.orderItems().get(0).totalPrice())
+                .isEqualTo(result.orderItems().get(0).unitPrice()
+                    .multiply(BigDecimal.valueOf(result.orderItems().get(0).quantity())));
+            
+            // Then: 주문 총액이 모든 항목의 합계와 일치하는지 검증
+            BigDecimal expectedTotal = new BigDecimal("10000.00").multiply(BigDecimal.valueOf(2))  // 20000
+                .add(new BigDecimal("20000.00").multiply(BigDecimal.valueOf(1)))                    // 20000
+                .add(new BigDecimal("15000.00").multiply(BigDecimal.valueOf(3)));                   // 45000
+            assertThat(result.totalAmount()).isEqualTo(expectedTotal);  // 85000.00
         }
 
         @Test
