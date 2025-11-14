@@ -23,7 +23,12 @@ public enum OrderStatus {
     /**
      * 확정 - 결제가 완료되어 주문이 확정된 상태
      */
-    CONFIRMED("확정", "결제가 완료되어 주문이 확정된 상태");
+    CONFIRMED("확정", "결제가 완료되어 주문이 확정된 상태"),
+    
+    /**
+     * 취소 - 주문이 취소된 상태
+     */
+    CANCELLED("취소", "주문이 취소된 상태");
 
     private final String description;
     private final String detail;

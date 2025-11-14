@@ -98,6 +98,31 @@ public class OrderEntity extends BaseEntity {
         return this.status == OrderStatus.CONFIRMED;
     }
 
+    /**
+     * 주문을 취소합니다.
+     * 
+     * <p>PENDING 또는 CONFIRMED 상태의 주문만 취소할 수 있습니다.</p>
+     * 
+     * @throws IllegalStateException 취소할 수 없는 상태인 경우
+     */
+    public void cancelOrder() {
+        if (this.status != OrderStatus.PENDING && this.status != OrderStatus.CONFIRMED) {
+            throw new IllegalStateException(
+                String.format("PENDING 또는 CONFIRMED 상태의 주문만 취소할 수 있습니다. 현재 상태: %s", this.status)
+            );
+        }
+        this.status = OrderStatus.CANCELLED;
+    }
+
+    /**
+     * 주문이 취소 상태인지 확인합니다.
+     * 
+     * @return 취소 상태 여부
+     */
+    public boolean isCancelled() {
+        return this.status == OrderStatus.CANCELLED;
+    }
+
     @Override
     protected void guard() {
         if (this.userId == null) {
