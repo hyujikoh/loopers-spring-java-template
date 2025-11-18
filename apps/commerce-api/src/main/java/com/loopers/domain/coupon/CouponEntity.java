@@ -194,7 +194,7 @@ public class CouponEntity extends BaseEntity {
 
     // 검증 메서드들
     private static void validateUserId(Long userId) {
-        if (userId == null || userId <= 0) {
+        if (userId == null) {
             throw new IllegalArgumentException("유효하지 않은 사용자 ID입니다.");
         }
     }
