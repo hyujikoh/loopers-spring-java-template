@@ -40,11 +40,6 @@ public class OrderRetrievalIntegrationTest {
     @Autowired
     private OrderFacade orderFacade;
 
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private UserFacade userFacade;
