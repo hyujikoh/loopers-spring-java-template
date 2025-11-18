@@ -17,14 +17,11 @@ import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
-import com.loopers.domain.order.OrderService;
 import com.loopers.domain.order.OrderStatus;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductDomainCreateRequest;
 import com.loopers.domain.product.ProductEntity;
-import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductService;
-import com.loopers.domain.user.UserRepository;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
@@ -43,12 +40,6 @@ public class OrderCancelIntegrationTest {
     private OrderFacade orderFacade;
 
     @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private UserFacade userFacade;
 
     @Autowired
@@ -59,8 +50,6 @@ public class OrderCancelIntegrationTest {
 
     @Autowired
     private PointService pointService;
-    @Autowired
-    private OrderService orderService;
 
     @BeforeEach
     void setUp() {
