@@ -17,6 +17,10 @@ erDiagram
     users ||--o{ point_histories: ""
     brands ||--o{ products: ""
     products ||--o{ order_items: ""
+    users ||--o{ coupons: ""
+    coupons ||--o{ coupon_usage_histories: ""
+    order_items ||--o{ coupon_usage_histories: ""
+    order_items }o--o| coupons: ""
 
     users {
         bigint id PK "기본키"
@@ -76,9 +80,11 @@ erDiagram
         bigint id PK "기본키"
         bigint order_id  "주문 ID"
         bigint product_id  "상품 ID"
+        bigint coupon_id "쿠폰 ID(선택사항)"
         int quantity "주문 수량"
         decimal unit_price "단가(주문 시점 가격)"
-        decimal total_price "총 가격(단가 * 수량)"
+        decimal discount_amount "쿠폰 할인 금액"
+        decimal total_price "총 가격(단가 * 수량 - 할인액)"
         timestamp created_at "생성일시"
         timestamp updated_at "수정일시"
         timestamp deleted_at "삭제일시"
@@ -90,6 +96,28 @@ erDiagram
         decimal amount "포인트 변동 금액"
         varchar(20) transaction_type "거래 유형(CHARGE/USE)"
         decimal balance_after "거래 후 잔액"
+        timestamp created_at "생성일시"
+        timestamp updated_at "수정일시"
+        timestamp deleted_at "삭제일시"
+    }
+
+    coupons {
+        bigint id PK "기본키"
+        bigint user_id "사용자 ID"
+        varchar(20) coupon_type "쿠폰 타입(FIXED_AMOUNT/PERCENTAGE)"
+        decimal fixed_amount "정액 할인 금액(정액 쿠폰용)"
+        decimal percentage "할인 비율(배율 쿠폰용)"
+        varchar(20) status "쿠폰 상태(UNUSED/USED)"
+        timestamp created_at "생성일시"
+        timestamp updated_at "수정일시"
+        timestamp deleted_at "삭제일시"
+    }
+
+    coupon_usage_histories {
+        bigint id PK "기본키"
+        bigint coupon_id "쿠폰 ID"
+        bigint order_item_id "주문 항목 ID"
+        decimal discount_amount "할인 적용 금액"
         timestamp created_at "생성일시"
         timestamp updated_at "수정일시"
         timestamp deleted_at "삭제일시"
@@ -274,16 +302,20 @@ CONFIRMED → CANCELLED (주문 취소)
 **인덱스**:
 - `idx_order_item_order_id`: order_id (주문별 상세 조회)
 - `idx_order_item_product_id`: product_id (상품별 주문 이력)
+- `idx_order_item_coupon_id`: coupon_id (쿠폰별 사용 이력)
 
 **논리적 관계** (물리적 FK 없음):
 - order_id → orders(id)
 - product_id → products(id)
+- coupon_id → coupons(id) (선택사항)
 
 **비즈니스 규칙**:
 - quantity는 1 이상이어야 함
 - unit_price는 주문 시점의 상품 가격 스냅샷
-- total_price = unit_price * quantity
+- discount_amount는 쿠폰 적용 시 할인 금액 (기본값 0)
+- total_price = unit_price * quantity - discount_amount
 - 주문 생성 시 재고 차감 필수
+- 쿠폰 적용 시 coupon_usage_histories에 이력 생성
 
 ---
 
@@ -318,6 +350,78 @@ CONFIRMED → CANCELLED (주문 취소)
 - `CHARGE`: 포인트 충전
 - `USE`: 포인트 사용 (주문 결제)
 - `REFUND`: 포인트 환불 (주문 취소)
+
+---
+
+### 8. coupons (쿠폰)
+
+**목적**: 사용자에게 발급된 할인 쿠폰 정보 관리
+
+| 컬럼명 | 타입 | 제약조건 | 설명 |
+|--------|------|----------|------|
+| id | BIGINT | PK, AUTO_INCREMENT | 쿠폰 고유 식별자 |
+| user_id | BIGINT | NOT NULL | 사용자 ID (users.id) |
+| coupon_type | VARCHAR(20) | NOT NULL | 쿠폰 타입 (FIXED_AMOUNT/PERCENTAGE) |
+| fixed_amount | DECIMAL(10,2) | NULL | 정액 할인 금액 (정액 쿠폰용) |
+| percentage | DECIMAL(5,2) | NULL | 할인 비율 (배율 쿠폰용, 0-100) |
+| status | VARCHAR(20) | NOT NULL | 쿠폰 상태 (UNUSED/USED) |
+| created_at | TIMESTAMP | NOT NULL | 생성일시 |
+| updated_at | TIMESTAMP | NOT NULL | 수정일시 |
+| deleted_at | TIMESTAMP | NULL | 삭제일시 |
+
+**인덱스**:
+- `idx_coupon_user_id`: user_id (사용자별 쿠폰 조회)
+- `idx_coupon_status`: status (상태별 쿠폰 조회)
+- `idx_coupon_user_status`: (user_id, status) (사용자별 사용 가능 쿠폰 조회)
+
+**논리적 관계** (물리적 FK 없음):
+- user_id → users(id)
+
+**비즈니스 규칙**:
+- 쿠폰은 1회성으로 한 번 사용하면 재사용 불가
+- FIXED_AMOUNT 타입: fixed_amount 필수, percentage NULL
+- PERCENTAGE 타입: percentage 필수 (0-100), fixed_amount NULL
+- 초기 상태는 UNUSED, 사용 후 USED로 변경
+- 동시성 제어를 위한 비관적 락 적용
+
+**쿠폰 타입**:
+- `FIXED_AMOUNT`: 정액 할인 (예: 5,000원 할인)
+- `PERCENTAGE`: 배율 할인 (예: 10% 할인)
+
+**쿠폰 상태**:
+- `UNUSED`: 미사용 (사용 가능)
+- `USED`: 사용됨 (재사용 불가)
+
+---
+
+### 9. coupon_usage_histories (쿠폰 사용 이력)
+
+**목적**: 쿠폰 사용 이력 추적 및 감사
+
+| 컬럼명 | 타입 | 제약조건 | 설명 |
+|--------|------|----------|------|
+| id | BIGINT | PK, AUTO_INCREMENT | 쿠폰 사용 이력 고유 식별자 |
+| coupon_id | BIGINT | NOT NULL | 쿠폰 ID (coupons.id) |
+| order_item_id | BIGINT | NOT NULL | 주문 항목 ID (order_items.id) |
+| discount_amount | DECIMAL(10,2) | NOT NULL | 실제 할인 적용 금액 |
+| created_at | TIMESTAMP | NOT NULL | 사용일시 |
+| updated_at | TIMESTAMP | NOT NULL | 수정일시 |
+| deleted_at | TIMESTAMP | NULL | 삭제일시 |
+
+**인덱스**:
+- `idx_coupon_usage_coupon_id`: coupon_id (쿠폰별 사용 이력)
+- `idx_coupon_usage_order_item_id`: order_item_id (주문 항목별 쿠폰 사용)
+
+**논리적 관계** (물리적 FK 없음):
+- coupon_id → coupons(id)
+- order_item_id → order_items(id)
+
+**비즈니스 규칙**:
+- 쿠폰 사용 시 반드시 이력 생성
+- discount_amount는 실제 적용된 할인 금액 기록
+- 주문 취소 시에도 이력은 유지 (감사 목적)
+- 쿠폰과 주문 항목 간의 연결 추적
+
 ---
 
 ## 데이터베이스 제약사항

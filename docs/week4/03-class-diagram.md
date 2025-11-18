@@ -18,6 +18,7 @@ DDD 기반 레이어드 아키텍처를 따르며, BaseEntity를 상속한 엔�
 | **Order** | 재고 예약과 포인트 차감은 원자적 처리 |
 | **Like** | 사용자당 상품별 1개만 가능, 멱등성 보장 |
 | **Brand** | 브랜드명 중복 불가, 소프트 삭제 지원 |
+| **Coupon** | 1회성 사용, 사용 후 재사용 불가, 동시성 제어 필수 |
 
 ### 도메인 관계 요약
 
@@ -30,6 +31,10 @@ DDD 기반 레이어드 아키텍처를 따르며, BaseEntity를 상속한 엔�
 | OrderItem -> Order   | 주문 상세내역은 주문 정보 포함 | N:1 | 필수 관계 |
 | OrderItem -> Product | 주문항목은 상품을 참조      | N:1 | 필수 관계 |
 | PointHistory -> User | 포인트 이력은 사용자별 관리  | N:1 | 필수 관계 |
+| Coupon -> User       | 쿠폰은 사용자에게 발급됨    | N:1 | 필수 관계 |
+| OrderItem -> Coupon  | 주문항목에 쿠폰 적용 가능   | N:1 | 선택 관계 |
+| CouponUsageHistory -> Coupon | 쿠폰 사용 이력 기록 | N:1 | 필수 관계 |
+| CouponUsageHistory -> OrderItem | 어떤 주문에 사용되었는지 추적 | N:1 | 필수 관계 |
 
 ---
 
@@ -122,14 +127,38 @@ classDiagram
         +createUseHistory() PointHistoryEntity
     }
 
+    class CouponEntity {
+        -Long userId
+        -CouponType couponType
+        -BigDecimal fixedAmount
+        -BigDecimal percentage
+        -CouponStatus status
+        +createCoupon() CouponEntity
+        +use() void
+        +isUsed() boolean
+        +canUse() boolean
+        +calculateDiscount() BigDecimal
+    }
+
+    class CouponUsageHistoryEntity {
+        -Long couponId
+        -Long orderItemId
+        -BigDecimal discountAmount
+        +createHistory() CouponUsageHistoryEntity
+    }
+
     UserEntity "1" --> "*" LikeEntity : userId
     UserEntity "1" --> "*" OrderEntity : userId
     UserEntity "1" --> "*" PointHistoryEntity : ManyToOne
+    UserEntity "1" --> "*" CouponEntity : userId
     ProductEntity "1" --> "*" LikeEntity : productId
     BrandEntity "1" --> "*" ProductEntity : brandId
     ProductEntity "1" *-- "1" Price : 임베디드
     OrderEntity "1" --> "1..*" OrderItemEntity : orderId
     OrderItemEntity "*" --> "1" ProductEntity : productId
+    OrderItemEntity "*" --> "0..1" CouponEntity : couponId (선택)
+    CouponEntity "1" --> "*" CouponUsageHistoryEntity : couponId
+    OrderItemEntity "1" --> "*" CouponUsageHistoryEntity : orderItemId
 ```
 
 ---
@@ -264,11 +293,15 @@ classDiagram
     class OrderItemEntity {
         -Long orderId
         -Long productId
+        -Long couponId
         -Integer quantity
         -BigDecimal unitPrice
+        -BigDecimal discountAmount
         -BigDecimal totalPrice
         +createOrderItem() OrderItemEntity
+        +createOrderItemWithCoupon() OrderItemEntity
         +calculateItemTotal() BigDecimal
+        +hasCoupon() boolean
     }
 
     class UserEntity {
@@ -297,6 +330,65 @@ classDiagram
     OrderEntity "*" --> "1" UserEntity : userId 참조
     OrderItemEntity "*" --> "1" ProductEntity : productId 참조
 ```
+
+### 5. 쿠폰 도메인 (Coupon Domain)
+
+```mermaid
+classDiagram
+    class CouponEntity {
+        -Long userId
+        -CouponType couponType
+        -BigDecimal fixedAmount
+        -BigDecimal percentage
+        -CouponStatus status
+        +createCoupon() CouponEntity
+        +use() void
+        +isUsed() boolean
+        +canUse() boolean
+        +calculateDiscount() BigDecimal
+        +validateOwnership() void
+    }
+
+    class CouponUsageHistoryEntity {
+        -Long couponId
+        -Long orderItemId
+        -BigDecimal discountAmount
+        +createHistory() CouponUsageHistoryEntity
+    }
+
+    class UserEntity {
+        -String username
+        -String email
+        -LocalDate birthdate
+        -Gender gender
+        -BigDecimal pointAmount
+        +createUserEntity() UserEntity
+    }
+
+    class OrderItemEntity {
+        -Long orderId
+        -Long productId
+        -Long couponId
+        -Integer quantity
+        -BigDecimal unitPrice
+        -BigDecimal discountAmount
+        -BigDecimal totalPrice
+        +createOrderItemWithCoupon() OrderItemEntity
+    }
+
+    CouponEntity "*" --> "1" UserEntity : userId 참조
+    CouponEntity "1" --> "*" CouponUsageHistoryEntity : couponId 참조
+    OrderItemEntity "0..1" --> "1" CouponEntity : couponId 참조 (선택)
+    CouponUsageHistoryEntity "*" --> "1" OrderItemEntity : orderItemId 참조
+```
+
+**쿠폰 타입 (CouponType)**
+- `FIXED_AMOUNT`: 정액 할인 (예: 5,000원 할인)
+- `PERCENTAGE`: 배율 할인 (예: 10% 할인)
+
+**쿠폰 상태 (CouponStatus)**
+- `UNUSED`: 미사용 (사용 가능)
+- `USED`: 사용됨 (재사용 불가)
 
 ---
 
@@ -362,7 +454,24 @@ classDiagram
 | `createChargeHistory()` | 충전 이력 생성 | 충전 금액 양수, 잔액 일치성 | 정적 팩토리 메서드, CHARGE 타입 |
 | `createUseHistory()` | 사용 이력 생성 | 사용 금액 양수, 잔액 일치성 | 정적 팩토리 메서드, USE 타입 |
 
-### 8. Price - 가격 임베디드 타입의 핵심 책임
+### 8. CouponEntity - 쿠폰 도메인의 핵심 책임
+
+| 메서드 | 책임 | 비즈니스 규칙 | 구현 세부사항 |
+|--------|------|---------------|---------------|
+| `createCoupon()` | 쿠폰 생성 | 사용자 ID 필수, 쿠폰 타입별 금액/비율 검증 | 정적 팩토리 메서드, 초기 상태 UNUSED |
+| `use()` | 쿠폰 사용 | UNUSED → USED 상태 전이, 이미 사용된 경우 예외 | 1회성 보장, 동시성 제어 필요 |
+| `isUsed()` | 사용 여부 확인 | 쿠폰 상태가 USED인지 확인 | 상태 검증 메서드 |
+| `canUse()` | 사용 가능 여부 | 쿠폰 상태가 UNUSED인지 확인 | 사용 전 검증 메서드 |
+| `calculateDiscount()` | 할인액 계산 | FIXED_AMOUNT: fixedAmount 반환<br/>PERCENTAGE: 상품가 × percentage / 100 | 쿠폰 타입별 할인 계산 로직 |
+| `validateOwnership()` | 소유권 검증 | 쿠폰 소유자와 사용자 일치 확인 | 권한 검증, 불일치 시 예외 |
+
+### 9. CouponUsageHistoryEntity - 쿠폰 사용 이력 도메인의 핵심 책임
+
+| 메서드 | 책임 | 비즈니스 규칙 | 구현 세부사항 |
+|--------|------|---------------|---------------|
+| `createHistory()` | 사용 이력 생성 | 쿠폰 ID, 주문항목 ID, 할인액 필수 | 정적 팩토리 메서드, 추적 가능성 보장 |
+
+### 10. Price - 가격 임베디드 타입의 핵심 책임
 
 | 메서드 | 책임 | 비즈니스 규칙 | 구현 세부사항 |
 |--------|------|---------------|---------------|
@@ -374,5 +483,78 @@ classDiagram
 | `getDiscountAmount()` | 할인 금액 계산 | 정가 - 할인가 | 할인 절약 금액 반환 |
 | `applyDiscount()` | 할인 적용 | 할인가 >= 0, 할인가 <= 정가 | 할인가 유효성 검증 후 적용 |
 | `removeDiscount()` | 할인 제거 | 할인가를 null로 설정 | 할인 정보 초기화 |
+
+---
+
+## 쿠폰 도메인 상세 설계
+
+### 쿠폰 타입별 할인 계산 로직
+
+#### 1. 정액 쿠폰 (FIXED_AMOUNT)
+```
+할인액 = fixedAmount
+최종 가격 = 상품 가격 - fixedAmount
+```
+
+**예시**:
+- 상품 가격: 50,000원
+- 쿠폰: 5,000원 정액 할인
+- 할인액: 5,000원
+- 최종 가격: 45,000원
+
+#### 2. 배율 쿠폰 (PERCENTAGE)
+```
+할인액 = 상품 가격 × (percentage / 100)
+최종 가격 = 상품 가격 - 할인액
+```
+
+**예시**:
+- 상품 가격: 50,000원
+- 쿠폰: 10% 할인
+- 할인액: 5,000원
+- 최종 가격: 45,000원
+
+### 쿠폰 사용 제약사항
+
+| 제약사항 | 설명 | 검증 시점 | 예외 타입 |
+|---------|------|----------|----------|
+| **1회성** | 쿠폰은 한 번만 사용 가능 | 주문 생성 시 | `ALREADY_USED_COUPON` |
+| **소유권** | 쿠폰 소유자만 사용 가능 | 주문 생성 시 | `FORBIDDEN_COUPON` |
+| **존재 여부** | 유효한 쿠폰 ID 필수 | 주문 생성 시 | `NOT_FOUND_COUPON` |
+| **동시성** | 동시 사용 시도 시 1건만 성공 | 주문 생성 시 | 비관적 락으로 제어 |
+
+### 쿠폰 적용 범위 (현재 설계)
+
+**주문 단위 쿠폰 적용**:
+- 1개 주문에 최대 1개의 쿠폰 적용
+- 주문 전체 금액에 대해 할인 적용
+- 여러 쿠폰 조합 사용은 추후 검토 예정
+
+**향후 확장 가능성**:
+- 상품별 쿠폰 적용
+- 쿠폰 조합 사용
+- 최소 주문 금액 조건
+- 쿠폰 유효기간 관리
+
+### 쿠폰 동시성 제어 전략
+
+#### 비관적 락 (Pessimistic Lock) 사용
+```java
+// CouponRepository
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@Query("SELECT c FROM CouponEntity c WHERE c.id = :couponId")
+Optional<CouponEntity> findByIdWithLock(@Param("couponId") Long couponId);
+```
+
+**동작 방식**:
+1. 쿠폰 조회 시 행 레벨 락 획득 (SELECT ... FOR UPDATE)
+2. 트랜잭션 종료 시까지 다른 트랜잭션의 접근 차단
+3. 쿠폰 상태 변경 (UNUSED → USED)
+4. 트랜잭션 커밋 시 락 해제
+
+**장점**:
+- 쿠폰의 1회성을 확실하게 보장
+- 동시 사용 시도 시 순차적으로 처리
+- 데이터 정합성 보장
 
 ---
