@@ -523,6 +523,192 @@ sequenceDiagram
         OrderController-->>User: 200 OK
     end
 ```
+---
+
+## 14. 현재 사용 가능한 쿠폰 목록 조회
+```mermaid
+sequenceDiagram
+participant User
+participant CouponController
+participant CouponService
+participant UserService
+participant CouponRepository
+
+    User->>CouponController: GET /api/v1/coupons<br/>Header: X-USER-ID=testuser
+    CouponController->>CouponService: getCouponsByUser(username="testuser")
+    
+    CouponService->>UserService: getUserByUsername("testuser")
+    alt 사용자가 존재하지 않는 경우
+        UserService-->>CouponService: CoreException(NOT_FOUND_USER)
+        CouponService-->>CouponController: CoreException
+        CouponController-->>User: 404 Not Found
+    else 사용자가 존재하는 경우
+        UserService-->>CouponService: UserEntity
+        
+        CouponService->>CouponRepository: findByUserId(userId)
+        alt 쿠폰이 존재하는 경우
+            CouponRepository-->>CouponService: List<CouponEntity>
+            Note over CouponService: CouponInfo 목록으로 변환<br/>(타입, 할인액/율, 상태)
+            CouponService-->>CouponController: List<CouponInfo>
+            CouponController-->>User: 200 OK
+        else 쿠폰이 없는 경우
+            CouponRepository-->>CouponService: Empty List
+            CouponService-->>CouponController: Empty List
+            CouponController-->>User: 200 OK
+        end
+    end
+```
+---
+## 15. 쿠폰 상세 조회
+```mermaid
+sequenceDiagram
+    participant User
+    participant CouponController
+    participant CouponService
+    participant CouponRepository
+
+    User->>CouponController: GET /api/v1/coupons/1
+    CouponController->>CouponService: getCouponById(couponId=1)
+    CouponService->>CouponRepository: findById(couponId=1)
+    
+    alt 쿠폰이 존재하는 경우
+        CouponRepository-->>CouponService: CouponEntity
+        Note over CouponService: CouponInfo로 변환<br/>(사용자, 타입, 할인액/율, 상태)
+        CouponService-->>CouponController: CouponInfo
+        CouponController-->>User: 200 OK
+    else 쿠폰이 존재하지 않는 경우
+        CouponRepository-->>CouponService: Optional.empty()
+        CouponService-->>CouponController: CoreException(NOT_FOUND_COUPON)
+        CouponController-->>User: 404 Not Found
+    end
+
+
+```
+
+---
+## 16. 주문 생성(쿠폰 적용)
+```mermaid
+sequenceDiagram
+    participant User
+    participant OrderController
+    participant OrderFacade
+    participant UserService
+    participant ProductService
+    participant CouponService
+    participant PointService
+    participant OrderService
+    participant OrderRepository
+    participant ProductRepository
+    participant CouponRepository
+
+    User->>OrderController: POST /api/v1/orders<br/>Header: X-USER-ID=testuser<br/>Body: {"items":[{"productId":1,"quantity":2,"couponId":10},...]}
+    OrderController->>OrderFacade: createOrder(command)
+    
+    OrderFacade->>UserService: getUserByUsername("testuser")
+    alt 사용자가 존재하지 않는 경우
+        UserService-->>OrderFacade: CoreException(NOT_FOUND_USER)
+        OrderFacade-->>OrderController: CoreException
+        OrderController-->>User: 404 Not Found
+    else 사용자가 존재하는 경우
+        UserService-->>OrderFacade: UserEntity
+        
+        Note over OrderFacade: 주문 항목을 productId로 정렬 (데드락 방지)
+        
+        loop 각 주문 상품 검증 (정렬된 순서)
+            OrderFacade->>ProductService: getProductDetailLock(productId) [비관적 락]
+            alt 상품이 존재하지 않는 경우
+                ProductService-->>OrderFacade: CoreException(NOT_FOUND_PRODUCT)
+                OrderFacade-->>OrderController: CoreException
+                OrderController-->>User: 404 Not Found
+            else 재고가 부족한 경우
+                ProductService-->>OrderFacade: ProductEntity
+                Note over OrderFacade: product.canOrder(quantity) = false
+                OrderFacade-->>OrderController: IllegalArgumentException
+                OrderController-->>User: 400 Bad Request
+            else 재고 충분
+                ProductService-->>OrderFacade: ProductEntity (locked)
+                Note over OrderFacade: 상품 기본가 계산
+                
+                alt 쿠폰이 지정된 경우
+                    OrderFacade->>CouponService: getCouponWithLock(couponId) [비관적 락]
+                    alt 쿠폰이 존재하지 않는 경우
+                        CouponService-->>OrderFacade: CoreException(NOT_FOUND_COUPON)
+                        OrderFacade-->>OrderController: CoreException
+                        OrderController-->>User: 404 Not Found
+                    else 쿠폰이 이미 사용된 경우
+                        CouponService-->>OrderFacade: CoreException(ALREADY_USED_COUPON)
+                        OrderFacade-->>OrderController: CoreException
+                        OrderController-->>User: 400 Bad Request
+                    else 쿠폰 소유자가 다른 경우
+                        CouponService-->>OrderFacade: CoreException(FORBIDDEN_COUPON)
+                        OrderFacade-->>OrderController: CoreException
+                        OrderController-->>User: 403 Forbidden
+                    else 쿠폰이 유효한 경우
+                        CouponService-->>OrderFacade: CouponEntity (locked)
+                        Note over OrderFacade: 쿠폰 타입별 할인액 계산<br/>- FIXED_AMOUNT: fixedAmount<br/>- PERCENTAGE: productPrice * percentage / 100<br/>상품 최종가 = productPrice - discountAmount
+                    end
+                else 쿠폰이 지정되지 않은 경우
+                    Note over OrderFacade: 상품 기본가 = 최종가
+                end
+                
+                Note over OrderFacade: 주문 가능 상품 목록에 추가<br/>총 주문 금액 계산 (할인 적용)
+            end
+        end
+        
+        OrderFacade->>PointService: use(user, totalAmount)
+        alt 포인트가 부족한 경우
+            PointService-->>OrderFacade: CoreException(INSUFFICIENT_POINTS)
+            Note over OrderFacade: 트랜잭션 롤백 (재고/쿠폰 락 자동 해제)
+            OrderFacade-->>OrderController: CoreException
+            OrderController-->>User: 400 Bad Request
+        else 포인트 차감 성공
+            PointService-->>OrderFacade: 차감 후 잔액
+            
+            OrderFacade->>OrderService: createOrder(request)
+            OrderService->>OrderRepository: save(order)
+            OrderRepository-->>OrderService: OrderEntity
+            OrderService-->>OrderFacade: OrderEntity
+            
+            loop 각 주문 항목 생성, 재고 차감, 쿠폰 상태 업데이트 (정렬된 순서)
+                OrderFacade->>ProductService: deductStock(product, quantity)
+                ProductService->>ProductRepository: save(product) [재고 차감]
+                ProductRepository-->>ProductService: ProductEntity
+                ProductService-->>OrderFacade: ProductEntity
+                
+                OrderFacade->>OrderService: createOrderItem(request)
+                OrderService->>OrderRepository: save(orderItem)
+                OrderRepository-->>OrderService: OrderItemEntity
+                OrderService-->>OrderFacade: OrderItemEntity
+                
+                alt 쿠폰이 적용된 경우
+                    OrderFacade->>CouponService: useCoupon(coupon)
+                    Note over CouponService: coupon.use() [상태: UNUSED → USED]
+                    CouponService->>CouponRepository: save(coupon)
+                    CouponRepository-->>CouponService: CouponEntity (USED)
+                    CouponService-->>OrderFacade: CouponEntity
+                    
+                    OrderFacade->>OrderService: createCouponUsageHistory(coupon, orderItem)
+                    OrderService->>OrderRepository: save(couponUsageHistory)
+                    OrderRepository-->>OrderService: CouponUsageHistoryEntity
+                    OrderService-->>OrderFacade: CouponUsageHistoryEntity
+                else 쿠폰이 적용되지 않은 경우
+                    Note over OrderFacade: 쿠폰 처리 없음
+                end
+            end
+            
+            OrderFacade-->>OrderController: OrderInfo (쿠폰 할인액 포함)
+            OrderController-->>User: 201 Created
+        end
+    end
+
+
+```
+
+---
+
+
+
+
 
 ### 🔒 주문 취소 원자성 보장
 
