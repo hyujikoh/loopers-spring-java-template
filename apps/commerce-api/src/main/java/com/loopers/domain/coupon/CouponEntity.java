@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.Objects;
 
 import com.loopers.domain.BaseEntity;
+import com.loopers.domain.user.UserEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -86,17 +87,17 @@ public class CouponEntity extends BaseEntity {
      *
      * <p>정액 할인 쿠폰을 생성합니다. 고정 금액만큼 할인을 제공합니다.</p>
      *
-     * @param userId 쿠폰을 소유할 사용자 ID (null 또는 0 이하일 수 없음)
+     * @param user 쿠폰을 소유할 사용자 ID (null 또는 0 이하일 수 없음)
      * @param fixedAmount 정액 할인 금액 (0보다 커야 함)
      * @return 생성된 정액 쿠폰 엔티티
      * @throws IllegalArgumentException 유효하지 않은 사용자 ID 또는 할인 금액인 경우
      */
-    public static CouponEntity createFixedAmountCoupon(Long userId, BigDecimal fixedAmount) {
-        Objects.requireNonNull(userId, "유효하지 않은 사용자 ID입니다.");
+    public static CouponEntity createFixedAmountCoupon(UserEntity user, BigDecimal fixedAmount) {
+        Objects.requireNonNull(user, "유효하지 않은 사용자 입니다.");
         Objects.requireNonNull(fixedAmount, "정액 할인 금액은 필수입니다.");
 
 
-        return new CouponEntity(userId, fixedAmount);
+        return new CouponEntity(user.getId(), fixedAmount);
     }
 
     /**
@@ -104,17 +105,17 @@ public class CouponEntity extends BaseEntity {
      *
      * <p>배율 할인 쿠폰을 생성합니다. 상품 가격의 일정 비율만큼 할인을 제공합니다.</p>
      *
-     * @param userId 쿠폰을 소유할 사용자 ID (null 또는 0 이하일 수 없음)
+     * @param user       쿠폰을 소유할 사용자 ID (null 또는 0 이하일 수 없음)
      * @param percentage 할인 비율 (0보다 크고 100 이하여야 함)
      * @return 생성된 배율 쿠폰 엔티티
      * @throws IllegalArgumentException 유효하지 않은 사용자 ID 또는 할인 비율인 경우
      */
-    public static CouponEntity createPercentageCoupon(Long userId, Integer percentage) {
-        Objects.requireNonNull(userId, "유효하지 않은 사용자 ID입니다.");
+    public static CouponEntity createPercentageCoupon(UserEntity user, Integer percentage) {
+        Objects.requireNonNull(user, "유효하지 않은 사용자 ID입니다.");
         Objects.requireNonNull(percentage, "할인 비율은 필수입니다.");
 
 
-        return new CouponEntity(userId, percentage);
+        return new CouponEntity(user.getId(), percentage);
     }
 
     /**

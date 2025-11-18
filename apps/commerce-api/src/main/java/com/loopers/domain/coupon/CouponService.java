@@ -1,5 +1,7 @@
 package com.loopers.domain.coupon;
 
+import java.math.BigDecimal;
+
 import org.springframework.stereotype.Component;
 
 import com.loopers.domain.user.UserEntity;
@@ -18,7 +20,12 @@ public class CouponService {
 
 
     public CouponEntity createPercentCoupon(UserEntity user, int percent) {
-        CouponEntity coupon = CouponEntity.createPercentageCoupon(user.getId(), percent);
+        CouponEntity coupon = CouponEntity.createPercentageCoupon(user, percent);
+        return couponRepository.save(coupon);
+    }
+
+    public CouponEntity createFixedAmountCoupon(UserEntity user, BigDecimal fixedAmount) {
+        CouponEntity coupon = CouponEntity.createFixedAmountCoupon(user, fixedAmount);
         return couponRepository.save(coupon);
     }
 }
