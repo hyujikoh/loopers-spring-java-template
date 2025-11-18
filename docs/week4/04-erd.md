@@ -446,6 +446,67 @@ CONFIRMED → CANCELLED (주문 취소)
 ---
 ### 2. 테이블 네이밍 규칙
 
-- 복수형 사용 (users, products, orders)
+- 복수형 사용 (users, products, orders, coupons)
 - 스네이크 케이스 (snake_case)
 - 소문자 사용
+- 연결 테이블은 복수형_복수형 형태 (coupon_usage_histories)
+
+### 3. 쿠폰 관련 제약사항
+
+#### 쿠폰 타입별 데이터 제약
+
+| 쿠폰 타입 | fixed_amount | percentage | 검증 규칙 |
+|----------|--------------|------------|----------|
+| FIXED_AMOUNT | NOT NULL (> 0) | NULL | 정액 할인 금액 필수 |
+| PERCENTAGE | NULL | NOT NULL (0-100) | 할인 비율 필수, 0-100% 범위 |
+
+#### 쿠폰 동시성 제어
+
+**비관적 락 (Pessimistic Lock) 적용**:
+```sql
+SELECT * FROM coupons WHERE id = ? FOR UPDATE;
+```
+
+**동작 방식**:
+1. 쿠폰 조회 시 행 레벨 락 획득
+2. 트랜잭션 종료까지 다른 트랜잭션 접근 차단
+3. 쿠폰 상태 변경 (UNUSED → USED)
+4. 트랜잭션 커밋 시 락 해제
+
+#### 쿠폰 할인 계산 로직
+
+**정액 쿠폰 (FIXED_AMOUNT)**:
+```
+discount_amount = coupons.fixed_amount
+final_price = unit_price * quantity - discount_amount
+```
+
+**배율 쿠폰 (PERCENTAGE)**:
+```
+discount_amount = (unit_price * quantity) * (coupons.percentage / 100)
+final_price = unit_price * quantity - discount_amount
+```
+
+#### 쿠폰 적용 범위 (현재 설계)
+
+- **주문 항목별 쿠폰 적용**: 각 order_item에 개별 쿠폰 적용 가능
+- **1회성 보장**: 쿠폰은 한 번만 사용 가능 (status: UNUSED → USED)
+- **소유권 검증**: 쿠폰 소유자만 사용 가능
+- **이력 추적**: coupon_usage_histories로 사용 이력 관리
+
+#### 데이터 정합성 보장
+
+1. **쿠폰 사용 원자성**:
+   - 쿠폰 상태 변경 (UNUSED → USED)
+   - 주문 항목 생성 (coupon_id, discount_amount 포함)
+   - 쿠폰 사용 이력 생성
+   - 모든 작업이 하나의 트랜잭션에서 처리
+
+2. **할인 금액 일치성**:
+   - order_items.discount_amount = coupon_usage_histories.discount_amount
+   - 쿠폰 타입별 계산 로직 일치성 보장
+
+3. **중복 사용 방지**:
+   - 비관적 락으로 동시 접근 제어
+   - 쿠폰 상태 검증 (UNUSED만 사용 가능)
+   - 소유권 검증 (user_id 일치 확인)

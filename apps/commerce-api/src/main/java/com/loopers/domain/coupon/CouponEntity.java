@@ -14,9 +14,6 @@ import jakarta.persistence.*;
 
 /**
  * 쿠폰 엔티티
- *
- * <p>사용자에게 발급된 할인 쿠폰 정보를 관리합니다.</p>
- *
  * @author hyunjikoh
  * @since 2025. 11. 18.
  */
@@ -69,7 +66,6 @@ public class CouponEntity extends BaseEntity {
         this.couponType = CouponType.FIXED_AMOUNT;
         this.fixedAmount = fixedAmount;
         this.percentage = null;
-        this.status = CouponStatus.UNUSED;
     }
 
     /**
@@ -83,25 +79,48 @@ public class CouponEntity extends BaseEntity {
         this.couponType = CouponType.PERCENTAGE;
         this.fixedAmount = null;
         this.percentage = percentage;
-        this.status = CouponStatus.UNUSED;
     }
 
     /**
      * 정액 쿠폰 생성
+     *
+     * <p>정액 할인 쿠폰을 생성합니다. 고정 금액만큼 할인을 제공합니다.</p>
+     *
+     * @param userId 쿠폰을 소유할 사용자 ID (null 또는 0 이하일 수 없음)
+     * @param fixedAmount 정액 할인 금액 (0보다 커야 함)
+     * @return 생성된 정액 쿠폰 엔티티
+     * @throws IllegalArgumentException 유효하지 않은 사용자 ID 또는 할인 금액인 경우
      */
     public static CouponEntity createFixedAmountCoupon(Long userId, BigDecimal fixedAmount) {
+        Objects.requireNonNull(userId, "유효하지 않은 사용자 ID입니다.");
+        Objects.requireNonNull(fixedAmount, "정액 할인 금액은 필수입니다.");
+
+
         return new CouponEntity(userId, fixedAmount);
     }
 
     /**
      * 배율 쿠폰 생성
+     *
+     * <p>배율 할인 쿠폰을 생성합니다. 상품 가격의 일정 비율만큼 할인을 제공합니다.</p>
+     *
+     * @param userId 쿠폰을 소유할 사용자 ID (null 또는 0 이하일 수 없음)
+     * @param percentage 할인 비율 (0보다 크고 100 이하여야 함)
+     * @return 생성된 배율 쿠폰 엔티티
+     * @throws IllegalArgumentException 유효하지 않은 사용자 ID 또는 할인 비율인 경우
      */
     public static CouponEntity createPercentageCoupon(Long userId, Integer percentage) {
+        Objects.requireNonNull(userId, "유효하지 않은 사용자 ID입니다.");
+        Objects.requireNonNull(percentage, "할인 비율은 필수입니다.");
+
+
         return new CouponEntity(userId, percentage);
     }
 
     /**
      * 쿠폰 사용 처리
+     *
+     * <p>쿠폰을 사용 상태로 변경합니다. 이미 사용된 쿠폰은 사용할 수 없습니다.</p>
      *
      * @throws IllegalStateException 이미 사용된 쿠폰인 경우
      */
@@ -114,6 +133,10 @@ public class CouponEntity extends BaseEntity {
 
     /**
      * 쿠폰 사용 여부 확인
+     *
+     * <p>쿠폰이 이미 사용되었는지 여부를 반환합니다.</p>
+     *
+     * @return 사용된 경우 true, 미사용인 경우 false
      */
     public boolean isUsed() {
         return this.status == CouponStatus.USED;
@@ -121,6 +144,10 @@ public class CouponEntity extends BaseEntity {
 
     /**
      * 쿠폰 사용 가능 여부 확인
+     *
+     * <p>쿠폰을 사용할 수 있는 상태인지 여부를 반환합니다.</p>
+     *
+     * @return 사용 가능한 경우 true, 이미 사용된 경우 false
      */
     public boolean canUse() {
         return this.status == CouponStatus.UNUSED;
@@ -129,8 +156,15 @@ public class CouponEntity extends BaseEntity {
     /**
      * 할인 금액 계산
      *
-     * @param productPrice 상품 가격
-     * @return 할인 금액
+     * <p>쿠폰 타입에 따라 상품 가격에 대한 할인 금액을 계산합니다.</p>
+     * <ul>
+     *   <li>정액 쿠폰: 고정 금액만큼 할인</li>
+     *   <li>배율 쿠폰: 상품 가격의 일정 비율만큼 할인 (소수점 이하 반올림)</li>
+     * </ul>
+     *
+     * @param productPrice 상품 가격 (0보다 커야 함)
+     * @return 계산된 할인 금액
+     * @throws IllegalArgumentException 상품 가격이 유효하지 않은 경우
      */
     public BigDecimal calculateDiscount(BigDecimal productPrice) {
         if (productPrice == null || productPrice.compareTo(BigDecimal.ZERO) <= 0) {
@@ -146,6 +180,8 @@ public class CouponEntity extends BaseEntity {
 
     /**
      * 쿠폰 소유권 검증
+     *
+     * <p>지정된 사용자 ID가 쿠폰의 소유자와 일치하는지 검증합니다.</p>
      *
      * @param userId 검증할 사용자 ID
      * @throws IllegalArgumentException 소유자가 아닌 경우
