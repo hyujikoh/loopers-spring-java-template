@@ -11,6 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.loopers.domain.coupon.CouponEntity;
+import com.loopers.domain.coupon.CouponService;
+import com.loopers.domain.coupon.CouponType;
 import com.loopers.domain.order.*;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductEntity;
@@ -37,6 +40,7 @@ public class OrderFacade {
     private final UserService userService;
     private final ProductService productService;
     private final PointService pointService;
+    private final CouponService couponService;
 
     /**
      * 주문 생성
@@ -55,14 +59,6 @@ public class OrderFacade {
         BigDecimal totalOrderAmount = BigDecimal.ZERO;
 
         // 주문 항목을 상품 ID 기준으로 정렬하여 교착 상태 방지
-        /**
-         * 데드락 시나리오:
-         *
-         * 스레드 A: [상품 1, 상품 2] 순서로 락 획득 → 락 1 획득 → 락 2 대기 중
-         * 스레드 B: [상품 2, 상품 1] 순서로 락 획득 → 락 2 획득 → 락 1 대기 중
-         * 결과: DB 수준의 원형 대기(circular wait) 발생
-         * 이를 방지하기 위해, 주문 항목을 productId 기준으로 정렬한 뒤 처리하세요:
-         */
         List<OrderItemCommand> sortedItems = command.orderItems().stream()
                 .sorted(Comparator.comparing(OrderItemCommand::productId))
                 .toList();
@@ -81,10 +77,19 @@ public class OrderFacade {
 
             // 주문 가능한 상품 목록에 추가
             orderableProducts.add(product);
+            BigDecimal itemTotal;
+            if (itemCommand.couponId() != null) {
+                CouponEntity coupon = couponService.getCouponByIdLock(itemCommand.couponId());
 
-            // 상품 가격으로 항목 총액 계산 후 누적
-            BigDecimal itemTotal = product.getSellingPrice().multiply(BigDecimal.valueOf(itemCommand.quantity()));
+                BigDecimal basePrice = product.getSellingPrice().multiply(BigDecimal.valueOf(itemCommand.quantity()));
+                BigDecimal discount = coupon.calculateDiscount(product.getSellingPrice());
+                itemTotal = basePrice.subtract(discount);
+                couponService.consumeCoupon(coupon);
+            } else {
+                itemTotal = product.getSellingPrice().multiply(BigDecimal.valueOf(itemCommand.quantity()));
+            }
             totalOrderAmount = totalOrderAmount.add(itemTotal);
+
         }
 
         // 3. 주문 금액만큼 포인트 차감

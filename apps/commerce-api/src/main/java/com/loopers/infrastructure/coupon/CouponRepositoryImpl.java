@@ -1,14 +1,12 @@
 package com.loopers.infrastructure.coupon;
 
-import java.util.List;
+import static com.loopers.domain.coupon.CouponStatus.UNUSED;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
 import com.loopers.domain.coupon.CouponEntity;
 import com.loopers.domain.coupon.CouponRepository;
-import com.loopers.domain.like.LikeEntity;
-import com.loopers.domain.like.LikeRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,5 +22,10 @@ public class CouponRepositoryImpl implements CouponRepository {
     @Override
     public CouponEntity save(CouponEntity coupon) {
         return couponJpaRepository.save(coupon);
+    }
+
+    @Override
+    public Optional<CouponEntity> findByIdWithLock(Long couponId) {
+        return couponJpaRepository.findByIdWithLock(couponId, UNUSED);
     }
 }

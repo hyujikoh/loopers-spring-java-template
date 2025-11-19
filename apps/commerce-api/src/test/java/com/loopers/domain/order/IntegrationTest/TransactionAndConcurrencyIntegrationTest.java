@@ -355,12 +355,12 @@ public class TransactionAndConcurrencyIntegrationTest {
             ProductEntity finalProduct = productService.getProductDetail(product.getId());
             int expectedFinalStock = initialStock - (threadCount * orderQuantityPerUser);
 
-            // ✅ 엄격한 검증: 정확히 일치해야 함
+            // 엄격한 검증: 정확히 일치해야 함
             assertThat(finalProduct.getStockQuantity())
                     .as("비관적 락으로 동시성이 보호되므로 재고는 정확히 일치해야 함")
                     .isEqualTo(expectedFinalStock);
 
-            // ✅ 추가 검증: Oversell 절대 발생하지 않음
+            // 추가 검증: Oversell 절대 발생하지 않음
             assertThat(finalProduct.getStockQuantity())
                     .as("재고는 절대 음수가 될 수 없음")
                     .isGreaterThanOrEqualTo(0);
