@@ -51,7 +51,7 @@ public class OrderFacade {
     @Transactional
     public OrderInfo createOrder(OrderCreateCommand command) {
         // 1. 주문자 정보 조회
-        UserEntity user = userService.getUserByUsername(command.username());
+        UserEntity user = userService.findByUsernameWithLock(command.username());
 
         // 2. 주문 상품 검증 및 총 주문 금액 계산
         List<ProductEntity> orderableProducts = new ArrayList<>();
