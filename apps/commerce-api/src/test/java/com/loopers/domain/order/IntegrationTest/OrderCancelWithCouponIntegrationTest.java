@@ -424,4 +424,375 @@ public class OrderCancelWithCouponIntegrationTest {
                     .isEqualTo(100);
         }
     }
+
+    @Nested
+    @DisplayName("포인트 및 재고 복구")
+    class PointAndStockRestoration {
+
+        @Test
+        @DisplayName("쿠폰 사용 주문 취소 시 포인트가 정확하게 환불된다")
+        void should_refund_correct_amount_when_canceling_order_with_coupon() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            BigDecimal initialPoints = new BigDecimal("50000");
+            pointService.charge(userInfo.username(), initialPoints);
+
+            // Given: 상품 생성 (단가 12,000원)
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("12000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(productRequest);
+
+            // Given: 정액 할인 쿠폰 생성 (3,000원 할인)
+            UserEntity user = userService.getUserByUsername(userInfo.username());
+            CouponEntity coupon = couponService.createFixedAmountCoupon(
+                    user,
+                    new BigDecimal("3000")
+            );
+
+            // Given: 쿠폰을 사용하여 주문 생성 (수량 2개)
+            // 원래 금액: 12,000 * 2 = 24,000원
+            // 할인 후 금액: 24,000 - 3,000 = 21,000원
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(2)
+                                    .couponId(coupon.getId())
+                                    .build()
+                    ))
+                    .build();
+
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+
+            // Given: 주문 후 포인트 확인
+            UserEntity userAfterOrder = userService.getUserByUsername(userInfo.username());
+            BigDecimal pointsAfterOrder = userAfterOrder.getPointAmount();
+            BigDecimal expectedPointsAfterOrder = initialPoints.subtract(new BigDecimal("21000"));
+            
+            assertThat(pointsAfterOrder)
+                    .as("주문 후 포인트 (50,000 - 21,000 = 29,000)")
+                    .isEqualByComparingTo(expectedPointsAfterOrder);
+
+            // When: 주문 취소
+            orderFacade.cancelOrder(createdOrder.id(), userInfo.username());
+
+            // Then: 포인트가 정확하게 환불되었는지 검증
+            UserEntity userAfterCancel = userService.getUserByUsername(userInfo.username());
+            
+            assertThat(userAfterCancel.getPointAmount())
+                    .as("주문 취소 후 포인트가 초기 금액으로 복구 (50,000)")
+                    .isEqualByComparingTo(initialPoints);
+
+            // Then: 환불된 포인트 금액 검증
+            BigDecimal refundedAmount = userAfterCancel.getPointAmount().subtract(pointsAfterOrder);
+            
+            assertThat(refundedAmount)
+                    .as("환불된 포인트는 실제 결제 금액과 동일 (21,000)")
+                    .isEqualByComparingTo(new BigDecimal("21000"));
+        }
+
+        @Test
+        @DisplayName("쿠폰 사용 주문 취소 시 재고가 정확하게 복구된다")
+        void should_restore_stock_correctly_when_canceling_order_with_coupon() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("100000"));
+
+            // Given: 상품 생성 (초기 재고 50개)
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("15000"),
+                    50
+            );
+            ProductEntity product = productService.registerProduct(productRequest);
+            int initialStock = product.getStockQuantity();
+
+            // Given: 배율 할인 쿠폰 생성 (30% 할인)
+            UserEntity user = userService.getUserByUsername(userInfo.username());
+            CouponEntity coupon = couponService.createPercentCoupon(
+                    user,
+                    30
+            );
+
+            // Given: 쿠폰을 사용하여 주문 생성 (수량 7개)
+            int orderQuantity = 7;
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(orderQuantity)
+                                    .couponId(coupon.getId())
+                                    .build()
+                    ))
+                    .build();
+
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+
+            // Given: 주문 후 재고 확인
+            ProductEntity productAfterOrder = productService.getProductDetail(product.getId());
+            int expectedStockAfterOrder = initialStock - orderQuantity;
+            
+            assertThat(productAfterOrder.getStockQuantity())
+                    .as("주문 후 재고 (50 - 7 = 43)")
+                    .isEqualTo(expectedStockAfterOrder);
+
+            // When: 주문 취소
+            orderFacade.cancelOrder(createdOrder.id(), userInfo.username());
+
+            // Then: 재고가 정확하게 복구되었는지 검증
+            ProductEntity productAfterCancel = productService.getProductDetail(product.getId());
+            
+            assertThat(productAfterCancel.getStockQuantity())
+                    .as("주문 취소 후 재고가 초기 수량으로 복구 (50)")
+                    .isEqualTo(initialStock);
+
+            // Then: 복구된 재고 수량 검증
+            int restoredStock = productAfterCancel.getStockQuantity() - productAfterOrder.getStockQuantity();
+            
+            assertThat(restoredStock)
+                    .as("복구된 재고는 주문 수량과 동일 (7)")
+                    .isEqualTo(orderQuantity);
+        }
+
+        @Test
+        @DisplayName("쿠폰 할인 금액을 제외한 실제 결제 금액만 환불된다")
+        void should_refund_only_actual_payment_amount_excluding_coupon_discount() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            BigDecimal initialPoints = new BigDecimal("80000");
+            pointService.charge(userInfo.username(), initialPoints);
+
+            // Given: 상품 생성 (단가 30,000원)
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("30000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(productRequest);
+
+            // Given: 정액 할인 쿠폰 생성 (10,000원 할인)
+            UserEntity user = userService.getUserByUsername(userInfo.username());
+            CouponEntity coupon = couponService.createFixedAmountCoupon(
+                    user,
+                    new BigDecimal("10000")
+            );
+
+            // Given: 쿠폰을 사용하여 주문 생성 (수량 2개)
+            // 원래 금액: 30,000 * 2 = 60,000원
+            // 쿠폰 할인: -10,000원
+            // 실제 결제 금액: 50,000원
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(2)
+                                    .couponId(coupon.getId())
+                                    .build()
+                    ))
+                    .build();
+
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+
+            // Given: 주문 후 포인트 확인
+            UserEntity userAfterOrder = userService.getUserByUsername(userInfo.username());
+            BigDecimal actualPaymentAmount = new BigDecimal("50000");
+            BigDecimal expectedPointsAfterOrder = initialPoints.subtract(actualPaymentAmount);
+            
+            assertThat(userAfterOrder.getPointAmount())
+                    .as("주문 후 포인트 (80,000 - 50,000 = 30,000)")
+                    .isEqualByComparingTo(expectedPointsAfterOrder);
+
+            // When: 주문 취소
+            orderFacade.cancelOrder(createdOrder.id(), userInfo.username());
+
+            // Then: 실제 결제 금액만 환불되었는지 검증
+            UserEntity userAfterCancel = userService.getUserByUsername(userInfo.username());
+            BigDecimal refundedAmount = userAfterCancel.getPointAmount().subtract(userAfterOrder.getPointAmount());
+            
+            assertThat(refundedAmount)
+                    .as("환불된 금액은 실제 결제 금액 (50,000원)이어야 함")
+                    .isEqualByComparingTo(actualPaymentAmount);
+
+            // Then: 쿠폰 할인 금액은 환불되지 않음을 검증
+            BigDecimal originalAmount = new BigDecimal("60000");
+            BigDecimal couponDiscount = new BigDecimal("10000");
+            
+            assertThat(refundedAmount)
+                    .as("환불 금액은 원래 금액(60,000)이 아닌 할인 후 금액(50,000)")
+                    .isNotEqualByComparingTo(originalAmount)
+                    .isEqualByComparingTo(originalAmount.subtract(couponDiscount));
+
+            // Then: 최종 포인트가 초기 금액으로 복구되었는지 검증
+            assertThat(userAfterCancel.getPointAmount())
+                    .as("주문 취소 후 포인트가 초기 금액으로 복구 (80,000)")
+                    .isEqualByComparingTo(initialPoints);
+        }
+
+        @Test
+        @DisplayName("여러 쿠폰 사용 주문 취소 시 포인트와 재고가 모두 정확하게 복구된다")
+        void should_restore_points_and_stock_correctly_with_multiple_coupons() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            BigDecimal initialPoints = new BigDecimal("150000");
+            pointService.charge(userInfo.username(), initialPoints);
+
+            // Given: 상품 3개 생성
+            ProductDomainCreateRequest product1Request = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "상품1",
+                    "상품1 설명",
+                    new BigDecimal("20000"),
+                    80
+            );
+            ProductEntity product1 = productService.registerProduct(product1Request);
+            int product1InitialStock = product1.getStockQuantity();
+
+            ProductDomainCreateRequest product2Request = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "상품2",
+                    "상품2 설명",
+                    new BigDecimal("30000"),
+                    60
+            );
+            ProductEntity product2 = productService.registerProduct(product2Request);
+            int product2InitialStock = product2.getStockQuantity();
+
+            ProductDomainCreateRequest product3Request = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "상품3",
+                    "상품3 설명",
+                    new BigDecimal("40000"),
+                    50
+            );
+            ProductEntity product3 = productService.registerProduct(product3Request);
+            int product3InitialStock = product3.getStockQuantity();
+
+            // Given: 쿠폰 3개 생성
+            UserEntity user = userService.getUserByUsername(userInfo.username());
+            CouponEntity fixedCoupon1 = couponService.createFixedAmountCoupon(
+                    user,
+                    new BigDecimal("5000")
+            );
+            CouponEntity percentageCoupon = couponService.createPercentCoupon(
+                    user,
+                    20
+            );
+            CouponEntity fixedCoupon2 = couponService.createFixedAmountCoupon(
+                    user,
+                    new BigDecimal("8000")
+            );
+
+            // Given: 여러 쿠폰을 사용하여 주문 생성
+            // 상품1: (20,000 * 2) - 5,000 = 35,000원
+            // 상품2: (30,000 * 1) * 0.8 = 24,000원
+            // 상품3: (40,000 * 1) - 8,000 = 32,000원
+            // 총 결제 금액: 91,000원
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product1.getId())
+                                    .quantity(2)
+                                    .couponId(fixedCoupon1.getId())
+                                    .build(),
+                            OrderItemCommand.builder()
+                                    .productId(product2.getId())
+                                    .quantity(1)
+                                    .couponId(percentageCoupon.getId())
+                                    .build(),
+                            OrderItemCommand.builder()
+                                    .productId(product3.getId())
+                                    .quantity(1)
+                                    .couponId(fixedCoupon2.getId())
+                                    .build()
+                    ))
+                    .build();
+
+            OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
+
+            // Given: 주문 후 포인트와 재고 확인
+            UserEntity userAfterOrder = userService.getUserByUsername(userInfo.username());
+            BigDecimal totalPaymentAmount = new BigDecimal("91000");
+            
+            assertThat(userAfterOrder.getPointAmount())
+                    .as("주문 후 포인트 (150,000 - 91,000 = 59,000)")
+                    .isEqualByComparingTo(initialPoints.subtract(totalPaymentAmount));
+
+            ProductEntity product1AfterOrder = productService.getProductDetail(product1.getId());
+            ProductEntity product2AfterOrder = productService.getProductDetail(product2.getId());
+            ProductEntity product3AfterOrder = productService.getProductDetail(product3.getId());
+            
+            assertThat(product1AfterOrder.getStockQuantity()).isEqualTo(product1InitialStock - 2);
+            assertThat(product2AfterOrder.getStockQuantity()).isEqualTo(product2InitialStock - 1);
+            assertThat(product3AfterOrder.getStockQuantity()).isEqualTo(product3InitialStock - 1);
+
+            // When: 주문 취소
+            orderFacade.cancelOrder(createdOrder.id(), userInfo.username());
+
+            // Then: 포인트가 정확하게 환불되었는지 검증
+            UserEntity userAfterCancel = userService.getUserByUsername(userInfo.username());
+            
+            assertThat(userAfterCancel.getPointAmount())
+                    .as("주문 취소 후 포인트가 초기 금액으로 복구 (150,000)")
+                    .isEqualByComparingTo(initialPoints);
+
+            // Then: 모든 상품의 재고가 정확하게 복구되었는지 검증
+            ProductEntity product1AfterCancel = productService.getProductDetail(product1.getId());
+            ProductEntity product2AfterCancel = productService.getProductDetail(product2.getId());
+            ProductEntity product3AfterCancel = productService.getProductDetail(product3.getId());
+            
+            assertThat(product1AfterCancel.getStockQuantity())
+                    .as("상품1 재고 복구 (80)")
+                    .isEqualTo(product1InitialStock);
+            assertThat(product2AfterCancel.getStockQuantity())
+                    .as("상품2 재고 복구 (60)")
+                    .isEqualTo(product2InitialStock);
+            assertThat(product3AfterCancel.getStockQuantity())
+                    .as("상품3 재고 복구 (50)")
+                    .isEqualTo(product3InitialStock);
+
+            // Then: 환불된 포인트 금액 검증
+            BigDecimal refundedAmount = userAfterCancel.getPointAmount().subtract(userAfterOrder.getPointAmount());
+            
+            assertThat(refundedAmount)
+                    .as("환불된 포인트는 총 결제 금액과 동일 (91,000)")
+                    .isEqualByComparingTo(totalPaymentAmount);
+        }
+    }
 }
