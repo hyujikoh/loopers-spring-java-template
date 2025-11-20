@@ -202,5 +202,81 @@ public class OrderCreateWithCouponIntegrationTest {
         }
 
 
+        @Test
+        @DisplayName("정액 쿠폰 할인 후 포인트 차감이 정확하게 이루어진다")
+        void should_deduct_points_correctly_after_fixed_coupon_discount() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            BigDecimal initialPoints = new BigDecimal("30000");
+            pointService.charge(userInfo.username(), initialPoints);
+
+            // Given: 상품 생성 (단가 12,000원)
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("12000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(productRequest);
+
+            // Given: 정액 할인 쿠폰 생성 (3,000원 할인)
+            UserEntity user = userService.getUserByUsername(userInfo.username());
+            CouponEntity fixedCoupon = couponService.createFixedAmountCoupon(
+                    user,
+                    new BigDecimal("3000")
+            );
+
+            // Given: 주문 생성 요청 (수량 2개)
+            // 예상 계산: (12,000 * 2) - 3,000 = 21,000원
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(2)
+                                    .couponId(fixedCoupon.getId())
+                                    .build()
+                    ))
+                    .build();
+
+            // When: 주문 생성
+            OrderInfo result = orderFacade.createOrder(orderCommand);
+
+            // Then: 포인트 차감 검증
+            BigDecimal expectedOriginalAmount = new BigDecimal("24000"); // 12,000 * 2
+            BigDecimal expectedDiscountAmount = new BigDecimal("3000");  // 쿠폰 할인
+            BigDecimal expectedFinalAmount = new BigDecimal("21000");    // 24,000 - 3,000
+            BigDecimal expectedRemainingPoints = initialPoints.subtract(expectedFinalAmount); // 30,000 - 21,000 = 9,000
+
+            // Then: 주문 금액 확인
+            assertThat(result.totalAmount())
+                    .as("쿠폰 할인이 적용된 최종 주문 금액")
+                    .isEqualByComparingTo(expectedFinalAmount);
+
+            // Then: 사용자의 남은 포인트 확인
+            UserEntity updatedUser = userService.getUserByUsername(userInfo.username());
+            assertThat(updatedUser.getPointAmount())
+                    .as("주문 후 남은 포인트 (초기 30,000 - 할인 후 금액 21,000)")
+                    .isEqualByComparingTo(expectedRemainingPoints);
+
+            // Then: 차감된 포인트가 할인 적용 후 금액과 일치하는지 확인
+            BigDecimal deductedPoints = initialPoints.subtract(updatedUser.getPointAmount());
+            assertThat(deductedPoints)
+                    .as("실제 차감된 포인트는 쿠폰 할인 후 금액과 동일해야 함")
+                    .isEqualByComparingTo(expectedFinalAmount);
+
+            // Then: 원래 금액이 아닌 할인된 금액만큼만 차감되었는지 확인
+            assertThat(deductedPoints)
+                    .as("할인 전 금액(24,000)이 아닌 할인 후 금액(21,000)만 차감")
+                    .isLessThan(expectedOriginalAmount)
+                    .isEqualByComparingTo(expectedFinalAmount);
+        }
     }
 }
