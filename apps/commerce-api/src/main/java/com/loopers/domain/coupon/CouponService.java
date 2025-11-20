@@ -2,10 +2,12 @@ package com.loopers.domain.coupon;
 
 import java.math.BigDecimal;
 
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.user.UserEntity;
+import com.loopers.infrastructure.coupon.CouponJpaRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -41,7 +43,12 @@ public class CouponService {
 
     @Transactional
     public void consumeCoupon(CouponEntity coupon) {
-        coupon.use();
+        try {
+            coupon.use();
+            couponRepository.save(coupon);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw new IllegalArgumentException("쿠폰을 사용할 수 없습니다. id: " + coupon.getId());
+        }
     }
 
     public void revertCoupon(CouponEntity coupon) {
