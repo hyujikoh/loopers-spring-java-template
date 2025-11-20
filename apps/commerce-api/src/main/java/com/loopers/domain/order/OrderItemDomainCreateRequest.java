@@ -7,6 +7,7 @@ import java.math.BigDecimal;
  *
  * @param orderId   주문 ID
  * @param productId 상품 ID
+ * @param couponId  쿠폰 ID
  * @param quantity  수량
  * @param unitPrice 단가
  * @author hyunjikoh
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
 public record OrderItemDomainCreateRequest(
         Long orderId,
         Long productId,
+        Long couponId,
         Integer quantity,
         BigDecimal unitPrice
 ) {

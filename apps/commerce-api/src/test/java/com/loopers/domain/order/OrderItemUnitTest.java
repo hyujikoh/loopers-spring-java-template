@@ -29,6 +29,7 @@ class OrderItemUnitTest {
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 2,
                 new BigDecimal("10000.00")
             );
@@ -52,6 +53,7 @@ class OrderItemUnitTest {
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 3,
                 new BigDecimal("15000.00")
             );
@@ -84,6 +86,7 @@ class OrderItemUnitTest {
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 null,
                 100L,
+                null,
                 2,
                 new BigDecimal("10000.00")
             ))
@@ -97,6 +100,7 @@ class OrderItemUnitTest {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
+                null,
                 null,
                 2,
                 new BigDecimal("10000.00")
@@ -113,6 +117,7 @@ class OrderItemUnitTest {
                 1L,
                 100L,
                 null,
+                null,
                 new BigDecimal("10000.00")
             ))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -126,6 +131,7 @@ class OrderItemUnitTest {
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 0,
                 new BigDecimal("10000.00")
             ))
@@ -135,6 +141,7 @@ class OrderItemUnitTest {
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 -1,
                 new BigDecimal("10000.00")
             ))
@@ -149,6 +156,7 @@ class OrderItemUnitTest {
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 1000,
                 new BigDecimal("10000.00")
             ))
@@ -163,6 +171,7 @@ class OrderItemUnitTest {
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 2,
                 null
             ))
@@ -177,6 +186,7 @@ class OrderItemUnitTest {
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 2,
                 BigDecimal.ZERO
             ))
@@ -186,6 +196,7 @@ class OrderItemUnitTest {
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 2,
                 new BigDecimal("-1000.00")
             ))
@@ -207,6 +218,7 @@ class OrderItemUnitTest {
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 quantity,
                 unitPrice
             );
@@ -229,6 +241,7 @@ class OrderItemUnitTest {
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 1,
                 unitPrice
             );
@@ -246,13 +259,14 @@ class OrderItemUnitTest {
         void should_calculate_total_price_accurately_with_multiple_quantities() {
             // given
             OrderItemDomainCreateRequest request1 = new OrderItemDomainCreateRequest(
-                1L, 100L, 5, new BigDecimal("12000.00")
+                1L, 100L,
+                null, 5, new BigDecimal("12000.00")
             );
             OrderItemDomainCreateRequest request2 = new OrderItemDomainCreateRequest(
-                1L, 101L, 10, new BigDecimal("8500.00")
+                1L, 101L, null, 10, new BigDecimal("8500.00")
             );
             OrderItemDomainCreateRequest request3 = new OrderItemDomainCreateRequest(
-                1L, 102L, 999, new BigDecimal("100.00")
+                1L, 102L,null , 999, new BigDecimal("100.00")
             );
             
             // when
@@ -278,6 +292,7 @@ class OrderItemUnitTest {
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 5,
                 new BigDecimal("20000.00")
             );
@@ -301,6 +316,7 @@ class OrderItemUnitTest {
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 null,
                 100L,
+                null,
                 2,
                 new BigDecimal("10000.00")
             ))
@@ -314,6 +330,7 @@ class OrderItemUnitTest {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
+                null,
                 null,
                 2,
                 new BigDecimal("10000.00")
@@ -330,6 +347,7 @@ class OrderItemUnitTest {
                 1L,
                 100L,
                 null,
+                null,
                 new BigDecimal("10000.00")
             ))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -343,6 +361,7 @@ class OrderItemUnitTest {
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 0,
                 new BigDecimal("10000.00")
             ))
@@ -357,6 +376,7 @@ class OrderItemUnitTest {
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 2,
                 null
             ))
@@ -371,6 +391,7 @@ class OrderItemUnitTest {
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 2,
                 BigDecimal.ZERO
             ))
@@ -385,6 +406,7 @@ class OrderItemUnitTest {
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 2,
                 new BigDecimal("10000.00")
             );
@@ -417,6 +439,7 @@ class OrderItemUnitTest {
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 2,
                 new BigDecimal("10000.00")
             );
@@ -449,6 +472,7 @@ class OrderItemUnitTest {
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
                 1L,
                 100L,
+                null,
                 2,
                 new BigDecimal("10000.00")
             );

@@ -114,6 +114,7 @@ public class OrderFacade {
                     new OrderItemDomainCreateRequest(
                             order.getId(),
                             product.getId(),
+                            itemCommand.couponId() != null ? itemCommand.couponId(): null,
                             itemCommand.quantity(),
                             product.getSellingPrice()
                     )
