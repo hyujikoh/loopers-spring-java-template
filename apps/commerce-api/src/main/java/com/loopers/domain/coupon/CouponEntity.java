@@ -173,7 +173,7 @@ public class CouponEntity extends BaseEntity {
         }
 
         return switch (this.couponType) {
-            case FIXED_AMOUNT -> this.fixedAmount;
+            case FIXED_AMOUNT -> this.fixedAmount.min(productPrice);
             case PERCENTAGE -> productPrice.multiply(BigDecimal.valueOf(this.percentage))
                     .divide(new BigDecimal("100"), 0, RoundingMode.HALF_UP);
         };

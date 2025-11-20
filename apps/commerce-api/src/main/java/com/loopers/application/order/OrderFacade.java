@@ -82,7 +82,7 @@ public class OrderFacade {
                 CouponEntity coupon = couponService.getCouponByIdLock(itemCommand.couponId());
 
                 BigDecimal basePrice = product.getSellingPrice().multiply(BigDecimal.valueOf(itemCommand.quantity()));
-                BigDecimal discount = coupon.calculateDiscount(product.getSellingPrice());
+                BigDecimal discount = coupon.calculateDiscount(basePrice);
                 itemTotal = basePrice.subtract(discount);
                 couponService.consumeCoupon(coupon);
             } else {

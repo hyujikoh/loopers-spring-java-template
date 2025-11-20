@@ -10,4 +10,7 @@ public interface CouponRepository {
     CouponEntity save(CouponEntity any);
 
     Optional<CouponEntity> findByIdWithLock(Long couponId);
+
+    Optional<CouponEntity> findById(Long couponId);
+
 }

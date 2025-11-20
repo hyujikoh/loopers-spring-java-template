@@ -39,6 +39,12 @@ public class CouponService {
                 .orElseThrow(() -> new IllegalArgumentException("Coupon not found with id: " + couponId));
     }
 
+    @Transactional(readOnly = true)
+    public CouponEntity getCouponById(Long couponId) {
+        return couponRepository.findById(couponId)
+                .orElseThrow(() -> new IllegalArgumentException("Coupon not found with id: " + couponId));
+    }
+
     @Transactional
     public void consumeCoupon(CouponEntity coupon) {
         coupon.use();
