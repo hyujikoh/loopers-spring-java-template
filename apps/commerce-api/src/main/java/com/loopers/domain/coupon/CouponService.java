@@ -34,9 +34,9 @@ public class CouponService {
 
 
     @Transactional(readOnly = true)
-    public CouponEntity getCouponByIdLock(Long couponId) {
-        return couponRepository.findByIdWithLock(couponId)
-                .orElseThrow(() -> new IllegalArgumentException("Coupon not found with id: " + couponId));
+    public CouponEntity getUserCouponByIdLock(Long couponId, Long userId) {
+        return couponRepository.findByIdWithLock(couponId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다. id: " + couponId));
     }
 
     @Transactional(readOnly = true)

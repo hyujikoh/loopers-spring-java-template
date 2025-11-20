@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.coupon.CouponEntity;
 import com.loopers.domain.coupon.CouponService;
-import com.loopers.domain.coupon.CouponType;
 import com.loopers.domain.order.*;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductEntity;
@@ -79,8 +78,10 @@ public class OrderFacade {
             orderableProducts.add(product);
             BigDecimal itemTotal;
             if (itemCommand.couponId() != null) {
-                CouponEntity coupon = couponService.getCouponByIdLock(itemCommand.couponId());
-
+                CouponEntity coupon = couponService.getUserCouponByIdLock(itemCommand.couponId(), user.getId());
+                if(coupon.isUsed()){
+                    throw new IllegalArgumentException("이미 사용된 쿠폰입니다.");
+                }
                 BigDecimal basePrice = product.getSellingPrice().multiply(BigDecimal.valueOf(itemCommand.quantity()));
                 BigDecimal discount = coupon.calculateDiscount(basePrice);
                 itemTotal = basePrice.subtract(discount);

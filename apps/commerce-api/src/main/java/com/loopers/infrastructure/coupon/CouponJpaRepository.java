@@ -19,6 +19,6 @@ public interface CouponJpaRepository extends JpaRepository<CouponEntity, Long> {
     Optional<CouponEntity> findByIdAndDeletedAtIsNull(Long id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT c FROM CouponEntity c WHERE c.id = :id AND c.deletedAt IS NULL and c.status = :status")
-    Optional<CouponEntity> findByIdWithLock(Long id, CouponStatus status);
+    @Query("SELECT c FROM CouponEntity c WHERE c.id = :id AND c.userId = :userId AND c.deletedAt IS NULL")
+    Optional<CouponEntity> findByIdWithLock(Long id, Long userId);
 }

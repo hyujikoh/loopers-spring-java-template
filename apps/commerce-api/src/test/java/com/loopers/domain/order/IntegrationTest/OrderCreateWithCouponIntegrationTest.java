@@ -26,6 +26,7 @@ import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductDomainCreateRequest;
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductService;
+import com.loopers.domain.user.Gender;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserService;
 import com.loopers.fixtures.BrandTestFixture;
@@ -480,6 +481,282 @@ public class OrderCreateWithCouponIntegrationTest {
             assertThat(updatedUser.getPointAmount())
                     .as("주문 후 남은 포인트")
                     .isEqualByComparingTo(expectedRemainingPoints);
+        }
+    }
+
+    @Nested
+    @DisplayName("쿠폰 사용 예외 처리")
+    class CouponUsageException {
+
+        @Test
+        @DisplayName("이미 사용된 쿠폰으로 주문 시 예외가 발생한다")
+        void should_throw_exception_when_using_already_used_coupon() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("50000"));
+
+            // Given: 상품 생성
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(productRequest);
+
+            // Given: 쿠폰 생성 및 첫 번째 주문으로 사용
+            UserEntity user = userService.getUserByUsername(userInfo.username());
+            CouponEntity coupon = couponService.createFixedAmountCoupon(
+                    user,
+                    new BigDecimal("5000")
+            );
+
+            OrderCreateCommand firstOrderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(1)
+                                    .couponId(coupon.getId())
+                                    .build()
+                    ))
+                    .build();
+            orderFacade.createOrder(firstOrderCommand);
+
+            // Given: 동일한 쿠폰으로 두 번째 주문 시도
+            OrderCreateCommand secondOrderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(1)
+                                    .couponId(coupon.getId())
+                                    .build()
+                    ))
+                    .build();
+
+            // When & Then: 이미 사용된 쿠폰으로 주문 시 예외 발생
+            assertThatThrownBy(() -> orderFacade.createOrder(secondOrderCommand))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("이미 사용된 쿠폰입니다.");
+        }
+
+        @Test
+        @DisplayName("다른 사용자의 쿠폰으로 주문 시 예외가 발생한다")
+        void should_throw_exception_when_using_other_users_coupon() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 첫 번째 사용자 생성 및 쿠폰 발급
+            UserRegisterCommand user1Command = UserTestFixture.createUserCommand(
+                    "user1",
+                    "user1@example.com",
+                    "1990-01-01",
+                    Gender.MALE
+            );
+            UserInfo user1Info = userFacade.registerUser(user1Command);
+            UserEntity user1 = userService.getUserByUsername(user1Info.username());
+            CouponEntity user1Coupon = couponService.createFixedAmountCoupon(
+                    user1,
+                    new BigDecimal("5000")
+            );
+
+            // Given: 두 번째 사용자 생성 및 포인트 충전
+            UserRegisterCommand user2Command = UserTestFixture.createUserCommand(
+                    "user2",
+                    "user2@example.com",
+                    "1990-01-01",
+                    Gender.MALE
+            );
+            UserInfo user2Info = userFacade.registerUser(user2Command);
+            pointService.charge(user2Info.username(), new BigDecimal("20000"));
+
+            // Given: 상품 생성
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(productRequest);
+
+            // Given: user2가 user1의 쿠폰으로 주문 시도
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(user2Info.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(1)
+                                    .couponId(user1Coupon.getId())
+                                    .build()
+                    ))
+                    .build();
+
+            // When & Then: 다른 사용자의 쿠폰 사용 시 쿠폰 자체를 찾을수 없다.
+            assertThatThrownBy(() -> orderFacade.createOrder(orderCommand))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("쿠폰을 찾을 수 없습니다");
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 쿠폰 ID로 주문 시 예외가 발생한다")
+        void should_throw_exception_when_using_non_existent_coupon() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("20000"));
+
+            // Given: 상품 생성
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(productRequest);
+
+            // Given: 존재하지 않는 쿠폰 ID로 주문 시도
+            Long nonExistentCouponId = 99999L;
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(1)
+                                    .couponId(nonExistentCouponId)
+                                    .build()
+                    ))
+                    .build();
+
+            // When & Then: 존재하지 않는 쿠폰 ID 사용 시 예외 발생
+            assertThatThrownBy(() -> orderFacade.createOrder(orderCommand))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("쿠폰을 찾을 수 없습니다");
+        }
+
+        @Test
+        @DisplayName("쿠폰 할인 후 포인트가 부족하면 주문이 실패한다")
+        void should_fail_order_when_insufficient_points_after_coupon_discount() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 부족한 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("5000")); // 부족한 포인트
+
+            // Given: 상품 생성 (단가 10,000원)
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    100
+            );
+            ProductEntity product = productService.registerProduct(productRequest);
+
+            // Given: 정액 할인 쿠폰 생성 (2,000원 할인)
+            // 할인 후 금액: 10,000 - 2,000 = 8,000원 (보유 포인트 5,000원으로 부족)
+            UserEntity user = userService.getUserByUsername(userInfo.username());
+            CouponEntity coupon = couponService.createFixedAmountCoupon(
+                    user,
+                    new BigDecimal("2000")
+            );
+
+            // Given: 주문 생성 요청
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(1)
+                                    .couponId(coupon.getId())
+                                    .build()
+                    ))
+                    .build();
+
+            // When & Then: 쿠폰 할인 후에도 포인트 부족으로 주문 실패
+            assertThatThrownBy(() -> orderFacade.createOrder(orderCommand))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("포인트가 부족합니다");
+
+            // Then: 쿠폰은 사용되지 않은 상태로 유지
+            CouponEntity unusedCoupon = couponService.getCouponById(coupon.getId());
+            assertThat(unusedCoupon.getStatus()).isEqualTo(CouponStatus.UNUSED);
+        }
+
+        @Test
+        @DisplayName("쿠폰 할인 후에도 재고가 부족하면 주문이 실패한다")
+        void should_fail_order_when_insufficient_stock_even_with_coupon() {
+            // Given: 브랜드 생성
+            BrandEntity brand = brandService.registerBrand(
+                    BrandTestFixture.createRequest("테스트브랜드", "브랜드 설명")
+            );
+
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("50000"));
+
+            // Given: 재고가 부족한 상품 생성 (재고 5개)
+            ProductDomainCreateRequest productRequest = ProductTestFixture.createRequest(
+                    brand.getId(),
+                    "테스트상품",
+                    "상품 설명",
+                    new BigDecimal("10000"),
+                    5 // 재고 5개만
+            );
+            ProductEntity product = productService.registerProduct(productRequest);
+
+            // Given: 쿠폰 생성
+            UserEntity user = userService.getUserByUsername(userInfo.username());
+            CouponEntity coupon = couponService.createFixedAmountCoupon(
+                    user,
+                    new BigDecimal("5000")
+            );
+
+            // Given: 재고보다 많은 수량으로 주문 시도 (10개 주문)
+            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    .username(userInfo.username())
+                    .orderItems(List.of(
+                            OrderItemCommand.builder()
+                                    .productId(product.getId())
+                                    .quantity(10) // 재고(5개)보다 많은 수량
+                                    .couponId(coupon.getId())
+                                    .build()
+                    ))
+                    .build();
+
+            // When & Then: 쿠폰이 있어도 재고 부족으로 주문 실패
+            assertThatThrownBy(() -> orderFacade.createOrder(orderCommand))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("주문할 수 없는 상품입니다.");
+
+            // Then: 쿠폰은 사용되지 않은 상태로 유지
+            CouponEntity unusedCoupon = couponService.getCouponById(coupon.getId());
+            assertThat(unusedCoupon.getStatus()).isEqualTo(CouponStatus.UNUSED);
+
+            // Then: 상품 재고는 변경되지 않음
+            ProductEntity unchangedProduct = productService.getProductDetail(product.getId());
+            assertThat(unchangedProduct.getStockQuantity()).isEqualTo(5);
         }
     }
 }
