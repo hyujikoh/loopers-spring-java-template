@@ -9,7 +9,5 @@ import java.util.Optional;
 public interface CouponRepository {
     CouponEntity save(CouponEntity any);
 
-    Optional<CouponEntity> findByIdWithLock(Long couponId, Long userId);
-
     Optional<CouponEntity> findByIdAndUserId(Long couponId, Long userId);
 }

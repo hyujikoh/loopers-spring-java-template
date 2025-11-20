@@ -78,7 +78,7 @@ public class OrderFacade {
             orderableProducts.add(product);
             BigDecimal itemTotal;
             if (itemCommand.couponId() != null) {
-                CouponEntity coupon = couponService.getUserCouponByIdLock(itemCommand.couponId(), user.getId());
+                CouponEntity coupon = couponService.getCouponByIdAndUserId(itemCommand.couponId(), user.getId());
                 if(coupon.isUsed()){
                     throw new IllegalArgumentException("이미 사용된 쿠폰입니다.");
                 }

@@ -121,6 +121,9 @@ public class OrderCreateWithCouponIntegrationTest {
                     ))
                     .build();
 
+            // When: 주문 생성
+            OrderInfo result = orderFacade.createOrder(orderCommand);
+
             // Then
             CouponEntity usedCoupon = couponService.getCouponByIdAndUserId(fixedAmountCoupon.getId(), user.getId());
             assertThat(usedCoupon.getStatus()).isEqualTo(CouponStatus.USED);

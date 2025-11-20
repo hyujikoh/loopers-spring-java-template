@@ -56,6 +56,10 @@ public class CouponEntity extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private CouponStatus status = CouponStatus.UNUSED;
 
+    @Version
+    private Long version;
+
+
     /**
      * 정액 쿠폰 생성자
      */
