@@ -179,6 +179,9 @@ public class OrderFacade {
             productService.restoreStock(orderItem.getProductId(), orderItem.getQuantity());
             if(orderItem.getCouponId() != null){
                 CouponEntity coupon = couponService.getCouponByIdAndUserId(orderItem.getCouponId(), order.getUserId());
+                if(!coupon.isUsed()){
+                    throw new IllegalStateException("취소하려는 주문의 쿠폰이 사용된 상태가 아닙니다.");
+                }
                 couponService.revertCoupon(coupon);
             }
         }
