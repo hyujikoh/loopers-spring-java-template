@@ -40,13 +40,17 @@ public class CouponService {
     }
 
     @Transactional(readOnly = true)
-    public CouponEntity getCouponById(Long couponId) {
-        return couponRepository.findById(couponId)
+    public CouponEntity getCouponByIdAndUserId(Long couponId, Long userId) {
+        return couponRepository.findByIdAndUserId(couponId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Coupon not found with id: " + couponId));
     }
 
     @Transactional
     public void consumeCoupon(CouponEntity coupon) {
         coupon.use();
+    }
+
+    public void revertCoupon(CouponEntity coupon) {
+        coupon.revert();
     }
 }

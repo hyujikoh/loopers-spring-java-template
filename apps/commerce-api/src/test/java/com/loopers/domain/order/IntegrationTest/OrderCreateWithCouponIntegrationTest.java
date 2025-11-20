@@ -105,9 +105,9 @@ public class OrderCreateWithCouponIntegrationTest {
             );
             ProductEntity savedProduct = productService.registerProduct(productRequest);
 
-            UserEntity userByUsername = userService.getUserByUsername(userInfo.username());
+            UserEntity user = userService.getUserByUsername(userInfo.username());
 
-            CouponEntity fixedAmountCoupon = couponService.createFixedAmountCoupon(userByUsername, new BigDecimal("5000"));
+            CouponEntity fixedAmountCoupon = couponService.createFixedAmountCoupon(user, new BigDecimal("5000"));
 
             // Given: 주문 생성 요청
             OrderCreateCommand orderCommand = OrderCreateCommand.builder()
@@ -121,12 +121,8 @@ public class OrderCreateWithCouponIntegrationTest {
                     ))
                     .build();
 
-            // When: 주문 생성
-            OrderInfo result = orderFacade.createOrder(orderCommand);
-
-
             // Then
-            CouponEntity usedCoupon = couponService.getCouponById(fixedAmountCoupon.getId());
+            CouponEntity usedCoupon = couponService.getCouponByIdAndUserId(fixedAmountCoupon.getId(), user.getId());
             assertThat(usedCoupon.getStatus()).isEqualTo(CouponStatus.USED);
         }
 
@@ -336,7 +332,7 @@ public class OrderCreateWithCouponIntegrationTest {
             assertThat(result.orderItems()).hasSize(1);
             
             // Then: 쿠폰이 사용됨 상태로 변경되었는지 검증
-            CouponEntity usedCoupon = couponService.getCouponById(percentageCoupon.getId());
+            CouponEntity usedCoupon = couponService.getCouponByIdAndUserId(percentageCoupon.getId(), user.getId());
             assertThat(usedCoupon.getStatus()).isEqualTo(CouponStatus.USED);
         }
 
@@ -699,7 +695,7 @@ public class OrderCreateWithCouponIntegrationTest {
                     .hasMessageContaining("포인트가 부족합니다");
 
             // Then: 쿠폰은 사용되지 않은 상태로 유지
-            CouponEntity unusedCoupon = couponService.getCouponById(coupon.getId());
+            CouponEntity unusedCoupon = couponService.getCouponByIdAndUserId(coupon.getId(), user.getId());
             assertThat(unusedCoupon.getStatus()).isEqualTo(CouponStatus.UNUSED);
         }
 
@@ -751,7 +747,7 @@ public class OrderCreateWithCouponIntegrationTest {
                     .hasMessageContaining("주문할 수 없는 상품입니다.");
 
             // Then: 쿠폰은 사용되지 않은 상태로 유지
-            CouponEntity unusedCoupon = couponService.getCouponById(coupon.getId());
+            CouponEntity unusedCoupon = couponService.getCouponByIdAndUserId(coupon.getId(), user.getId());
             assertThat(unusedCoupon.getStatus()).isEqualTo(CouponStatus.UNUSED);
 
             // Then: 상품 재고는 변경되지 않음

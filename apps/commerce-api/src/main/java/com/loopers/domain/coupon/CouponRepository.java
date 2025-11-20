@@ -11,6 +11,5 @@ public interface CouponRepository {
 
     Optional<CouponEntity> findByIdWithLock(Long couponId, Long userId);
 
-    Optional<CouponEntity> findById(Long couponId);
-
+    Optional<CouponEntity> findByIdAndUserId(Long couponId, Long userId);
 }

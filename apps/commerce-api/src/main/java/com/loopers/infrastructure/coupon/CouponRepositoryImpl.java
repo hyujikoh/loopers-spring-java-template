@@ -30,7 +30,7 @@ public class CouponRepositoryImpl implements CouponRepository {
     }
 
     @Override
-    public Optional<CouponEntity> findById(Long couponId) {
-        return couponJpaRepository.findByIdAndDeletedAtIsNull(couponId);
+    public Optional<CouponEntity> findByIdAndUserId(Long couponId, Long userId) {
+        return couponJpaRepository.findByIdAndUserIdAndDeletedAtIsNull(couponId, userId);
     }
 }

@@ -234,4 +234,8 @@ public class CouponEntity extends BaseEntity {
             }
         }
     }
+
+    public void revert() {
+        this.status = CouponStatus.UNUSED;
+    }
 }

@@ -16,7 +16,7 @@ import jakarta.persistence.LockModeType;
  * @since 2025. 11. 11.
  */
 public interface CouponJpaRepository extends JpaRepository<CouponEntity, Long> {
-    Optional<CouponEntity> findByIdAndDeletedAtIsNull(Long id);
+    Optional<CouponEntity> findByIdAndUserIdAndDeletedAtIsNull(Long id, Long userId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM CouponEntity c WHERE c.id = :id AND c.userId = :userId AND c.deletedAt IS NULL")

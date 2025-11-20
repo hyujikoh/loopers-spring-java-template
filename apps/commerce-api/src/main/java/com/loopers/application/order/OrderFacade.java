@@ -177,6 +177,10 @@ public class OrderFacade {
         // 3. 재고 원복
         for (OrderItemEntity orderItem : orderItems) {
             productService.restoreStock(orderItem.getProductId(), orderItem.getQuantity());
+            if(orderItem.getCouponId() != null){
+                CouponEntity coupon = couponService.getCouponByIdAndUserId(orderItem.getCouponId(), order.getUserId());
+                couponService.revertCoupon(coupon);
+            }
         }
 
         // 4. 포인트 환불
