@@ -76,4 +76,16 @@ public class Uris {
         public static final String GET_LIST = BASE;
         public static final String GET_DETAIL = BASE + "/{productId}";
     }
+
+    /**
+     * Like API 엔드포인트
+     */
+    public static class Like {
+        private Like() {
+        }
+
+        public static final String BASE = API_V1 + "/likes";
+        public static final String UPSERT = BASE + "/products/{productId}";
+        public static final String CANCEL = BASE + "/products/{productId}";
+    }
 }
