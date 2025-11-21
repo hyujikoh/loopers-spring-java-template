@@ -52,8 +52,14 @@ public class OrderV1Dtos {
             @Schema(description = "주문 상태", example = "PENDING")
             OrderStatus status,
 
-            @Schema(description = "총 주문 금액", example = "20000.00")
-            BigDecimal totalAmount,
+            @Schema(description = "할인 전 총액", example = "25000.00")
+            BigDecimal originalTotalAmount,
+
+            @Schema(description = "할인 금액", example = "5000.00")
+            BigDecimal discountAmount,
+
+            @Schema(description = "할인 후 총액 (실제 결제 금액)", example = "20000.00")
+            BigDecimal finalTotalAmount,
 
             @Schema(description = "주문 일시")
             ZonedDateTime orderedAt
@@ -62,7 +68,9 @@ public class OrderV1Dtos {
             return new OrderCreateResponse(
                     orderInfo.id(),
                     orderInfo.status(),
-                    orderInfo.totalAmount(),
+                    orderInfo.originalTotalAmount(),
+                    orderInfo.discountAmount(),
+                    orderInfo.finalTotalAmount(),
                     orderInfo.createdAt()
             );
         }
@@ -79,8 +87,14 @@ public class OrderV1Dtos {
             @Schema(description = "주문 상태", example = "PENDING")
             OrderStatus status,
 
-            @Schema(description = "총 주문 금액", example = "20000.00")
-            BigDecimal totalAmount,
+            @Schema(description = "할인 전 총액", example = "25000.00")
+            BigDecimal originalTotalAmount,
+
+            @Schema(description = "할인 금액", example = "5000.00")
+            BigDecimal discountAmount,
+
+            @Schema(description = "할인 후 총액 (실제 결제 금액)", example = "20000.00")
+            BigDecimal finalTotalAmount,
 
             @Schema(description = "주문 상품 목록")
             List<OrderItemResponse> items,
@@ -96,7 +110,9 @@ public class OrderV1Dtos {
                     orderInfo.id(),
                     orderInfo.userId(),
                     orderInfo.status(),
-                    orderInfo.totalAmount(),
+                    orderInfo.originalTotalAmount(),
+                    orderInfo.discountAmount(),
+                    orderInfo.finalTotalAmount(),
                     orderInfo.orderItems().stream()
                             .map(OrderItemResponse::from)
                             .toList(),
@@ -120,7 +136,10 @@ public class OrderV1Dtos {
             @Schema(description = "단가", example = "10000.00")
             BigDecimal unitPrice,
 
-            @Schema(description = "총 금액", example = "20000.00")
+            @Schema(description = "할인 금액", example = "2000.00")
+            BigDecimal discountAmount,
+
+            @Schema(description = "총 금액 (할인 적용 후)", example = "18000.00")
             BigDecimal totalPrice
     ) {
         public static OrderItemResponse from(com.loopers.application.order.OrderItemInfo itemInfo) {
@@ -129,6 +148,7 @@ public class OrderV1Dtos {
                     itemInfo.productId(),
                     itemInfo.quantity(),
                     itemInfo.unitPrice(),
+                    itemInfo.discountAmount(),
                     itemInfo.totalPrice()
             );
         }
@@ -142,8 +162,14 @@ public class OrderV1Dtos {
             @Schema(description = "주문 상태", example = "PENDING")
             OrderStatus status,
 
-            @Schema(description = "총 주문 금액", example = "20000.00")
-            BigDecimal totalAmount,
+            @Schema(description = "할인 전 총액", example = "25000.00")
+            BigDecimal originalTotalAmount,
+
+            @Schema(description = "할인 금액", example = "5000.00")
+            BigDecimal discountAmount,
+
+            @Schema(description = "할인 후 총액 (실제 결제 금액)", example = "20000.00")
+            BigDecimal finalTotalAmount,
 
             @Schema(description = "주문 일시")
             ZonedDateTime orderedAt
@@ -152,7 +178,9 @@ public class OrderV1Dtos {
             return new OrderListResponse(
                     orderInfo.id(),
                     orderInfo.status(),
-                    orderInfo.totalAmount(),
+                    orderInfo.originalTotalAmount(),
+                    orderInfo.discountAmount(),
+                    orderInfo.finalTotalAmount(),
                     orderInfo.createdAt()
             );
         }

@@ -55,7 +55,10 @@ public class OrderFacade {
 
         // 2. 주문 상품 검증 및 총 주문 금액 계산
         List<ProductEntity> orderableProducts = new ArrayList<>();
-        BigDecimal totalOrderAmount = BigDecimal.ZERO;
+        List<BigDecimal> itemDiscounts = new ArrayList<>(); // 항목별 할인 금액 추적
+        BigDecimal originalTotalAmount = BigDecimal.ZERO; // 할인 전 총액
+        BigDecimal totalDiscountAmount = BigDecimal.ZERO; // 총 할인 금액
+        BigDecimal finalTotalAmount = BigDecimal.ZERO;    // 할인 후 총액
 
         // 주문 항목을 상품 ID 기준으로 정렬하여 교착 상태 방지
         List<OrderItemCommand> sortedItems = command.orderItems().stream()
@@ -76,29 +79,37 @@ public class OrderFacade {
 
             // 주문 가능한 상품 목록에 추가
             orderableProducts.add(product);
-            BigDecimal itemTotal;
+
+            // 항목별 금액 계산
+            BigDecimal basePrice = product.getSellingPrice().multiply(BigDecimal.valueOf(itemCommand.quantity()));
+            BigDecimal itemDiscount = BigDecimal.ZERO;
+
             if (itemCommand.couponId() != null) {
                 CouponEntity coupon = couponService.getCouponByIdAndUserId(itemCommand.couponId(), user.getId());
                 if (coupon.isUsed()) {
                     throw new IllegalArgumentException("이미 사용된 쿠폰입니다.");
                 }
-                BigDecimal basePrice = product.getSellingPrice().multiply(BigDecimal.valueOf(itemCommand.quantity()));
-                BigDecimal discount = coupon.calculateDiscount(basePrice);
-                itemTotal = basePrice.subtract(discount);
+                itemDiscount = coupon.calculateDiscount(basePrice);
                 couponService.consumeCoupon(coupon);
-            } else {
-                itemTotal = product.getSellingPrice().multiply(BigDecimal.valueOf(itemCommand.quantity()));
             }
-            totalOrderAmount = totalOrderAmount.add(itemTotal);
 
+            itemDiscounts.add(itemDiscount);
+            originalTotalAmount = originalTotalAmount.add(basePrice);
+            totalDiscountAmount = totalDiscountAmount.add(itemDiscount);
+            finalTotalAmount = finalTotalAmount.add(basePrice.subtract(itemDiscount));
         }
 
-        // 3. 주문 금액만큼 포인트 차감
-        pointService.use(user, totalOrderAmount);
+        // 3. 주문 금액만큼 포인트 차감 (할인 후 금액으로)
+        pointService.use(user, finalTotalAmount);
 
-        // 4. 주문 엔티티 생성 (사용자 ID와 총 금액으로)
+        // 4. 주문 엔티티 생성
         OrderEntity order = orderService.createOrder(
-                new OrderDomainCreateRequest(user.getId(), totalOrderAmount)
+                new OrderDomainCreateRequest(
+                        user.getId(),
+                        originalTotalAmount,
+                        totalDiscountAmount,
+                        finalTotalAmount
+                )
         );
 
         // 5. 주문 항목 생성 및 재고 차감 처리
@@ -106,18 +117,20 @@ public class OrderFacade {
         IntStream.range(0, sortedItems.size()).forEach(i -> {
             OrderItemCommand itemCommand = sortedItems.get(i);
             ProductEntity product = orderableProducts.get(i);
+            BigDecimal itemDiscount = itemDiscounts.get(i);
 
             // 재고 차감 (도메인 서비스를 통해 처리)
             productService.deductStock(product, itemCommand.quantity());
 
-            // 주문 항목 엔티티 생성 (주문 ID, 상품 ID, 수량, 가격으로)
+            // 주문 항목 엔티티 생성
             OrderItemEntity orderItem = orderService.createOrderItem(
                     new OrderItemDomainCreateRequest(
                             order.getId(),
                             product.getId(),
                             itemCommand.couponId(),
                             itemCommand.quantity(),
-                            product.getSellingPrice()
+                            product.getSellingPrice(),
+                            itemDiscount
                     )
             );
             orderItems.add(orderItem);
@@ -186,8 +199,8 @@ public class OrderFacade {
             }
         }
 
-        // 4. 포인트 환불
-        pointService.charge(username, order.getTotalAmount());
+        // 4. 포인트 환불 (할인 후 금액으로)
+        pointService.charge(username, order.getFinalTotalAmount());
 
         return OrderInfo.from(order, orderItems);
     }
