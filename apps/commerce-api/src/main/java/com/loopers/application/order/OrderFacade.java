@@ -13,7 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.coupon.CouponEntity;
 import com.loopers.domain.coupon.CouponService;
-import com.loopers.domain.order.*;
+import com.loopers.domain.order.OrderEntity;
+import com.loopers.domain.order.OrderItemEntity;
+import com.loopers.domain.order.OrderService;
+import com.loopers.domain.order.OrderStatus;
 import com.loopers.domain.order.dto.OrderCreationResult;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductEntity;
@@ -79,12 +82,11 @@ public class OrderFacade {
             }
 
             // 쿠폰 검증 및 준비
-            CouponEntity coupon = null;
-            if (itemCommand.couponId() != null) {
-                coupon = couponService.getCouponByIdAndUserId(itemCommand.couponId(), user.getId());
-                if (coupon.isUsed()) {
-                    throw new IllegalArgumentException("이미 사용된 쿠폰입니다.");
-                }
+            CouponEntity coupon = itemCommand.couponId() != null
+                    ? couponService.getCouponByIdAndUserId(itemCommand.couponId(), user.getId())
+                    : null;
+            if (coupon != null && coupon.isUsed()) {
+                throw new IllegalArgumentException("이미 사용된 쿠폰입니다.");
             }
 
             orderableProducts.add(product);
@@ -103,6 +105,7 @@ public class OrderFacade {
         // 5. 포인트 차감
         pointService.use(user, creationResult.order().getFinalTotalAmount());
 
+        // 6. 쿠폰 사용 처리
         coupons.stream().filter(Objects::nonNull).forEach(couponService::consumeCoupon);
 
         IntStream.range(0, orderableProducts.size())
@@ -117,7 +120,7 @@ public class OrderFacade {
      *
      * <p>주문을 확정합니다. (재고는 이미 주문 생성 시 차감되었음)</p>
      *
-     * @param orderId 주문 ID
+     * @param orderId  주문 ID
      * @param username 사용자명
      * @return 확정된 주문 정보
      */
@@ -162,18 +165,18 @@ public class OrderFacade {
         }
 
         // 5. 쿠폰 원복
-        for (OrderItemEntity orderItem : orderItems) {
-            if (orderItem.getCouponId() != null) {
-                CouponEntity coupon = couponService.getCouponByIdAndUserId(
-                        orderItem.getCouponId(),
-                        order.getUserId()
-                );
-                if (!coupon.isUsed()) {
-                    throw new IllegalStateException("취소하려는 주문의 쿠폰이 사용된 상태가 아닙니다.");
-                }
-                couponService.revertCoupon(coupon);
-            }
-        }
+        orderItems.stream()
+                .filter(orderItem -> orderItem.getCouponId() != null)
+                .forEach(orderItem -> {
+                    CouponEntity coupon = couponService.getCouponByIdAndUserId(
+                            orderItem.getCouponId(),
+                            order.getUserId()
+                    );
+                    if (!coupon.isUsed()) {
+                        throw new IllegalStateException("취소하려는 주문의 쿠폰이 사용된 상태가 아닙니다.");
+                    }
+                    couponService.revertCoupon(coupon);
+                });
 
         // 6. 포인트 환불 (할인 후 금액으로)
         pointService.refund(username, order.getFinalTotalAmount());
@@ -190,7 +193,7 @@ public class OrderFacade {
      */
     public OrderInfo getOrderById(String username, Long orderId) {
         UserEntity user = userService.getUserByUsername(username);
-        OrderEntity order = orderService.getOrderByIdAndUserId(orderId , user.getId());
+        OrderEntity order = orderService.getOrderByIdAndUserId(orderId, user.getId());
         List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
         return OrderInfo.from(order, orderItems);
     }
