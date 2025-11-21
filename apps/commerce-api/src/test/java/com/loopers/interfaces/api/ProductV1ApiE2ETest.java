@@ -26,6 +26,7 @@ import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
 import com.loopers.infrastructure.product.ProductJpaRepository;
+import com.loopers.interfaces.api.common.PageResponse;
 import com.loopers.interfaces.api.product.ProductV1Dtos;
 import com.loopers.support.Uris;
 import com.loopers.utils.DatabaseCleanUp;
@@ -106,10 +107,10 @@ class ProductV1ApiE2ETest {
         @DisplayName("상품 목록을 페이징하여 조회한다")
         void get_products_with_pagination_success() {
             // when
-            ParameterizedTypeReference<ApiResponse<ProductV1Dtos.PageResponse<ProductV1Dtos.ProductListResponse>>> responseType =
+            ParameterizedTypeReference<ApiResponse<PageResponse<ProductV1Dtos.ProductListResponse>>> responseType =
                     new ParameterizedTypeReference<>() {
                     };
-            ResponseEntity<ApiResponse<ProductV1Dtos.PageResponse<ProductV1Dtos.ProductListResponse>>> response =
+            ResponseEntity<ApiResponse<PageResponse<ProductV1Dtos.ProductListResponse>>> response =
                     testRestTemplate.exchange(Uris.Product.GET_LIST + "?page=0&size=3",
                             HttpMethod.GET, null, responseType);
 
@@ -131,10 +132,10 @@ class ProductV1ApiE2ETest {
         @DisplayName("두 번째 페이지를 조회하면 남은 상품들을 응답한다")
         void get_products_second_page_success() {
             // when
-            ParameterizedTypeReference<ApiResponse<ProductV1Dtos.PageResponse<ProductV1Dtos.ProductListResponse>>> responseType =
+            ParameterizedTypeReference<ApiResponse<PageResponse<ProductV1Dtos.ProductListResponse>>> responseType =
                     new ParameterizedTypeReference<>() {
                     };
-            ResponseEntity<ApiResponse<ProductV1Dtos.PageResponse<ProductV1Dtos.ProductListResponse>>> response =
+            ResponseEntity<ApiResponse<PageResponse<ProductV1Dtos.ProductListResponse>>> response =
                     testRestTemplate.exchange(Uris.Product.GET_LIST + "?page=1&size=3",
                             HttpMethod.GET, null, responseType);
 
@@ -165,10 +166,10 @@ class ProductV1ApiE2ETest {
             }
 
             // when
-            ParameterizedTypeReference<ApiResponse<ProductV1Dtos.PageResponse<ProductV1Dtos.ProductListResponse>>> responseType =
+            ParameterizedTypeReference<ApiResponse<PageResponse<ProductV1Dtos.ProductListResponse>>> responseType =
                     new ParameterizedTypeReference<>() {
                     };
-            ResponseEntity<ApiResponse<ProductV1Dtos.PageResponse<ProductV1Dtos.ProductListResponse>>> response =
+            ResponseEntity<ApiResponse<PageResponse<ProductV1Dtos.ProductListResponse>>> response =
                     testRestTemplate.exchange(Uris.Product.GET_LIST,
                             HttpMethod.GET, null, responseType);
 
@@ -194,10 +195,10 @@ class ProductV1ApiE2ETest {
             });
 
             // when
-            ParameterizedTypeReference<ApiResponse<ProductV1Dtos.PageResponse<ProductV1Dtos.ProductListResponse>>> responseType =
+            ParameterizedTypeReference<ApiResponse<PageResponse<ProductV1Dtos.ProductListResponse>>> responseType =
                     new ParameterizedTypeReference<>() {
                     };
-            ResponseEntity<ApiResponse<ProductV1Dtos.PageResponse<ProductV1Dtos.ProductListResponse>>> response =
+            ResponseEntity<ApiResponse<PageResponse<ProductV1Dtos.ProductListResponse>>> response =
                     testRestTemplate.exchange(Uris.Product.GET_LIST,
                             HttpMethod.GET, null, responseType);
 

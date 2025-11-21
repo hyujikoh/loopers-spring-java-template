@@ -12,6 +12,7 @@ import com.loopers.application.order.OrderSummary;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.interfaces.api.ApiResponse;
+import com.loopers.interfaces.api.common.PageResponse;
 import com.loopers.support.Uris;
 
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class OrderV1Controller implements OrderV1ApiSpec {
 
     @GetMapping(Uris.Order.GET_LIST)
     @Override
-    public ApiResponse<OrderV1Dtos.PageResponse<OrderV1Dtos.OrderListResponse>> getOrders(
+    public ApiResponse<PageResponse<OrderV1Dtos.OrderListResponse>> getOrders(
             @RequestHeader("X-USER-ID") String username,
             @PageableDefault(size = 20) Pageable pageable
     ) {
@@ -53,7 +54,7 @@ public class OrderV1Controller implements OrderV1ApiSpec {
                         summary.createdAt()
                 )
         );
-        return ApiResponse.success(OrderV1Dtos.PageResponse.from(responsePage));
+        return ApiResponse.success(PageResponse.from(responsePage));
     }
 
     @GetMapping(Uris.Order.GET_DETAIL)

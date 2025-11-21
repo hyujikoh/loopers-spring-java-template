@@ -10,6 +10,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.loopers.interfaces.api.ApiResponse;
+import com.loopers.interfaces.api.common.PageResponse;
 
 @Tag(name = "Product V1 API", description = "상품 관리 API")
 public interface ProductV1ApiSpec {
@@ -22,7 +23,7 @@ public interface ProductV1ApiSpec {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
-    ApiResponse<ProductV1Dtos.PageResponse<ProductV1Dtos.ProductListResponse>> getProducts(
+    ApiResponse<PageResponse<ProductV1Dtos.ProductListResponse>> getProducts(
             @PageableDefault(size = 20) Pageable pageable,
             @RequestParam(required = false) Long brandId,
             @RequestParam(required = false) String productName
