@@ -395,7 +395,7 @@ public class OrderCreateWithCouponIntegrationTest {
 
             // Then: 할인 금액이 정수로 반올림되었는지 검증
             BigDecimal originalAmount = new BigDecimal("9999");
-            BigDecimal expectedDiscount = new BigDecimal("2000"); // 1999.8 -> 1,500 (반올림)
+            BigDecimal expectedDiscount = new BigDecimal("2000"); // 9999 * 0.2 = 1999.8 -> 2000 (반올림)
             BigDecimal expectedFinalAmount = originalAmount.subtract(expectedDiscount); // 8,499
 
             assertThat(result.finalTotalAmount())

@@ -50,7 +50,9 @@ public class CouponService {
         }
     }
 
+    @Transactional
     public void revertCoupon(CouponEntity coupon) {
         coupon.revert();
+        couponRepository.save(coupon);
     }
 }

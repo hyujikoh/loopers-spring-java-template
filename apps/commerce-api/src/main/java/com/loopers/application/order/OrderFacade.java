@@ -18,6 +18,7 @@ import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.UserEntity;
+import com.loopers.domain.user.UserRepository;
 import com.loopers.domain.user.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class OrderFacade {
     private final ProductService productService;
     private final PointService pointService;
     private final CouponService couponService;
+    private final UserRepository userRepository;
 
     /**
      * 주문 생성
@@ -146,12 +148,15 @@ public class OrderFacade {
      * <p>주문을 확정합니다. (재고는 이미 주문 생성 시 차감되었음)</p>
      *
      * @param orderId 주문 ID
+     * @param username
      * @return 확정된 주문 정보
      */
     @Transactional
-    public OrderInfo confirmOrder(Long orderId) {
+    public OrderInfo confirmOrder(Long orderId, String username) {
+        UserEntity user = userService.getUserByUsername(username);
+
         // 1. 주문 확정
-        OrderEntity order = orderService.getOrderById(orderId);
+        OrderEntity order = orderService.getOrderByIdAndUserId(orderId, user.getId());
         order.confirmOrder();
 
         // 2. 주문 항목 조회
@@ -171,8 +176,10 @@ public class OrderFacade {
      */
     @Transactional
     public OrderInfo cancelOrder(Long orderId, String username) {
+        UserEntity user = userService.getUserByUsername(username);
+
         // 1. 주문 취소
-        OrderEntity order = orderService.getOrderById(orderId);
+        OrderEntity order = orderService.getOrderByIdAndUserId(orderId, user.getId());
         order.cancelOrder();
 
         // 2. 주문 항목 조회
@@ -200,7 +207,7 @@ public class OrderFacade {
         }
 
         // 4. 포인트 환불 (할인 후 금액으로)
-        pointService.charge(username, order.getFinalTotalAmount());
+        pointService.refund(username, order.getFinalTotalAmount());
 
         return OrderInfo.from(order, orderItems);
     }
@@ -208,11 +215,13 @@ public class OrderFacade {
     /**
      * 주문 ID로 주문 조회
      *
-     * @param orderId 주문 ID
+     * @param username
+     * @param orderId  주문 ID
      * @return 주문 정보
      */
-    public OrderInfo getOrderById(Long orderId) {
-        OrderEntity order = orderService.getOrderById(orderId);
+    public OrderInfo getOrderById(String username, Long orderId) {
+        UserEntity user = userService.getUserByUsername(username);
+        OrderEntity order = orderService.getOrderByIdAndUserId(orderId , user.getId());
         List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
         return OrderInfo.from(order, orderItems);
     }
@@ -258,8 +267,10 @@ public class OrderFacade {
      * @param orderId 주문 ID
      * @return 주문 요약 정보
      */
-    public OrderSummary getOrderSummaryById(Long orderId) {
-        OrderEntity order = orderService.getOrderById(orderId);
+    public OrderSummary getOrderSummaryById(Long orderId, String username) {
+        UserEntity user = userService.getUserByUsername(username);
+
+        OrderEntity order = orderService.getOrderByIdAndUserId(orderId, user.getId());
         int itemCount = orderService.countOrderItems(orderId);
         return OrderSummary.from(order, itemCount);
     }
@@ -268,14 +279,18 @@ public class OrderFacade {
      * 주문 ID로 주문 항목 목록을 페이징하여 조회합니다.
      *
      * @param orderId  주문 ID
+     * @param username
      * @param pageable 페이징 정보
      * @return 주문 항목 정보 페이지
      */
     public Page<OrderItemInfo> getOrderItemsByOrderId(
             Long orderId,
+            String username,
             Pageable pageable) {
+        UserEntity user = userService.getUserByUsername(username);
+
         // 주문 존재 여부 확인
-        orderService.getOrderById(orderId);
+        orderService.getOrderByIdAndUserId(orderId, user.getId());
 
         // 주문 항목 페이징 조회
         Page<OrderItemEntity> orderItemsPage =

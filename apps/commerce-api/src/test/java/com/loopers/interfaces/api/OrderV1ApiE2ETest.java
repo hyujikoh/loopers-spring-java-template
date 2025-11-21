@@ -20,6 +20,7 @@ import com.loopers.application.order.OrderInfo;
 import com.loopers.application.order.OrderItemCommand;
 import com.loopers.application.point.PointFacade;
 import com.loopers.application.user.UserFacade;
+import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
@@ -30,6 +31,7 @@ import com.loopers.domain.product.ProductService;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
+import com.loopers.interfaces.api.common.PageResponse;
 import com.loopers.interfaces.api.order.OrderV1Dtos;
 import com.loopers.interfaces.api.point.PointV1Dtos;
 import com.loopers.support.Uris;
@@ -209,10 +211,10 @@ class OrderV1ApiE2ETest {
             headers.set("X-USER-ID", testUsername);
 
             // when
-            ParameterizedTypeReference<ApiResponse<OrderV1Dtos.PageResponse<OrderV1Dtos.OrderListResponse>>> responseType =
+            ParameterizedTypeReference<ApiResponse<PageResponse<OrderV1Dtos.OrderListResponse>>> responseType =
                     new ParameterizedTypeReference<>() {
                     };
-            ResponseEntity<ApiResponse<OrderV1Dtos.PageResponse<OrderV1Dtos.OrderListResponse>>> response =
+            ResponseEntity<ApiResponse<PageResponse<OrderV1Dtos.OrderListResponse>>> response =
                     testRestTemplate.exchange(Uris.Order.GET_LIST + "?page=0&size=2",
                             HttpMethod.GET, new HttpEntity<>(null, headers), responseType);
 
@@ -236,10 +238,10 @@ class OrderV1ApiE2ETest {
             headers.set("X-USER-ID", testUsername);
 
             // when
-            ParameterizedTypeReference<ApiResponse<OrderV1Dtos.PageResponse<OrderV1Dtos.OrderListResponse>>> responseType =
+            ParameterizedTypeReference<ApiResponse<PageResponse<OrderV1Dtos.OrderListResponse>>> responseType =
                     new ParameterizedTypeReference<>() {
                     };
-            ResponseEntity<ApiResponse<OrderV1Dtos.PageResponse<OrderV1Dtos.OrderListResponse>>> response =
+            ResponseEntity<ApiResponse<PageResponse<OrderV1Dtos.OrderListResponse>>> response =
                     testRestTemplate.exchange(Uris.Order.GET_LIST,
                             HttpMethod.GET, new HttpEntity<>(null, headers), responseType);
 
@@ -257,10 +259,10 @@ class OrderV1ApiE2ETest {
         @DisplayName("X-USER-ID 헤더가 없으면 400 Bad Request 응답을 반환한다")
         void get_orders_fail_when_header_missing() {
             // when
-            ParameterizedTypeReference<ApiResponse<OrderV1Dtos.PageResponse<OrderV1Dtos.OrderListResponse>>> responseType =
+            ParameterizedTypeReference<ApiResponse<PageResponse<OrderV1Dtos.OrderListResponse>>> responseType =
                     new ParameterizedTypeReference<>() {
                     };
-            ResponseEntity<ApiResponse<OrderV1Dtos.PageResponse<OrderV1Dtos.OrderListResponse>>> response =
+            ResponseEntity<ApiResponse<PageResponse<OrderV1Dtos.OrderListResponse>>> response =
                     testRestTemplate.exchange(Uris.Order.GET_LIST,
                             HttpMethod.GET, new HttpEntity<>(null, null), responseType);
 
@@ -281,6 +283,8 @@ class OrderV1ApiE2ETest {
         void get_order_detail_success() {
             // given
             Long orderId = createTestOrder(testUsername, 3);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-USER-ID", testUsername);
 
             // when
             ParameterizedTypeReference<ApiResponse<OrderV1Dtos.OrderDetailResponse>> responseType =
@@ -288,7 +292,7 @@ class OrderV1ApiE2ETest {
                     };
             ResponseEntity<ApiResponse<OrderV1Dtos.OrderDetailResponse>> response =
                     testRestTemplate.exchange(Uris.Order.GET_DETAIL,
-                            HttpMethod.GET, null, responseType, orderId);
+                            HttpMethod.GET,  new HttpEntity<>(null, headers), responseType, orderId);
 
             // then
             assertAll(
@@ -310,7 +314,10 @@ class OrderV1ApiE2ETest {
         @DisplayName("존재하지 않는 주문 ID로 조회하면 404 Not Found 응답을 반환한다")
         void get_order_detail_fail_when_order_not_found() {
             // given
+
             Long nonExistentOrderId = 99999L;
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-USER-ID", testUsername);
 
             // when
             ParameterizedTypeReference<ApiResponse<OrderV1Dtos.OrderDetailResponse>> responseType =
@@ -318,7 +325,7 @@ class OrderV1ApiE2ETest {
                     };
             ResponseEntity<ApiResponse<OrderV1Dtos.OrderDetailResponse>> response =
                     testRestTemplate.exchange(Uris.Order.GET_DETAIL,
-                            HttpMethod.GET, null, responseType, nonExistentOrderId);
+                            HttpMethod.GET,  new HttpEntity<>(null, headers), responseType, nonExistentOrderId);
 
             // then
             assertAll(

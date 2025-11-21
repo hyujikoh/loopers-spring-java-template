@@ -6,7 +6,6 @@ build/
 !**/src/test/**/build/
 .kiro
 apps/commerce-api/src/main/generated/**
-.github
 docs/project-analysis
 ### STS ###
 .apt_generated

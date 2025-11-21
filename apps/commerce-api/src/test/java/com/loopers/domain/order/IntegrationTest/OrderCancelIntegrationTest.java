@@ -1,9 +1,12 @@
 package com.loopers.domain.order.IntegrationTest;
 
+import static com.loopers.domain.point.PointTransactionType.CHARGE;
+import static com.loopers.domain.point.PointTransactionType.REFUND;
 import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +21,7 @@ import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.order.OrderStatus;
+import com.loopers.domain.point.PointHistoryEntity;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductDomainCreateRequest;
 import com.loopers.domain.product.ProductEntity;
@@ -116,6 +120,15 @@ public class OrderCancelIntegrationTest {
 
             // Then: 주문 상태 확인
             assertThat(cancelledOrder.status()).isEqualTo(OrderStatus.CANCELLED);
+
+            // Then: 포인트 환불 확인
+            PointHistoryEntity pointHistoryEntity = pointService.getPointHistories(userInfo.username()).get(0);
+
+            assertThat(pointHistoryEntity.getTransactionType()).isEqualTo(REFUND);
+            assertThat(pointHistoryEntity.getAmount()).isEqualTo(new BigDecimal("20000").setScale(2));
+
+            assertThat(pointHistoryEntity.getBalanceAfter())
+                    .isEqualTo(new BigDecimal("50000").setScale(2));
         }
 
         @Test
@@ -197,7 +210,7 @@ public class OrderCancelIntegrationTest {
                     .build();
 
             OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
-            OrderInfo confirmedOrder = orderFacade.confirmOrder(createdOrder.id());
+            OrderInfo confirmedOrder = orderFacade.confirmOrder(createdOrder.id() , userInfo.username());
             assertThat(confirmedOrder.status()).isEqualTo(OrderStatus.CONFIRMED);
 
             // When: 주문 취소
