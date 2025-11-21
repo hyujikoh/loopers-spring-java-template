@@ -135,7 +135,9 @@ class OrderV1ApiE2ETest {
                     () -> assertThat(Objects.requireNonNull(response.getBody()).data().orderId()).isNotNull(),
                     () -> assertThat(Objects.requireNonNull(response.getBody()).data().status())
                             .isEqualTo(OrderStatus.PENDING),
-                    () -> assertThat(Objects.requireNonNull(response.getBody()).data().totalAmount())
+                    () -> assertThat(Objects.requireNonNull(response.getBody()).data().originalTotalAmount())
+                            .isEqualByComparingTo(new BigDecimal("20000.00")),
+                    () -> assertThat(Objects.requireNonNull(response.getBody()).data().finalTotalAmount())
                             .isEqualByComparingTo(new BigDecimal("20000.00"))
             );
         }
@@ -295,7 +297,9 @@ class OrderV1ApiE2ETest {
                     () -> assertThat(Objects.requireNonNull(response.getBody()).data().orderId())
                             .isEqualTo(orderId),
                     () -> assertThat(Objects.requireNonNull(response.getBody()).data().userId()).isNotNull(),
-                    () -> assertThat(Objects.requireNonNull(response.getBody()).data().totalAmount())
+                    () -> assertThat(Objects.requireNonNull(response.getBody()).data().originalTotalAmount())
+                            .isEqualByComparingTo(new BigDecimal("30000.00")),
+                    () -> assertThat(Objects.requireNonNull(response.getBody()).data().finalTotalAmount())
                             .isEqualByComparingTo(new BigDecimal("30000.00")),
                     () -> assertThat(Objects.requireNonNull(response.getBody()).data().items())
                             .isNotEmpty()

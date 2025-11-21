@@ -114,7 +114,8 @@ public class OrderCreateIntegrationTest {
             // Then: 주문이 정상 생성되었는지 검증
             assertThat(result).isNotNull();
             assertThat(result.userId()).isEqualTo(userInfo.id());
-            assertThat(result.totalAmount()).isEqualTo(new BigDecimal("20000.00")); // 10000 * 2
+            assertThat(result.originalTotalAmount()).isEqualTo(new BigDecimal("20000.00")); // 10000 * 2
+            assertThat(result.finalTotalAmount()).isEqualTo(new BigDecimal("20000.00")); // 할인 없음
             assertThat(result.status()).isEqualTo(OrderStatus.PENDING);
             assertThat(result.orderItems()).hasSize(1);
             assertThat(result.orderItems().get(0).quantity()).isEqualTo(2);
@@ -208,7 +209,7 @@ public class OrderCreateIntegrationTest {
             BigDecimal expectedTotal = new BigDecimal("10000.00").multiply(BigDecimal.valueOf(2))  // 20000
                     .add(new BigDecimal("20000.00").multiply(BigDecimal.valueOf(1)))                    // 20000
                     .add(new BigDecimal("15000.00").multiply(BigDecimal.valueOf(3)));                   // 45000
-            assertThat(result.totalAmount()).isEqualTo(expectedTotal);  // 85000.00
+            assertThat(result.finalTotalAmount()).isEqualTo(expectedTotal);  // 85000.00
         }
 
         @Test
@@ -254,13 +255,13 @@ public class OrderCreateIntegrationTest {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             // Then: 주문 총액과 항목 합계가 일치하는지 검증
-            assertThat(result.totalAmount()).isEqualTo(itemsTotal);
+            assertThat(result.finalTotalAmount()).isEqualTo(itemsTotal);
 
             // Then: 예상 총액과도 일치하는지 검증
             BigDecimal expectedTotal = new BigDecimal("12500.00").multiply(BigDecimal.valueOf(3))  // 37500
                     .add(new BigDecimal("33000.00").multiply(BigDecimal.valueOf(2)))                    // 66000
                     .add(new BigDecimal("7800.00").multiply(BigDecimal.valueOf(5)));                    // 39000
-            assertThat(result.totalAmount()).isEqualTo(expectedTotal);  // 142500.00
+            assertThat(result.finalTotalAmount()).isEqualTo(expectedTotal);  // 142500.00
         }
 
         @Test

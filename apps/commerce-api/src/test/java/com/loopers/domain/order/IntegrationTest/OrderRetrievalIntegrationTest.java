@@ -111,7 +111,7 @@ public class OrderRetrievalIntegrationTest {
             assertThat(retrievedOrder).isNotNull();
             assertThat(retrievedOrder.id()).isEqualTo(createdOrder.id());
             assertThat(retrievedOrder.userId()).isEqualTo(userInfo.id());
-            assertThat(retrievedOrder.totalAmount()).isEqualTo(new BigDecimal("20000.00"));
+            assertThat(retrievedOrder.finalTotalAmount()).isEqualTo(new BigDecimal("20000.00"));
             assertThat(retrievedOrder.status()).isEqualTo(OrderStatus.PENDING);
             assertThat(retrievedOrder.itemCount()).isEqualTo(1);
         }

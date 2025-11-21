@@ -180,7 +180,15 @@ public class OrderCreateWithCouponIntegrationTest {
             BigDecimal expectedDiscountAmount = new BigDecimal("5000");  // 쿠폰 할인
             BigDecimal expectedFinalAmount = new BigDecimal("15000");    // 20,000 - 5,000
 
-            assertThat(result.totalAmount())
+            assertThat(result.originalTotalAmount())
+                    .as("할인 전 원래 주문 금액")
+                    .isEqualByComparingTo(expectedOriginalAmount);
+
+            assertThat(result.discountAmount())
+                    .as("쿠폰 할인 금액")
+                    .isEqualByComparingTo(expectedDiscountAmount);
+
+            assertThat(result.finalTotalAmount())
                     .as("쿠폰 할인이 적용된 최종 주문 금액")
                     .isEqualByComparingTo(expectedFinalAmount);
 
@@ -194,7 +202,7 @@ public class OrderCreateWithCouponIntegrationTest {
             // Then: 실제 할인이 적용되었는지 검증
             BigDecimal itemTotal = result.orderItems().get(0).unitPrice()
                     .multiply(BigDecimal.valueOf(result.orderItems().get(0).quantity()));
-            BigDecimal actualDiscount = itemTotal.subtract(result.totalAmount());
+            BigDecimal actualDiscount = itemTotal.subtract(result.finalTotalAmount());
 
             assertThat(actualDiscount)
                     .as("실제 적용된 할인 금액")
@@ -256,7 +264,7 @@ public class OrderCreateWithCouponIntegrationTest {
             BigDecimal expectedRemainingPoints = initialPoints.subtract(expectedFinalAmount); // 30,000 - 21,000 = 9,000
 
             // Then: 주문 금액 확인
-            assertThat(result.totalAmount())
+            assertThat(result.finalTotalAmount())
                     .as("쿠폰 할인이 적용된 최종 주문 금액")
                     .isEqualByComparingTo(expectedFinalAmount);
 
@@ -390,12 +398,12 @@ public class OrderCreateWithCouponIntegrationTest {
             BigDecimal expectedDiscount = new BigDecimal("2000"); // 1999.8 -> 1,500 (반올림)
             BigDecimal expectedFinalAmount = originalAmount.subtract(expectedDiscount); // 8,499
 
-            assertThat(result.totalAmount())
+            assertThat(result.finalTotalAmount())
                     .as("배율 쿠폰 할인 후 금액 (소수점 반올림 적용)")
                     .isEqualByComparingTo(expectedFinalAmount);
 
             // Then: 할인 금액에 소수점이 없는지 확인
-            assertThat(result.totalAmount().scale())
+            assertThat(result.finalTotalAmount().scale())
                     .as("최종 금액은 소수점이 없어야 함")
                     .isLessThanOrEqualTo(2);
         }
@@ -453,7 +461,7 @@ public class OrderCreateWithCouponIntegrationTest {
             BigDecimal expectedDiscountAmount = expectedOriginalAmount.multiply(expectedDiscountRate); // 22,500
             BigDecimal expectedFinalAmount = new BigDecimal("52500");    // 75,000 - 22,500
 
-            assertThat(result.totalAmount())
+            assertThat(result.finalTotalAmount())
                     .as("배율 쿠폰 할인이 적용된 최종 주문 금액")
                     .isEqualByComparingTo(expectedFinalAmount);
 
@@ -467,7 +475,7 @@ public class OrderCreateWithCouponIntegrationTest {
             // Then: 실제 할인율 검증
             BigDecimal itemTotal = result.orderItems().get(0).unitPrice()
                     .multiply(BigDecimal.valueOf(result.orderItems().get(0).quantity()));
-            BigDecimal actualDiscount = itemTotal.subtract(result.totalAmount());
+            BigDecimal actualDiscount = itemTotal.subtract(result.finalTotalAmount());
 
             assertThat(actualDiscount)
                     .as("실제 적용된 할인 금액 (30%)")

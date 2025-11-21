@@ -107,7 +107,7 @@ public class OrderItemManagementIntegrationTest {
             assertThat(orderSummaries.getContent()).hasSize(1);
             assertThat(orderSummaries.getTotalElements()).isEqualTo(1);
             assertThat(orderSummaries.getContent().get(0).itemCount()).isEqualTo(2);
-            assertThat(orderSummaries.getContent().get(0).totalAmount()).isEqualTo(new BigDecimal("80000.00"));
+            assertThat(orderSummaries.getContent().get(0).finalTotalAmount()).isEqualTo(new BigDecimal("80000.00"));
         }
 
         @Test
