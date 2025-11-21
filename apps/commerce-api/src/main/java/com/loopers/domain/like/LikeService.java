@@ -60,7 +60,6 @@ public class LikeService {
                         like.restore();
                         // DB 원자적 연산으로 카운트 증가
                         productRepository.incrementLikeCount(product.getId());
-                        productRepository.save(product);
                     }
                     // 활성 좋아요인 경우: 카운트 변경 없음 (중복 방지)
                     return like;
@@ -69,7 +68,6 @@ public class LikeService {
                 .orElseGet(() -> {
                     // DB 원자적 연산으로 카운트 증가
                     productRepository.incrementLikeCount(product.getId());
-                    productRepository.save(product);
                     return likeRepository.save(LikeEntity.createEntity(user.getId(), product.getId()));
                 });
     }
@@ -94,7 +92,6 @@ public class LikeService {
                     like.delete();
                     // DB 원자적 연산으로 카운트 감소
                     productRepository.decrementLikeCount(product.getId());
-                    productRepository.save(product);
                 });
     }
 }
