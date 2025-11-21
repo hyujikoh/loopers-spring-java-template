@@ -1,6 +1,7 @@
 package com.loopers.domain.order;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * 주문 생성 도메인 요청 DTO
@@ -52,7 +53,8 @@ public record OrderDomainCreateRequest(
 
         // 금액 정합성 검증
         BigDecimal calculatedFinalAmount = originalTotalAmount.subtract(discountAmount);
-        if (calculatedFinalAmount.compareTo(finalTotalAmount) != 0) {
+        if (calculatedFinalAmount.setScale(2, RoundingMode.HALF_UP)
+                .compareTo(finalTotalAmount.setScale(2, RoundingMode.HALF_UP)) != 0) {
             throw new IllegalArgumentException(
                     String.format("금액 정합성 오류: 할인 전 총액(%s) - 할인 금액(%s) ≠ 할인 후 총액(%s)",
                             originalTotalAmount, discountAmount, finalTotalAmount)
