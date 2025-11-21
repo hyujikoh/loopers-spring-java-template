@@ -47,7 +47,9 @@ public class OrderV1Controller implements OrderV1ApiSpec {
                 new OrderV1Dtos.OrderListResponse(
                         summary.id(),
                         summary.status(),
-                        summary.totalAmount(),
+                        summary.originalTotalAmount(),
+                        summary.discountAmount(),
+                        summary.finalTotalAmount(),
                         summary.createdAt()
                 )
         );

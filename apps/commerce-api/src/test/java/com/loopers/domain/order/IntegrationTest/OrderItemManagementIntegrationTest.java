@@ -25,6 +25,7 @@ import com.loopers.domain.user.UserRepository;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
+import com.loopers.support.error.CoreException;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**
@@ -40,12 +41,6 @@ public class OrderItemManagementIntegrationTest {
     private OrderFacade orderFacade;
 
     @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private UserFacade userFacade;
 
     @Autowired
@@ -56,8 +51,6 @@ public class OrderItemManagementIntegrationTest {
 
     @Autowired
     private PointService pointService;
-    @Autowired
-    private OrderService orderService;
 
     @BeforeEach
     void setUp() {
@@ -114,7 +107,7 @@ public class OrderItemManagementIntegrationTest {
             assertThat(orderSummaries.getContent()).hasSize(1);
             assertThat(orderSummaries.getTotalElements()).isEqualTo(1);
             assertThat(orderSummaries.getContent().get(0).itemCount()).isEqualTo(2);
-            assertThat(orderSummaries.getContent().get(0).totalAmount()).isEqualTo(new BigDecimal("80000.00"));
+            assertThat(orderSummaries.getContent().get(0).finalTotalAmount()).isEqualTo(new BigDecimal("80000.00"));
         }
 
         @Test
@@ -244,7 +237,7 @@ public class OrderItemManagementIntegrationTest {
                     nonExistentOrderId,
                     PageRequest.of(0, 10)
             ))
-                    .isInstanceOf(Exception.class)
+                    .isInstanceOf(CoreException.class)
                     .hasMessageContaining("주문을 찾을 수 없습니다");
         }
     }

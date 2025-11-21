@@ -3,10 +3,7 @@ package com.loopers.interfaces.api.product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.loopers.application.product.ProductDetailInfo;
 import com.loopers.application.product.ProductFacade;
@@ -28,8 +25,8 @@ public class ProductV1Controller implements ProductV1ApiSpec {
     @Override
     public ApiResponse<ProductV1Dtos.PageResponse<ProductV1Dtos.ProductListResponse>> getProducts(
             @PageableDefault(size = 20) Pageable pageable,
-            Long brandId,
-            String productName
+            @RequestParam(required = false) Long brandId,
+            @RequestParam(required = false) String productName
     ) {
         ProductSearchFilter filter = new ProductSearchFilter(brandId, productName, pageable);
         Page<ProductInfo> products = productFacade.getProducts(filter);

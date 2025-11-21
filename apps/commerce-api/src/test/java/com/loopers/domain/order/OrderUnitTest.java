@@ -1,5 +1,6 @@
 package com.loopers.domain.order;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 
@@ -31,8 +32,10 @@ class OrderUnitTest {
         void should_create_order_entity_successfully_with_valid_information() {
             // given
             Long userId = 1L;
-            BigDecimal totalAmount = new BigDecimal("50000");
-            OrderDomainCreateRequest request = new OrderDomainCreateRequest(userId, totalAmount);
+            BigDecimal originalTotalAmount = new BigDecimal("50000");
+            BigDecimal discountAmount = BigDecimal.ZERO;
+            BigDecimal finalTotalAmount = new BigDecimal("50000");
+            OrderDomainCreateRequest request = new OrderDomainCreateRequest(userId, originalTotalAmount, discountAmount, finalTotalAmount);
 
             // when
             OrderEntity order = OrderEntity.createOrder(request);
@@ -40,14 +43,16 @@ class OrderUnitTest {
             // then
             Assertions.assertThat(order).isNotNull();
             Assertions.assertThat(order.getUserId()).isEqualTo(userId);
-            Assertions.assertThat(order.getTotalAmount()).isEqualByComparingTo(totalAmount);
+            Assertions.assertThat(order.getOriginalTotalAmount()).isEqualByComparingTo(originalTotalAmount);
+            Assertions.assertThat(order.getDiscountAmount()).isEqualByComparingTo(discountAmount);
+            Assertions.assertThat(order.getFinalTotalAmount()).isEqualByComparingTo(finalTotalAmount);
         }
 
         @Test
         @DisplayName("주문 생성 시 상태는 PENDING이다")
         void should_have_pending_status_when_order_is_created() {
             // given
-            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
+            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"), BigDecimal.ZERO, new BigDecimal("50000"));
 
             // when
             OrderEntity order = OrderEntity.createOrder(request);
@@ -71,7 +76,7 @@ class OrderUnitTest {
         void should_throw_exception_when_user_id_is_null() {
             // given & when & then
             Assertions.assertThatThrownBy(() ->
-                            new OrderDomainCreateRequest(null, new BigDecimal("50000")))
+                            new OrderDomainCreateRequest(null, new BigDecimal("50000"), BigDecimal.ZERO, new BigDecimal("50000")))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("사용자 ID는 필수입니다.");
         }
@@ -81,9 +86,9 @@ class OrderUnitTest {
         void should_throw_exception_when_total_amount_is_null() {
             // given & when & then
             Assertions.assertThatThrownBy(() ->
-                            new OrderDomainCreateRequest(1L, null))
+                            new OrderDomainCreateRequest(1L, null, BigDecimal.ZERO, new BigDecimal("50000")))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessage("주문 총액은 필수입니다.");
+                    .hasMessage("할인 전 총액은 필수입니다.");
         }
 
         @Test
@@ -91,14 +96,14 @@ class OrderUnitTest {
         void should_throw_exception_when_total_amount_is_zero_or_negative() {
             // given & when & then
             Assertions.assertThatThrownBy(() ->
-                            new OrderDomainCreateRequest(1L, BigDecimal.ZERO))
+                            new OrderDomainCreateRequest(1L, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessage("주문 총액은 0보다 커야 합니다.");
+                    .hasMessage("할인 전 총액은 0보다 커야 합니다.");
 
             Assertions.assertThatThrownBy(() ->
-                            new OrderDomainCreateRequest(1L, new BigDecimal("-1000")))
+                            new OrderDomainCreateRequest(1L, new BigDecimal("-1000"), BigDecimal.ZERO, new BigDecimal("-1000")))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessage("주문 총액은 0보다 커야 합니다.");
+                    .hasMessage("할인 전 총액은 0보다 커야 합니다.");
         }
     }
 
@@ -109,7 +114,7 @@ class OrderUnitTest {
 
         @BeforeEach
         void setUp() {
-            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
+            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"), BigDecimal.ZERO, new BigDecimal("50000"));
             order = OrderEntity.createOrder(request);
         }
 
@@ -148,7 +153,7 @@ class OrderUnitTest {
 
         @BeforeEach
         void setUp() {
-            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
+            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"), BigDecimal.ZERO, new BigDecimal("50000"));
             order = OrderEntity.createOrder(request);
         }
 
@@ -187,11 +192,11 @@ class OrderUnitTest {
         @DisplayName("모든 필수 값이 유효하면 검증에 성공한다")
         void should_pass_validation_when_all_required_fields_are_valid() {
             // given
-            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
+            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"), BigDecimal.ZERO, new BigDecimal("50000"));
             OrderEntity order = OrderEntity.createOrder(request);
 
             // when & then
-            Assertions.assertThatCode(() -> order.guard())
+            Assertions.assertThatCode(order::guard)
                     .doesNotThrowAnyException();
         }
 
@@ -199,15 +204,16 @@ class OrderUnitTest {
         @DisplayName("사용자 ID가 null이면 검증에 실패한다")
         void should_fail_validation_when_user_id_is_null() {
             // given
-            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
+            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"), BigDecimal.ZERO, new BigDecimal("50000"));
             OrderEntity order = OrderEntity.createOrder(request);
 
             Field userIdField = ReflectionUtils.findField(OrderEntity.class, "userId");
+            assertNotNull(userIdField);
             ReflectionUtils.makeAccessible(userIdField);
             ReflectionUtils.setField(userIdField, order, null);
 
             // when & then
-            Assertions.assertThatThrownBy(() -> order.guard())
+            Assertions.assertThatThrownBy(order::guard)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("사용자 ID는 필수입니다.");
         }
@@ -216,49 +222,58 @@ class OrderUnitTest {
         @DisplayName("주문 총액이 null이면 검증에 실패한다")
         void should_fail_validation_when_total_amount_is_null() {
             // given
-            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
+            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"), BigDecimal.ZERO, new BigDecimal("50000"));
             OrderEntity order = OrderEntity.createOrder(request);
 
-            Field totalAmountField = ReflectionUtils.findField(OrderEntity.class, "totalAmount");
-            ReflectionUtils.makeAccessible(totalAmountField);
-            ReflectionUtils.setField(totalAmountField, order, null);
+            Field originalTotalAmountField = ReflectionUtils.findField(OrderEntity.class, "originalTotalAmount");
+            assertNotNull(originalTotalAmountField);
+            ReflectionUtils.makeAccessible(originalTotalAmountField);
+            ReflectionUtils.setField(originalTotalAmountField, order, null);
 
             // when & then
-            Assertions.assertThatThrownBy(() -> order.guard())
+            Assertions.assertThatThrownBy(order::guard)
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessage("주문 총액은 0보다 커야 합니다.");
+                    .hasMessage("할인 전 총액은 0보다 커야 합니다.");
         }
 
         @Test
         @DisplayName("주문 총액이 0 이하이면 검증에 실패한다")
         void should_fail_validation_when_total_amount_is_zero_or_negative() {
             // given
-            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
+            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"), BigDecimal.ZERO, new BigDecimal("50000"));
             OrderEntity order = OrderEntity.createOrder(request);
 
-            Field totalAmountField = ReflectionUtils.findField(OrderEntity.class, "totalAmount");
-            ReflectionUtils.makeAccessible(totalAmountField);
-            ReflectionUtils.setField(totalAmountField, order, BigDecimal.ZERO);
+            Field originalTotalAmountField = ReflectionUtils.findField(OrderEntity.class, "originalTotalAmount");
+            assertNotNull(originalTotalAmountField);
+            ReflectionUtils.makeAccessible(originalTotalAmountField);
 
-            // when & then
-            Assertions.assertThatThrownBy(() -> order.guard())
+            // 0인 경우
+            ReflectionUtils.setField(originalTotalAmountField, order, BigDecimal.ZERO);
+            Assertions.assertThatThrownBy(order::guard)
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessage("주문 총액은 0보다 커야 합니다.");
+                    .hasMessage("할인 전 총액은 0보다 커야 합니다.");
+
+            // 음수인 경우
+            ReflectionUtils.setField(originalTotalAmountField, order, new BigDecimal("-1000"));
+            Assertions.assertThatThrownBy(order::guard)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("할인 전 총액은 0보다 커야 합니다.");
         }
 
         @Test
         @DisplayName("주문 상태가 null이면 검증에 실패한다")
         void should_fail_validation_when_order_status_is_null() {
             // given
-            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"));
+            OrderDomainCreateRequest request = new OrderDomainCreateRequest(1L, new BigDecimal("50000"), BigDecimal.ZERO, new BigDecimal("50000"));
             OrderEntity order = OrderEntity.createOrder(request);
 
             Field statusField = ReflectionUtils.findField(OrderEntity.class, "status");
+            assertNotNull(statusField);
             ReflectionUtils.makeAccessible(statusField);
             ReflectionUtils.setField(statusField, order, null);
 
             // when & then
-            Assertions.assertThatThrownBy(() -> order.guard())
+            Assertions.assertThatThrownBy(order::guard)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("주문 상태는 필수입니다.");
         }

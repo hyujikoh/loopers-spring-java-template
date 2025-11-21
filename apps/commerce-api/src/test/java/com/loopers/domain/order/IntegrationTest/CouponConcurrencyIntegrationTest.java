@@ -223,7 +223,7 @@ public class CouponConcurrencyIntegrationTest {
 
             // Then: 성공한 주문이 정확히 하나만 존재해야 함
             assertThat(successfulOrders).hasSize(1);
-            assertThat(successfulOrders.get(0).totalAmount())
+            assertThat(successfulOrders.get(0).finalTotalAmount())
                     .isEqualByComparingTo(new BigDecimal("5000")); // 10,000 - 5,000
         }
 
@@ -349,7 +349,7 @@ public class CouponConcurrencyIntegrationTest {
 
             // Then: 주문이 정상적으로 생성되어야 함
             assertThat(result).isNotNull();
-            assertThat(result.totalAmount()).isEqualByComparingTo(new BigDecimal("7000")); // 10,000 - 3,000
+            assertThat(result.finalTotalAmount()).isEqualByComparingTo(new BigDecimal("7000")); // 10,000 - 3,000
 
             // Then: 쿠폰이 사용됨 상태로 변경되어야 함
             CouponEntity usedCoupon = couponService.getCouponByIdAndUserId(coupon.getId(), user.getId());
@@ -653,7 +653,7 @@ public class CouponConcurrencyIntegrationTest {
                 BigDecimal expectedFinalAmount = new BigDecimal("10000").subtract(expectedDiscount);
 
                 boolean hasMatchingOrder = createdOrders.stream()
-                        .anyMatch(order -> order.totalAmount().compareTo(expectedFinalAmount) == 0);
+                        .anyMatch(order -> order.finalTotalAmount().compareTo(expectedFinalAmount) == 0);
                 assertThat(hasMatchingOrder)
                         .as("할인 금액 %s원이 적용된 주문이 존재해야 함", expectedDiscount)
                         .isTrue();

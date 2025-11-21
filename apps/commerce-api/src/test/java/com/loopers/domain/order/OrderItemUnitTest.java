@@ -30,7 +30,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     2,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             );
 
             // when
@@ -54,7 +55,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     3,
-                    new BigDecimal("15000.00")
+                    new BigDecimal("15000.00"),
+                    null
             );
 
             // when
@@ -87,7 +89,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     2,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("주문 ID는 필수입니다.");
@@ -102,7 +105,8 @@ class OrderItemUnitTest {
                     null,
                     null,
                     2,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("상품 ID는 필수입니다.");
@@ -117,7 +121,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     null,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("주문 수량은 필수입니다.");
@@ -132,7 +137,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     0,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("주문 수량은 1 이상이어야 합니다.");
@@ -142,7 +148,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     -1,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("주문 수량은 1 이상이어야 합니다.");
@@ -157,7 +164,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     1000,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("주문 수량은 999개를 초과할 수 없습니다.");
@@ -172,6 +180,7 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     2,
+                    null,
                     null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
@@ -187,7 +196,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     2,
-                    BigDecimal.ZERO
+                    BigDecimal.ZERO,
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("단가는 0보다 커야 합니다.");
@@ -197,7 +207,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     2,
-                    new BigDecimal("-1000.00")
+                    new BigDecimal("-1000.00"),
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("단가는 0보다 커야 합니다.");
@@ -219,7 +230,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     quantity,
-                    unitPrice
+                    unitPrice,
+                    null
             );
 
             // when
@@ -242,7 +254,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     1,
-                    unitPrice
+                    unitPrice,
+                    null
             );
 
             // when
@@ -259,13 +272,16 @@ class OrderItemUnitTest {
             // given
             OrderItemDomainCreateRequest request1 = new OrderItemDomainCreateRequest(
                     1L, 100L,
-                    null, 5, new BigDecimal("12000.00")
+                    null, 5, new BigDecimal("12000.00"),
+                    null
             );
             OrderItemDomainCreateRequest request2 = new OrderItemDomainCreateRequest(
-                    1L, 101L, null, 10, new BigDecimal("8500.00")
+                    1L, 101L, null, 10, new BigDecimal("8500.00"),
+                    null
             );
             OrderItemDomainCreateRequest request3 = new OrderItemDomainCreateRequest(
-                    1L, 102L, null, 999, new BigDecimal("100.00")
+                    1L, 102L, null, 999, new BigDecimal("100.00"),
+                    null
             );
 
             // when
@@ -293,7 +309,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     5,
-                    new BigDecimal("20000.00")
+                    new BigDecimal("20000.00"),
+                    null
             );
 
             // when
@@ -317,7 +334,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     2,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("주문 ID는 필수입니다.");
@@ -332,7 +350,8 @@ class OrderItemUnitTest {
                     null,
                     null,
                     2,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("상품 ID는 필수입니다.");
@@ -347,7 +366,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     null,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("주문 수량은 필수입니다.");
@@ -362,7 +382,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     0,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("주문 수량은 1 이상이어야 합니다.");
@@ -377,6 +398,7 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     2,
+                    null,
                     null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
@@ -392,7 +414,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     2,
-                    BigDecimal.ZERO
+                    BigDecimal.ZERO,
+                    null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("단가는 0보다 커야 합니다.");
@@ -407,7 +430,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     2,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             );
             OrderItemEntity orderItem = OrderItemEntity.createOrderItem(request);
 
@@ -425,7 +449,7 @@ class OrderItemUnitTest {
                 })
                         .getCause()
                         .isInstanceOf(IllegalStateException.class)
-                        .hasMessage("총 가격은 0보다 커야 합니다.");
+                        .hasMessage("총 가격은 0 이상이어야 합니다.");
             } catch (Exception e) {
                 throw new RuntimeException("리플렉션 테스트 실패", e);
             }
@@ -440,7 +464,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     2,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             );
             OrderItemEntity orderItem = OrderItemEntity.createOrderItem(request);
 
@@ -458,7 +483,7 @@ class OrderItemUnitTest {
                 })
                         .getCause()
                         .isInstanceOf(IllegalStateException.class)
-                        .hasMessage("총 가격은 0보다 커야 합니다.");
+                        .hasMessageContaining("총 가격 정합성 오류");
             } catch (Exception e) {
                 throw new RuntimeException("리플렉션 테스트 실패", e);
             }
@@ -473,7 +498,8 @@ class OrderItemUnitTest {
                     100L,
                     null,
                     2,
-                    new BigDecimal("10000.00")
+                    new BigDecimal("10000.00"),
+                    null
             );
             OrderItemEntity orderItem = OrderItemEntity.createOrderItem(request);
 
@@ -491,7 +517,7 @@ class OrderItemUnitTest {
                 })
                         .getCause()
                         .isInstanceOf(IllegalStateException.class)
-                        .hasMessage("총 가격이 단가 × 수량과 일치하지 않습니다.");
+                        .hasMessageContaining("총 가격 정합성 오류:");
             } catch (Exception e) {
                 throw new RuntimeException("리플렉션 테스트 실패", e);
             }
