@@ -33,7 +33,7 @@ public class OrderTestFixture {
     /**
      * 기본값으로 OrderCreateCommand 생성
      *
-     * @param username 사용자명
+     * @param username  사용자명
      * @param productId 상품 ID
      * @return OrderCreateCommand
      */
@@ -46,9 +46,9 @@ public class OrderTestFixture {
     /**
      * 기본값으로 OrderCreateCommand 생성 (쿠폰 포함)
      *
-     * @param username 사용자명
+     * @param username  사용자명
      * @param productId 상품 ID
-     * @param couponId 쿠폰 ID
+     * @param couponId  쿠폰 ID
      * @return OrderCreateCommand
      */
     public static OrderCreateCommand createOrderCommandWithCoupon(String username, Long productId, Long couponId) {
@@ -60,7 +60,7 @@ public class OrderTestFixture {
     /**
      * 커스텀 OrderCreateCommand 생성
      *
-     * @param username 사용자명
+     * @param username   사용자명
      * @param orderItems 주문 항목 리스트
      * @return OrderCreateCommand
      */
@@ -76,9 +76,9 @@ public class OrderTestFixture {
     /**
      * 단일 상품 주문 생성
      *
-     * @param username 사용자명
+     * @param username  사용자명
      * @param productId 상품 ID
-     * @param quantity 수량
+     * @param quantity  수량
      * @return OrderCreateCommand
      */
     public static OrderCreateCommand createSingleProductOrder(String username, Long productId, Integer quantity) {
@@ -90,10 +90,10 @@ public class OrderTestFixture {
     /**
      * 단일 상품 주문 생성 (쿠폰 포함)
      *
-     * @param username 사용자명
+     * @param username  사용자명
      * @param productId 상품 ID
-     * @param quantity 수량
-     * @param couponId 쿠폰 ID
+     * @param quantity  수량
+     * @param couponId  쿠폰 ID
      * @return OrderCreateCommand
      */
     public static OrderCreateCommand createSingleProductOrderWithCoupon(
@@ -112,7 +112,7 @@ public class OrderTestFixture {
     /**
      * 다중 상품 주문 생성
      *
-     * @param username 사용자명
+     * @param username   사용자명
      * @param productIds 상품 ID 리스트
      * @param quantities 수량 리스트
      * @return OrderCreateCommand
@@ -132,10 +132,10 @@ public class OrderTestFixture {
     /**
      * 다중 상품 주문 생성 (쿠폰 포함)
      *
-     * @param username 사용자명
+     * @param username   사용자명
      * @param productIds 상품 ID 리스트
      * @param quantities 수량 리스트
-     * @param couponIds 쿠폰 ID 리스트 (null 가능)
+     * @param couponIds  쿠폰 ID 리스트 (null 가능)
      * @return OrderCreateCommand
      */
     public static OrderCreateCommand createMultiProductOrderWithCoupons(
@@ -155,7 +155,7 @@ public class OrderTestFixture {
     /**
      * 다중 상품 주문 생성 (Map 기반)
      *
-     * @param username 사용자명
+     * @param username           사용자명
      * @param productQuantityMap 상품ID와 수량 맵
      * @return OrderCreateCommand
      */
@@ -173,9 +173,9 @@ public class OrderTestFixture {
     /**
      * 다중 상품 + 다중 쿠폰 주문 (Map 기반)
      *
-     * @param username 사용자명
+     * @param username         사용자명
      * @param productCouponMap 상품ID와 쿠폰ID 맵 (쿠폰 없으면 null)
-     * @param quantityMap 상품ID와 수량 맵
+     * @param quantityMap      상품ID와 수량 맵
      * @return OrderCreateCommand
      */
     public static OrderCreateCommand createMultiProductOrderWithCouponMap(
@@ -197,8 +197,8 @@ public class OrderTestFixture {
      * OrderItemCommand 생성
      *
      * @param productId 상품 ID
-     * @param quantity 수량
-     * @param couponId 쿠폰 ID (null 가능)
+     * @param quantity  수량
+     * @param couponId  쿠폰 ID (null 가능)
      * @return OrderItemCommand
      */
     public static OrderItemCommand createOrderItem(Long productId, Integer quantity, Long couponId) {
@@ -213,7 +213,7 @@ public class OrderTestFixture {
      * OrderItemCommand 생성 (쿠폰 없음)
      *
      * @param productId 상품 ID
-     * @param quantity 수량
+     * @param quantity  수량
      * @return OrderItemCommand
      */
     public static OrderItemCommand createOrderItem(Long productId, Integer quantity) {
@@ -225,9 +225,9 @@ public class OrderTestFixture {
     /**
      * 통합 테스트용 - 간단한 주문 생성
      *
-     * @param username 사용자명
+     * @param username  사용자명
      * @param productId 상품 ID
-     * @param quantity 수량
+     * @param quantity  수량
      * @return OrderCreateCommand
      */
     public static OrderCreateCommand createSimpleOrder(String username, Long productId, Integer quantity) {
@@ -237,10 +237,10 @@ public class OrderTestFixture {
     /**
      * 통합 테스트용 - 쿠폰 적용 단일 상품 주문
      *
-     * @param username 사용자명
+     * @param username  사용자명
      * @param productId 상품 ID
-     * @param quantity 수량
-     * @param couponId 쿠폰 ID
+     * @param quantity  수량
+     * @param couponId  쿠폰 ID
      * @return OrderCreateCommand
      */
     public static OrderCreateCommand createOrderWithSingleCoupon(
@@ -255,11 +255,11 @@ public class OrderTestFixture {
     /**
      * 통합 테스트용 - 동시성 테스트를 위한 동일 주문 생성
      *
-     * @param username 사용자명
+     * @param username  사용자명
      * @param productId 상품 ID
-     * @param quantity 수량
-     * @param couponId 쿠폰 ID (null 가능)
-     * @param count 생성할 주문 개수
+     * @param quantity  수량
+     * @param couponId  쿠폰 ID (null 가능)
+     * @param count     생성할 주문 개수
      * @return OrderCreateCommand 리스트
      */
     public static List<OrderCreateCommand> createConcurrentOrders(
@@ -282,9 +282,9 @@ public class OrderTestFixture {
     /**
      * 통합 테스트용 - 서로 다른 쿠폰을 사용하는 동시 주문 생성
      *
-     * @param username 사용자명
+     * @param username  사용자명
      * @param productId 상품 ID
-     * @param quantity 수량
+     * @param quantity  수량
      * @param couponIds 쿠폰 ID 리스트
      * @return OrderCreateCommand 리스트
      */
@@ -304,9 +304,9 @@ public class OrderTestFixture {
     /**
      * 통합 테스트용 - 재고 부족 시나리오를 위한 대량 주문
      *
-     * @param username 사용자명
+     * @param username  사용자명
      * @param productId 상품 ID
-     * @param quantity 수량 (재고보다 많게)
+     * @param quantity  수량 (재고보다 많게)
      * @return OrderCreateCommand
      */
     public static OrderCreateCommand createOrderExceedingStock(
@@ -320,9 +320,9 @@ public class OrderTestFixture {
     /**
      * 통합 테스트용 - 포인트 부족 시나리오를 위한 고액 주문
      *
-     * @param username 사용자명
+     * @param username  사용자명
      * @param productId 상품 ID
-     * @param quantity 대량 수량
+     * @param quantity  대량 수량
      * @return OrderCreateCommand
      */
     public static OrderCreateCommand createHighValueOrder(
@@ -338,7 +338,7 @@ public class OrderTestFixture {
     /**
      * 주문 상태 검증
      *
-     * @param order 주문 엔티티
+     * @param order          주문 엔티티
      * @param expectedStatus 예상 상태
      */
     public static void assertOrderStatus(OrderEntity order, OrderStatus expectedStatus) {
@@ -348,7 +348,7 @@ public class OrderTestFixture {
     /**
      * 주문 금액 검증
      *
-     * @param order 주문 엔티티
+     * @param order          주문 엔티티
      * @param expectedAmount 예상 금액
      */
     public static void assertOrderAmount(OrderEntity order, BigDecimal expectedAmount) {
@@ -358,7 +358,7 @@ public class OrderTestFixture {
     /**
      * 주문 항목 개수 검증
      *
-     * @param orderItems 주문 항목 리스트
+     * @param orderItems    주문 항목 리스트
      * @param expectedCount 예상 개수
      */
     public static void assertOrderItemCount(List<OrderItemEntity> orderItems, int expectedCount) {
@@ -368,9 +368,9 @@ public class OrderTestFixture {
     /**
      * 주문 항목 상세 검증
      *
-     * @param orderItem 주문 항목
+     * @param orderItem         주문 항목
      * @param expectedProductId 예상 상품 ID
-     * @param expectedQuantity 예상 수량
+     * @param expectedQuantity  예상 수량
      * @param expectedUnitPrice 예상 단가
      */
     public static void assertOrderItem(
@@ -399,7 +399,7 @@ public class OrderTestFixture {
     /**
      * 주문 항목 총액 검증
      *
-     * @param orderItem 주문 항목
+     * @param orderItem          주문 항목
      * @param expectedTotalPrice 예상 총액
      */
     public static void assertOrderItemTotalPrice(OrderItemEntity orderItem, BigDecimal expectedTotalPrice) {
@@ -411,7 +411,7 @@ public class OrderTestFixture {
      * 주문 항목 리스트에서 특정 상품의 항목 찾기
      *
      * @param orderItems 주문 항목 리스트
-     * @param productId 상품 ID
+     * @param productId  상품 ID
      * @return 찾은 주문 항목 (없으면 null)
      */
     public static OrderItemEntity findOrderItemByProductId(List<OrderItemEntity> orderItems, Long productId) {
@@ -440,9 +440,9 @@ public class OrderTestFixture {
     /**
      * 주문 상태 변경 검증
      *
-     * @param order 주문 엔티티
+     * @param order      주문 엔티티
      * @param fromStatus 변경 전 상태
-     * @param toStatus 변경 후 상태
+     * @param toStatus   변경 후 상태
      */
     public static void assertOrderStatusChange(OrderEntity order, OrderStatus fromStatus, OrderStatus toStatus) {
         Assertions.assertThat(order.getStatus()).isNotEqualTo(fromStatus);
@@ -470,7 +470,7 @@ public class OrderTestFixture {
     /**
      * 주문 사용자 ID 검증
      *
-     * @param order 주문 엔티티
+     * @param order          주문 엔티티
      * @param expectedUserId 예상 사용자 ID
      */
     public static void assertOrderUserId(OrderEntity order, Long expectedUserId) {
@@ -480,7 +480,7 @@ public class OrderTestFixture {
     /**
      * 주문 할인 금액 계산 (쿠폰 적용 전후 비교용)
      *
-     * @param originalAmount 원래 금액
+     * @param originalAmount   원래 금액
      * @param discountedAmount 할인된 금액
      * @return 할인 금액
      */
@@ -491,7 +491,7 @@ public class OrderTestFixture {
     /**
      * 할인율 계산 (백분율)
      *
-     * @param originalAmount 원래 금액
+     * @param originalAmount   원래 금액
      * @param discountedAmount 할인된 금액
      * @return 할인율 (0-100)
      */

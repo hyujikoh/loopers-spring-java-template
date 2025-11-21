@@ -1,6 +1,12 @@
 package com.loopers.interfaces.api.product;
 
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.loopers.application.product.ProductDetailInfo;
 import com.loopers.application.product.ProductFacade;
@@ -8,11 +14,8 @@ import com.loopers.application.product.ProductInfo;
 import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.interfaces.api.ApiResponse;
 import com.loopers.support.Uris;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor

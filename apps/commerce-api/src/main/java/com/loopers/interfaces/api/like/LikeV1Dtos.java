@@ -1,9 +1,9 @@
 package com.loopers.interfaces.api.like;
 
-import com.loopers.application.like.LikeInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.time.ZonedDateTime;
+
+import com.loopers.application.like.LikeInfo;
 
 public class LikeV1Dtos {
 

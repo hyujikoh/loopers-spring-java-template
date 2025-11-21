@@ -3,6 +3,7 @@ package com.loopers.domain.order.IntegrationTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -778,7 +779,7 @@ public class TransactionAndConcurrencyIntegrationTest {
             if (successCount.get() == threadCount) {
                 assertThat(finalProduct1.getStockQuantity()).isEqualTo(100 - (15 * 2));
                 assertThat(finalProduct2.getStockQuantity()).isEqualTo(80 - (15 * 3));
-                assertThat(finalProduct3.getStockQuantity()).isEqualTo(60 - (15 * 1));
+                assertThat(finalProduct3.getStockQuantity()).isEqualTo(60 - (15));
             }
 
             // 모든 상품의 재고가 음수가 아닌지 확인
@@ -948,7 +949,7 @@ public class TransactionAndConcurrencyIntegrationTest {
             executorService.shutdown();
 
             // Then: 포인트 부족으로 일부만 성공해야 함
-            int maxPossibleOrders = initialPoints.divide(new BigDecimal("15000"), 0, BigDecimal.ROUND_DOWN).intValue();
+            int maxPossibleOrders = initialPoints.divide(new BigDecimal("15000"), 0, RoundingMode.DOWN).intValue();
             assertThat(successCount.get())
                     .as("포인트 50,000으로 15,000원 상품은 최대 3개만 구매 가능")
                     .isLessThanOrEqualTo(maxPossibleOrders);
@@ -1044,10 +1045,10 @@ public class TransactionAndConcurrencyIntegrationTest {
             for (int i = 0; i < users.size(); i++) {
                 UserEntity user = userRepository.findByUsername(users.get(i).username())
                         .orElseThrow();
-                
+
                 BigDecimal initialPoints = initialPointsList.get(i);
                 BigDecimal orderAmount = new BigDecimal("20000");
-                
+
                 // 포인트가 충분했던 사용자는 차감되어야 함
                 if (initialPoints.compareTo(orderAmount) >= 0) {
                     assertThat(user.getPointAmount())
@@ -1059,7 +1060,7 @@ public class TransactionAndConcurrencyIntegrationTest {
                             .as("사용자 " + i + "의 포인트는 변경되지 않아야 함")
                             .isEqualTo(initialPoints.setScale(2));
                 }
-                
+
                 // 모든 사용자의 포인트가 음수가 아닌지 확인
                 assertThat(user.getPointAmount())
                         .as("사용자 " + i + "의 포인트는 음수가 될 수 없음")

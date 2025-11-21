@@ -1,11 +1,13 @@
 package com.loopers.interfaces.api.like;
 
+import org.springframework.web.bind.annotation.*;
+
 import com.loopers.application.like.LikeFacade;
 import com.loopers.application.like.LikeInfo;
 import com.loopers.interfaces.api.ApiResponse;
 import com.loopers.support.Uris;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor

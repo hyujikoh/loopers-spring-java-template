@@ -3,7 +3,6 @@ package com.loopers.domain.coupon;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-
 import java.math.BigDecimal;
 
 import org.junit.jupiter.api.DisplayName;
@@ -13,9 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import com.loopers.domain.like.LikeEntity;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.fixtures.UserTestFixture;
 
@@ -40,7 +37,7 @@ class CouponUnitTest {
         @Test
         @DisplayName("유효한 사용자 ID와 정액으로 정액 쿠폰을 생성하면 성공한다")
         void valid_user_id_and_fixed_amount_creates_fixed_amount_coupon_successfully() {
-        	// given
+            // given
             UserEntity user = UserTestFixture.createDefaultUserEntity();
 
             // when
@@ -48,7 +45,7 @@ class CouponUnitTest {
 
             when(couponRepository.save(any(CouponEntity.class))).thenReturn(percentageCoupon);
 
-        	// then
+            // then
             CouponEntity percentCoupon = couponService.createPercentCoupon(user, 30);
             assertNotNull(percentCoupon);
             assertEquals(user.getId(), percentCoupon.getUserId());
@@ -85,7 +82,8 @@ class CouponUnitTest {
             assertEquals(CouponStatus.UNUSED, percentCoupon.getStatus());
             assertEquals(CouponType.FIXED_AMOUNT, percentCoupon.getCouponType());
 
-            assertEquals(new BigDecimal("5000.00"), percentCoupon.getFixedAmount());        }
+            assertEquals(new BigDecimal("5000.00"), percentCoupon.getFixedAmount());
+        }
 
         @Test
         @DisplayName("유효하지 않은 사용자 ID로 배율 쿠폰 생성 시 예외가 발생한다")

@@ -1,7 +1,7 @@
 package com.loopers.domain.order.IntegrationTest;
 
-import static org.assertj.core.api.Assertions.*;
-
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -195,7 +195,7 @@ public class OrderCreateWithCouponIntegrationTest {
             BigDecimal itemTotal = result.orderItems().get(0).unitPrice()
                     .multiply(BigDecimal.valueOf(result.orderItems().get(0).quantity()));
             BigDecimal actualDiscount = itemTotal.subtract(result.totalAmount());
-            
+
             assertThat(actualDiscount)
                     .as("실제 적용된 할인 금액")
                     .isEqualByComparingTo(expectedDiscountAmount);
@@ -333,7 +333,7 @@ public class OrderCreateWithCouponIntegrationTest {
             // Then: 주문이 정상적으로 생성되었는지 검증
             assertThat(result).isNotNull();
             assertThat(result.orderItems()).hasSize(1);
-            
+
             // Then: 쿠폰이 사용됨 상태로 변경되었는지 검증
             CouponEntity usedCoupon = couponService.getCouponByIdAndUserId(percentageCoupon.getId(), user.getId());
             assertThat(usedCoupon.getStatus()).isEqualTo(CouponStatus.USED);
@@ -468,7 +468,7 @@ public class OrderCreateWithCouponIntegrationTest {
             BigDecimal itemTotal = result.orderItems().get(0).unitPrice()
                     .multiply(BigDecimal.valueOf(result.orderItems().get(0).quantity()));
             BigDecimal actualDiscount = itemTotal.subtract(result.totalAmount());
-            
+
             assertThat(actualDiscount)
                     .as("실제 적용된 할인 금액 (30%)")
                     .isEqualByComparingTo(expectedDiscountAmount);
@@ -476,7 +476,7 @@ public class OrderCreateWithCouponIntegrationTest {
             // Then: 포인트 차감 검증
             UserEntity updatedUser = userService.getUserByUsername(userInfo.username());
             BigDecimal expectedRemainingPoints = initialPoints.subtract(expectedFinalAmount);
-            
+
             assertThat(updatedUser.getPointAmount())
                     .as("주문 후 남은 포인트")
                     .isEqualByComparingTo(expectedRemainingPoints);

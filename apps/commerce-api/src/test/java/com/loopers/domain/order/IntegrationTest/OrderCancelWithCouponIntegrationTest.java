@@ -1,7 +1,6 @@
 package com.loopers.domain.order.IntegrationTest;
 
-import static org.assertj.core.api.Assertions.*;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -376,7 +375,7 @@ public class OrderCancelWithCouponIntegrationTest {
             // Given: 주문 생성 후 모든 쿠폰이 사용됨 상태인지 확인
             CouponEntity usedFixedCoupon = couponService.getCouponByIdAndUserId(fixedCoupon.getId(), user.getId());
             CouponEntity usedPercentageCoupon = couponService.getCouponByIdAndUserId(percentageCoupon.getId(), user.getId());
-            
+
             assertThat(usedFixedCoupon.getStatus())
                     .as("주문 생성 후 정액 쿠폰 상태")
                     .isEqualTo(CouponStatus.USED);
@@ -415,7 +414,7 @@ public class OrderCancelWithCouponIntegrationTest {
             // Then: 모든 상품의 재고가 복구되었는지 검증
             ProductEntity updatedProduct1 = productService.getProductDetail(product1.getId());
             ProductEntity updatedProduct2 = productService.getProductDetail(product2.getId());
-            
+
             assertThat(updatedProduct1.getStockQuantity())
                     .as("상품1 재고 복구")
                     .isEqualTo(100);
@@ -480,7 +479,7 @@ public class OrderCancelWithCouponIntegrationTest {
             UserEntity userAfterOrder = userService.getUserByUsername(userInfo.username());
             BigDecimal pointsAfterOrder = userAfterOrder.getPointAmount();
             BigDecimal expectedPointsAfterOrder = initialPoints.subtract(new BigDecimal("21000"));
-            
+
             assertThat(pointsAfterOrder)
                     .as("주문 후 포인트 (50,000 - 21,000 = 29,000)")
                     .isEqualByComparingTo(expectedPointsAfterOrder);
@@ -490,14 +489,14 @@ public class OrderCancelWithCouponIntegrationTest {
 
             // Then: 포인트가 정확하게 환불되었는지 검증
             UserEntity userAfterCancel = userService.getUserByUsername(userInfo.username());
-            
+
             assertThat(userAfterCancel.getPointAmount())
                     .as("주문 취소 후 포인트가 초기 금액으로 복구 (50,000)")
                     .isEqualByComparingTo(initialPoints);
 
             // Then: 환불된 포인트 금액 검증
             BigDecimal refundedAmount = userAfterCancel.getPointAmount().subtract(pointsAfterOrder);
-            
+
             assertThat(refundedAmount)
                     .as("환불된 포인트는 실제 결제 금액과 동일 (21,000)")
                     .isEqualByComparingTo(new BigDecimal("21000"));
@@ -552,7 +551,7 @@ public class OrderCancelWithCouponIntegrationTest {
             // Given: 주문 후 재고 확인
             ProductEntity productAfterOrder = productService.getProductDetail(product.getId());
             int expectedStockAfterOrder = initialStock - orderQuantity;
-            
+
             assertThat(productAfterOrder.getStockQuantity())
                     .as("주문 후 재고 (50 - 7 = 43)")
                     .isEqualTo(expectedStockAfterOrder);
@@ -562,14 +561,14 @@ public class OrderCancelWithCouponIntegrationTest {
 
             // Then: 재고가 정확하게 복구되었는지 검증
             ProductEntity productAfterCancel = productService.getProductDetail(product.getId());
-            
+
             assertThat(productAfterCancel.getStockQuantity())
                     .as("주문 취소 후 재고가 초기 수량으로 복구 (50)")
                     .isEqualTo(initialStock);
 
             // Then: 복구된 재고 수량 검증
             int restoredStock = productAfterCancel.getStockQuantity() - productAfterOrder.getStockQuantity();
-            
+
             assertThat(restoredStock)
                     .as("복구된 재고는 주문 수량과 동일 (7)")
                     .isEqualTo(orderQuantity);
@@ -627,7 +626,7 @@ public class OrderCancelWithCouponIntegrationTest {
             UserEntity userAfterOrder = userService.getUserByUsername(userInfo.username());
             BigDecimal actualPaymentAmount = new BigDecimal("50000");
             BigDecimal expectedPointsAfterOrder = initialPoints.subtract(actualPaymentAmount);
-            
+
             assertThat(userAfterOrder.getPointAmount())
                     .as("주문 후 포인트 (80,000 - 50,000 = 30,000)")
                     .isEqualByComparingTo(expectedPointsAfterOrder);
@@ -638,7 +637,7 @@ public class OrderCancelWithCouponIntegrationTest {
             // Then: 실제 결제 금액만 환불되었는지 검증
             UserEntity userAfterCancel = userService.getUserByUsername(userInfo.username());
             BigDecimal refundedAmount = userAfterCancel.getPointAmount().subtract(userAfterOrder.getPointAmount());
-            
+
             assertThat(refundedAmount)
                     .as("환불된 금액은 실제 결제 금액 (50,000원)이어야 함")
                     .isEqualByComparingTo(actualPaymentAmount);
@@ -646,7 +645,7 @@ public class OrderCancelWithCouponIntegrationTest {
             // Then: 쿠폰 할인 금액은 환불되지 않음을 검증
             BigDecimal originalAmount = new BigDecimal("60000");
             BigDecimal couponDiscount = new BigDecimal("10000");
-            
+
             assertThat(refundedAmount)
                     .as("환불 금액은 원래 금액(60,000)이 아닌 할인 후 금액(50,000)")
                     .isNotEqualByComparingTo(originalAmount)
@@ -749,7 +748,7 @@ public class OrderCancelWithCouponIntegrationTest {
             // Given: 주문 후 포인트와 재고 확인
             UserEntity userAfterOrder = userService.getUserByUsername(userInfo.username());
             BigDecimal totalPaymentAmount = new BigDecimal("91000");
-            
+
             assertThat(userAfterOrder.getPointAmount())
                     .as("주문 후 포인트 (150,000 - 91,000 = 59,000)")
                     .isEqualByComparingTo(initialPoints.subtract(totalPaymentAmount));
@@ -757,7 +756,7 @@ public class OrderCancelWithCouponIntegrationTest {
             ProductEntity product1AfterOrder = productService.getProductDetail(product1.getId());
             ProductEntity product2AfterOrder = productService.getProductDetail(product2.getId());
             ProductEntity product3AfterOrder = productService.getProductDetail(product3.getId());
-            
+
             assertThat(product1AfterOrder.getStockQuantity()).isEqualTo(product1InitialStock - 2);
             assertThat(product2AfterOrder.getStockQuantity()).isEqualTo(product2InitialStock - 1);
             assertThat(product3AfterOrder.getStockQuantity()).isEqualTo(product3InitialStock - 1);
@@ -767,7 +766,7 @@ public class OrderCancelWithCouponIntegrationTest {
 
             // Then: 포인트가 정확하게 환불되었는지 검증
             UserEntity userAfterCancel = userService.getUserByUsername(userInfo.username());
-            
+
             assertThat(userAfterCancel.getPointAmount())
                     .as("주문 취소 후 포인트가 초기 금액으로 복구 (150,000)")
                     .isEqualByComparingTo(initialPoints);
@@ -776,7 +775,7 @@ public class OrderCancelWithCouponIntegrationTest {
             ProductEntity product1AfterCancel = productService.getProductDetail(product1.getId());
             ProductEntity product2AfterCancel = productService.getProductDetail(product2.getId());
             ProductEntity product3AfterCancel = productService.getProductDetail(product3.getId());
-            
+
             assertThat(product1AfterCancel.getStockQuantity())
                     .as("상품1 재고 복구 (80)")
                     .isEqualTo(product1InitialStock);
@@ -789,7 +788,7 @@ public class OrderCancelWithCouponIntegrationTest {
 
             // Then: 환불된 포인트 금액 검증
             BigDecimal refundedAmount = userAfterCancel.getPointAmount().subtract(userAfterOrder.getPointAmount());
-            
+
             assertThat(refundedAmount)
                     .as("환불된 포인트는 총 결제 금액과 동일 (91,000)")
                     .isEqualByComparingTo(totalPaymentAmount);

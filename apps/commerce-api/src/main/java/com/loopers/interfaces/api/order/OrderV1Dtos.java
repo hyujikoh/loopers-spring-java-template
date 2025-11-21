@@ -1,16 +1,16 @@
 package com.loopers.interfaces.api.order;
 
-import com.loopers.application.order.OrderCreateCommand;
-import com.loopers.application.order.OrderInfo;
-import com.loopers.application.order.OrderItemCommand;
-import com.loopers.domain.order.OrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+
+import com.loopers.application.order.OrderCreateCommand;
+import com.loopers.application.order.OrderInfo;
+import com.loopers.application.order.OrderItemCommand;
+import com.loopers.domain.order.OrderStatus;
 
 public class OrderV1Dtos {
 

@@ -1,5 +1,18 @@
 package com.loopers.interfaces.api.like;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.math.BigDecimal;
+import java.util.Objects;
+
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.*;
+
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
@@ -14,19 +27,6 @@ import com.loopers.interfaces.api.ApiResponse;
 import com.loopers.interfaces.api.product.ProductV1Dtos;
 import com.loopers.support.Uris;
 import com.loopers.utils.DatabaseCleanUp;
-import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
-
-import java.math.BigDecimal;
-import java.util.Objects;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DisplayName("Like API E2E 테스트")
@@ -100,7 +100,8 @@ class LikeV1ApiE2ETest {
 
             // when - 1. 좋아요 등록
             ParameterizedTypeReference<ApiResponse<LikeV1Dtos.LikeResponse>> likeResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<LikeV1Dtos.LikeResponse>> likeResponse =
                     testRestTemplate.exchange(
                             Uris.Like.UPSERT,
@@ -122,7 +123,8 @@ class LikeV1ApiE2ETest {
 
             // when - 2. 상품 상세 조회 (좋아요 여부 확인)
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponse =
                     testRestTemplate.exchange(
                             Uris.Product.GET_DETAIL,
@@ -154,7 +156,8 @@ class LikeV1ApiE2ETest {
 
             // when - 1. 좋아요 등록
             ParameterizedTypeReference<ApiResponse<LikeV1Dtos.LikeResponse>> likeResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             testRestTemplate.exchange(
                     Uris.Like.UPSERT,
                     HttpMethod.POST,
@@ -165,7 +168,8 @@ class LikeV1ApiE2ETest {
 
             // when - 2. 좋아요 취소
             ParameterizedTypeReference<ApiResponse<Void>> unlikeResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<Void>> unlikeResponse =
                     testRestTemplate.exchange(
                             Uris.Like.CANCEL,
@@ -183,7 +187,8 @@ class LikeV1ApiE2ETest {
 
             // when - 3. 상품 상세 조회 (좋아요 여부 확인)
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponse =
                     testRestTemplate.exchange(
                             Uris.Product.GET_DETAIL,
@@ -214,7 +219,8 @@ class LikeV1ApiE2ETest {
             headers.set("X-USER-ID", testUsername);
 
             ParameterizedTypeReference<ApiResponse<LikeV1Dtos.LikeResponse>> likeResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             testRestTemplate.exchange(
                     Uris.Like.UPSERT,
                     HttpMethod.POST,
@@ -225,7 +231,8 @@ class LikeV1ApiE2ETest {
 
             // when - 비로그인 사용자가 상품 상세 조회 (헤더 없음)
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponse =
                     testRestTemplate.exchange(
                             Uris.Product.GET_DETAIL,
@@ -254,7 +261,8 @@ class LikeV1ApiE2ETest {
 
             // when - 1. 첫 번째 좋아요 등록
             ParameterizedTypeReference<ApiResponse<LikeV1Dtos.LikeResponse>> likeResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             testRestTemplate.exchange(
                     Uris.Like.UPSERT,
                     HttpMethod.POST,
@@ -274,7 +282,8 @@ class LikeV1ApiE2ETest {
 
             // when - 3. 상품 상세 조회
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponse =
                     testRestTemplate.exchange(
                             Uris.Product.GET_DETAIL,
@@ -308,7 +317,8 @@ class LikeV1ApiE2ETest {
 
             // when
             ParameterizedTypeReference<ApiResponse<LikeV1Dtos.LikeResponse>> responseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<LikeV1Dtos.LikeResponse>> response =
                     testRestTemplate.exchange(
                             Uris.Like.UPSERT,
@@ -340,7 +350,8 @@ class LikeV1ApiE2ETest {
 
             // when
             ParameterizedTypeReference<ApiResponse<LikeV1Dtos.LikeResponse>> responseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<LikeV1Dtos.LikeResponse>> response =
                     testRestTemplate.exchange(
                             Uris.Like.UPSERT,
@@ -367,7 +378,8 @@ class LikeV1ApiE2ETest {
 
             // when
             ParameterizedTypeReference<ApiResponse<LikeV1Dtos.LikeResponse>> responseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<LikeV1Dtos.LikeResponse>> response =
                     testRestTemplate.exchange(
                             Uris.Like.UPSERT,
@@ -397,7 +409,8 @@ class LikeV1ApiE2ETest {
             headers.set("X-USER-ID", testUsername);
 
             ParameterizedTypeReference<ApiResponse<LikeV1Dtos.LikeResponse>> likeResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             testRestTemplate.exchange(
                     Uris.Like.UPSERT,
                     HttpMethod.POST,
@@ -408,7 +421,8 @@ class LikeV1ApiE2ETest {
 
             // when - 좋아요 취소
             ParameterizedTypeReference<ApiResponse<Void>> responseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<Void>> response =
                     testRestTemplate.exchange(
                             Uris.Like.CANCEL,
@@ -434,7 +448,8 @@ class LikeV1ApiE2ETest {
 
             // when - 좋아요 없이 취소 시도
             ParameterizedTypeReference<ApiResponse<Void>> responseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<Void>> response =
                     testRestTemplate.exchange(
                             Uris.Like.CANCEL,
@@ -460,7 +475,8 @@ class LikeV1ApiE2ETest {
 
             // when
             ParameterizedTypeReference<ApiResponse<Void>> responseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<Void>> response =
                     testRestTemplate.exchange(
                             Uris.Like.CANCEL,
@@ -487,7 +503,8 @@ class LikeV1ApiE2ETest {
 
             // when
             ParameterizedTypeReference<ApiResponse<Void>> responseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<Void>> response =
                     testRestTemplate.exchange(
                             Uris.Like.CANCEL,

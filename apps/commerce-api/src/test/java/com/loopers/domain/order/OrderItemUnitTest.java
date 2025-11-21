@@ -1,17 +1,16 @@
 package com.loopers.domain.order;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import java.math.BigDecimal;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 /**
  * OrderItemEntity 단위 테스트
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 11. 14.
  */
@@ -27,16 +26,16 @@ class OrderItemUnitTest {
         void should_create_order_item_successfully_with_valid_information() {
             // given
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                2,
-                new BigDecimal("10000.00")
+                    1L,
+                    100L,
+                    null,
+                    2,
+                    new BigDecimal("10000.00")
             );
-            
+
             // when
             OrderItemEntity orderItem = OrderItemEntity.createOrderItem(request);
-            
+
             // then
             assertThat(orderItem).isNotNull();
             assertThat(orderItem.getOrderId()).isEqualTo(1L);
@@ -51,16 +50,16 @@ class OrderItemUnitTest {
         void should_calculate_total_price_automatically_when_creating_order_item() {
             // given
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                3,
-                new BigDecimal("15000.00")
+                    1L,
+                    100L,
+                    null,
+                    3,
+                    new BigDecimal("15000.00")
             );
-            
+
             // when
             OrderItemEntity orderItem = OrderItemEntity.createOrderItem(request);
-            
+
             // then
             BigDecimal expectedTotal = new BigDecimal("15000.00").multiply(BigDecimal.valueOf(3));
             assertThat(orderItem.getTotalPrice()).isEqualByComparingTo(expectedTotal);
@@ -72,11 +71,11 @@ class OrderItemUnitTest {
         void should_throw_exception_when_create_request_is_null() {
             // given
             OrderItemDomainCreateRequest request = null;
-            
+
             // when & then
             assertThatThrownBy(() -> OrderItemEntity.createOrderItem(request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("주문 항목 생성 요청은 필수입니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("주문 항목 생성 요청은 필수입니다.");
         }
 
         @Test
@@ -84,14 +83,14 @@ class OrderItemUnitTest {
         void should_throw_exception_when_order_id_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                null,
-                100L,
-                null,
-                2,
-                new BigDecimal("10000.00")
+                    null,
+                    100L,
+                    null,
+                    2,
+                    new BigDecimal("10000.00")
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("주문 ID는 필수입니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("주문 ID는 필수입니다.");
         }
 
         @Test
@@ -99,14 +98,14 @@ class OrderItemUnitTest {
         void should_throw_exception_when_product_id_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                null,
-                null,
-                2,
-                new BigDecimal("10000.00")
+                    1L,
+                    null,
+                    null,
+                    2,
+                    new BigDecimal("10000.00")
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("상품 ID는 필수입니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("상품 ID는 필수입니다.");
         }
 
         @Test
@@ -114,14 +113,14 @@ class OrderItemUnitTest {
         void should_throw_exception_when_quantity_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                null,
-                new BigDecimal("10000.00")
+                    1L,
+                    100L,
+                    null,
+                    null,
+                    new BigDecimal("10000.00")
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("주문 수량은 필수입니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("주문 수량은 필수입니다.");
         }
 
         @Test
@@ -129,24 +128,24 @@ class OrderItemUnitTest {
         void should_throw_exception_when_quantity_is_zero_or_negative() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                0,
-                new BigDecimal("10000.00")
+                    1L,
+                    100L,
+                    null,
+                    0,
+                    new BigDecimal("10000.00")
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("주문 수량은 1 이상이어야 합니다.");
-            
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("주문 수량은 1 이상이어야 합니다.");
+
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                -1,
-                new BigDecimal("10000.00")
+                    1L,
+                    100L,
+                    null,
+                    -1,
+                    new BigDecimal("10000.00")
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("주문 수량은 1 이상이어야 합니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("주문 수량은 1 이상이어야 합니다.");
         }
 
         @Test
@@ -154,14 +153,14 @@ class OrderItemUnitTest {
         void should_throw_exception_when_quantity_exceeds_999() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                1000,
-                new BigDecimal("10000.00")
+                    1L,
+                    100L,
+                    null,
+                    1000,
+                    new BigDecimal("10000.00")
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("주문 수량은 999개를 초과할 수 없습니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("주문 수량은 999개를 초과할 수 없습니다.");
         }
 
         @Test
@@ -169,14 +168,14 @@ class OrderItemUnitTest {
         void should_throw_exception_when_unit_price_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                2,
-                null
+                    1L,
+                    100L,
+                    null,
+                    2,
+                    null
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("단가는 필수입니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("단가는 필수입니다.");
         }
 
         @Test
@@ -184,24 +183,24 @@ class OrderItemUnitTest {
         void should_throw_exception_when_unit_price_is_zero_or_negative() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                2,
-                BigDecimal.ZERO
+                    1L,
+                    100L,
+                    null,
+                    2,
+                    BigDecimal.ZERO
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("단가는 0보다 커야 합니다.");
-            
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("단가는 0보다 커야 합니다.");
+
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                2,
-                new BigDecimal("-1000.00")
+                    1L,
+                    100L,
+                    null,
+                    2,
+                    new BigDecimal("-1000.00")
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("단가는 0보다 커야 합니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("단가는 0보다 커야 합니다.");
         }
     }
 
@@ -216,17 +215,17 @@ class OrderItemUnitTest {
             BigDecimal unitPrice = new BigDecimal("25000.00");
             Integer quantity = 4;
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                quantity,
-                unitPrice
+                    1L,
+                    100L,
+                    null,
+                    quantity,
+                    unitPrice
             );
-            
+
             // when
             OrderItemEntity orderItem = OrderItemEntity.createOrderItem(request);
             BigDecimal calculatedTotal = orderItem.calculateItemTotal();
-            
+
             // then
             BigDecimal expectedTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
             assertThat(calculatedTotal).isEqualByComparingTo(expectedTotal);
@@ -239,16 +238,16 @@ class OrderItemUnitTest {
             // given
             BigDecimal unitPrice = new BigDecimal("50000.00");
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                1,
-                unitPrice
+                    1L,
+                    100L,
+                    null,
+                    1,
+                    unitPrice
             );
-            
+
             // when
             OrderItemEntity orderItem = OrderItemEntity.createOrderItem(request);
-            
+
             // then
             assertThat(orderItem.getTotalPrice()).isEqualByComparingTo(unitPrice);
             assertThat(orderItem.calculateItemTotal()).isEqualByComparingTo(unitPrice);
@@ -259,21 +258,21 @@ class OrderItemUnitTest {
         void should_calculate_total_price_accurately_with_multiple_quantities() {
             // given
             OrderItemDomainCreateRequest request1 = new OrderItemDomainCreateRequest(
-                1L, 100L,
-                null, 5, new BigDecimal("12000.00")
+                    1L, 100L,
+                    null, 5, new BigDecimal("12000.00")
             );
             OrderItemDomainCreateRequest request2 = new OrderItemDomainCreateRequest(
-                1L, 101L, null, 10, new BigDecimal("8500.00")
+                    1L, 101L, null, 10, new BigDecimal("8500.00")
             );
             OrderItemDomainCreateRequest request3 = new OrderItemDomainCreateRequest(
-                1L, 102L,null , 999, new BigDecimal("100.00")
+                    1L, 102L, null, 999, new BigDecimal("100.00")
             );
-            
+
             // when
             OrderItemEntity orderItem1 = OrderItemEntity.createOrderItem(request1);
             OrderItemEntity orderItem2 = OrderItemEntity.createOrderItem(request2);
             OrderItemEntity orderItem3 = OrderItemEntity.createOrderItem(request3);
-            
+
             // then
             assertThat(orderItem1.getTotalPrice()).isEqualByComparingTo(new BigDecimal("60000.00"));
             assertThat(orderItem2.getTotalPrice()).isEqualByComparingTo(new BigDecimal("85000.00"));
@@ -290,16 +289,16 @@ class OrderItemUnitTest {
         void should_pass_validation_when_all_required_fields_are_valid() {
             // given
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                5,
-                new BigDecimal("20000.00")
+                    1L,
+                    100L,
+                    null,
+                    5,
+                    new BigDecimal("20000.00")
             );
-            
+
             // when
             OrderItemEntity orderItem = OrderItemEntity.createOrderItem(request);
-            
+
             // then - guard() 메서드가 예외를 던지지 않으면 검증 성공
             assertThat(orderItem).isNotNull();
             assertThat(orderItem.getOrderId()).isNotNull();
@@ -314,14 +313,14 @@ class OrderItemUnitTest {
         void should_fail_validation_when_order_id_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                null,
-                100L,
-                null,
-                2,
-                new BigDecimal("10000.00")
+                    null,
+                    100L,
+                    null,
+                    2,
+                    new BigDecimal("10000.00")
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("주문 ID는 필수입니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("주문 ID는 필수입니다.");
         }
 
         @Test
@@ -329,14 +328,14 @@ class OrderItemUnitTest {
         void should_fail_validation_when_product_id_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                null,
-                null,
-                2,
-                new BigDecimal("10000.00")
+                    1L,
+                    null,
+                    null,
+                    2,
+                    new BigDecimal("10000.00")
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("상품 ID는 필수입니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("상품 ID는 필수입니다.");
         }
 
         @Test
@@ -344,14 +343,14 @@ class OrderItemUnitTest {
         void should_fail_validation_when_quantity_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                null,
-                new BigDecimal("10000.00")
+                    1L,
+                    100L,
+                    null,
+                    null,
+                    new BigDecimal("10000.00")
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("주문 수량은 필수입니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("주문 수량은 필수입니다.");
         }
 
         @Test
@@ -359,14 +358,14 @@ class OrderItemUnitTest {
         void should_fail_validation_when_quantity_is_zero_or_negative() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                0,
-                new BigDecimal("10000.00")
+                    1L,
+                    100L,
+                    null,
+                    0,
+                    new BigDecimal("10000.00")
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("주문 수량은 1 이상이어야 합니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("주문 수량은 1 이상이어야 합니다.");
         }
 
         @Test
@@ -374,14 +373,14 @@ class OrderItemUnitTest {
         void should_fail_validation_when_unit_price_is_null() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                2,
-                null
+                    1L,
+                    100L,
+                    null,
+                    2,
+                    null
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("단가는 필수입니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("단가는 필수입니다.");
         }
 
         @Test
@@ -389,14 +388,14 @@ class OrderItemUnitTest {
         void should_fail_validation_when_unit_price_is_zero_or_negative() {
             // given & when & then
             assertThatThrownBy(() -> new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                2,
-                BigDecimal.ZERO
+                    1L,
+                    100L,
+                    null,
+                    2,
+                    BigDecimal.ZERO
             ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("단가는 0보다 커야 합니다.");
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("단가는 0보다 커야 합니다.");
         }
 
         @Test
@@ -404,29 +403,29 @@ class OrderItemUnitTest {
         void should_fail_validation_when_total_price_is_null() {
             // given
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                2,
-                new BigDecimal("10000.00")
+                    1L,
+                    100L,
+                    null,
+                    2,
+                    new BigDecimal("10000.00")
             );
             OrderItemEntity orderItem = OrderItemEntity.createOrderItem(request);
-            
+
             // when - 리플렉션을 사용하여 totalPrice를 null로 설정
             try {
                 java.lang.reflect.Field totalPriceField = OrderItemEntity.class.getDeclaredField("totalPrice");
                 totalPriceField.setAccessible(true);
                 totalPriceField.set(orderItem, null);
-                
+
                 // then - guard() 메서드 호출 시 예외 발생
                 assertThatThrownBy(() -> {
                     java.lang.reflect.Method guardMethod = OrderItemEntity.class.getDeclaredMethod("guard");
                     guardMethod.setAccessible(true);
                     guardMethod.invoke(orderItem);
                 })
-                    .getCause()
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessage("총 가격은 0보다 커야 합니다.");
+                        .getCause()
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessage("총 가격은 0보다 커야 합니다.");
             } catch (Exception e) {
                 throw new RuntimeException("리플렉션 테스트 실패", e);
             }
@@ -437,29 +436,29 @@ class OrderItemUnitTest {
         void should_fail_validation_when_total_price_is_zero_or_negative() {
             // given
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                2,
-                new BigDecimal("10000.00")
+                    1L,
+                    100L,
+                    null,
+                    2,
+                    new BigDecimal("10000.00")
             );
             OrderItemEntity orderItem = OrderItemEntity.createOrderItem(request);
-            
+
             // when - 리플렉션을 사용하여 totalPrice를 0으로 설정
             try {
                 java.lang.reflect.Field totalPriceField = OrderItemEntity.class.getDeclaredField("totalPrice");
                 totalPriceField.setAccessible(true);
                 totalPriceField.set(orderItem, BigDecimal.ZERO);
-                
+
                 // then - guard() 메서드 호출 시 예외 발생
                 assertThatThrownBy(() -> {
                     java.lang.reflect.Method guardMethod = OrderItemEntity.class.getDeclaredMethod("guard");
                     guardMethod.setAccessible(true);
                     guardMethod.invoke(orderItem);
                 })
-                    .getCause()
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessage("총 가격은 0보다 커야 합니다.");
+                        .getCause()
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessage("총 가격은 0보다 커야 합니다.");
             } catch (Exception e) {
                 throw new RuntimeException("리플렉션 테스트 실패", e);
             }
@@ -470,29 +469,29 @@ class OrderItemUnitTest {
         void should_fail_validation_when_total_price_does_not_match_unit_price_times_quantity() {
             // given
             OrderItemDomainCreateRequest request = new OrderItemDomainCreateRequest(
-                1L,
-                100L,
-                null,
-                2,
-                new BigDecimal("10000.00")
+                    1L,
+                    100L,
+                    null,
+                    2,
+                    new BigDecimal("10000.00")
             );
             OrderItemEntity orderItem = OrderItemEntity.createOrderItem(request);
-            
+
             // when - 리플렉션을 사용하여 totalPrice를 잘못된 값으로 설정
             try {
                 java.lang.reflect.Field totalPriceField = OrderItemEntity.class.getDeclaredField("totalPrice");
                 totalPriceField.setAccessible(true);
                 totalPriceField.set(orderItem, new BigDecimal("15000.00")); // 잘못된 총액
-                
+
                 // then - guard() 메서드 호출 시 예외 발생
                 assertThatThrownBy(() -> {
                     java.lang.reflect.Method guardMethod = OrderItemEntity.class.getDeclaredMethod("guard");
                     guardMethod.setAccessible(true);
                     guardMethod.invoke(orderItem);
                 })
-                    .getCause()
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessage("총 가격이 단가 × 수량과 일치하지 않습니다.");
+                        .getCause()
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessage("총 가격이 단가 × 수량과 일치하지 않습니다.");
             } catch (Exception e) {
                 throw new RuntimeException("리플렉션 테스트 실패", e);
             }
