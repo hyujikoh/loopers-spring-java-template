@@ -265,7 +265,7 @@ public class TransactionAndConcurrencyIntegrationTest {
 
             // When & Then: 주문 생성 실패
             assertThatThrownBy(() -> orderFacade.createOrder(invalidOrderCommand))
-                    .isInstanceOf(Exception.class);
+                    .isInstanceOf(IllegalArgumentException.class);
 
             // Then: 재고가 원래대로 복구되었는지 확인
             ProductEntity productAfterFail = productService.getProductDetail(product.getId());
@@ -445,12 +445,18 @@ public class TransactionAndConcurrencyIntegrationTest {
             // Then: 성공 + 실패 = 전체 시도 수
             assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount);
 
-            // Then: 최종 재고 확인 (재고가 소진되었거나 거의 소진됨)
             ProductEntity finalProduct = productService.getProductDetail(product.getId());
-            assertThat(finalProduct.getStockQuantity()).isLessThanOrEqualTo(initialStock);
+            assertThat(finalProduct.getStockQuantity())
+                    .as("재고는 절대 음수가 될 수 없음 (Oversell 방지)")
+                    .isGreaterThanOrEqualTo(0)
+                    .isLessThan(initialStock);
 
-            // Then: 최소한 일부 재고는 차감되었는지 확인
-            assertThat(finalProduct.getStockQuantity()).isLessThan(initialStock);
+            // 선택: 성공한 주문 수와 차감된 재고 일치 여부까지 검증
+            int deductedStock = initialStock - finalProduct.getStockQuantity();
+            int expectedDeductedStock = successCount.get() * orderQuantityPerUser;
+            assertThat(deductedStock)
+                    .as("차감된 재고는 성공한 주문 수량과 정확히 일치해야 함")
+                    .isEqualTo(expectedDeductedStock);
         }
 
         @Test
