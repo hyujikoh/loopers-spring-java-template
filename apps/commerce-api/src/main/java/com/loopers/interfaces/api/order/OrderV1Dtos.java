@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import com.loopers.application.order.OrderCreateCommand;
 import com.loopers.application.order.OrderInfo;
 import com.loopers.application.order.OrderItemCommand;
+import com.loopers.domain.order.OrderEntity;
+import com.loopers.domain.order.OrderItemEntity;
 import com.loopers.domain.order.OrderStatus;
 
 public class OrderV1Dtos {

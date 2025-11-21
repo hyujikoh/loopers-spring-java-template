@@ -1,9 +1,9 @@
 package com.loopers.application.order;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 import org.springframework.data.domain.Page;
@@ -13,12 +13,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.coupon.CouponEntity;
 import com.loopers.domain.coupon.CouponService;
-import com.loopers.domain.order.*;
+import com.loopers.domain.order.OrderEntity;
+import com.loopers.domain.order.OrderItemEntity;
+import com.loopers.domain.order.OrderService;
+import com.loopers.domain.order.OrderStatus;
+import com.loopers.domain.order.dto.OrderCreationResult;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.UserEntity;
-import com.loopers.domain.user.UserRepository;
 import com.loopers.domain.user.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -41,10 +44,11 @@ public class OrderFacade {
     private final ProductService productService;
     private final PointService pointService;
     private final CouponService couponService;
-    private final UserRepository userRepository;
 
     /**
      * 주문 생성
+     *
+     * <p>여러 도메인 서비스를 조정하여 주문 생성 유스케이스를 완성합니다.</p>
      *
      * @param command 주문 생성 명령
      * @return 생성된 주문 정보
@@ -52,26 +56,24 @@ public class OrderFacade {
      */
     @Transactional
     public OrderInfo createOrder(OrderCreateCommand command) {
-        // 1. 주문자 정보 조회
+        // 1. 주문자 정보 조회 (락 적용)
         UserEntity user = userService.findByUsernameWithLock(command.username());
 
-        // 2. 주문 상품 검증 및 총 주문 금액 계산
-        List<ProductEntity> orderableProducts = new ArrayList<>();
-        List<BigDecimal> itemDiscounts = new ArrayList<>(); // 항목별 할인 금액 추적
-        BigDecimal originalTotalAmount = BigDecimal.ZERO; // 할인 전 총액
-        BigDecimal totalDiscountAmount = BigDecimal.ZERO; // 총 할인 금액
-        BigDecimal finalTotalAmount = BigDecimal.ZERO;    // 할인 후 총액
-
-        // 주문 항목을 상품 ID 기준으로 정렬하여 교착 상태 방지
+        // 2. 주문 항목을 상품 ID 기준으로 정렬 (교착 상태 방지)
         List<OrderItemCommand> sortedItems = command.orderItems().stream()
                 .sorted(Comparator.comparing(OrderItemCommand::productId))
                 .toList();
 
+        // 3. 상품 검증 및 준비 (재고 확인, 락 적용)
+        List<ProductEntity> orderableProducts = new ArrayList<>();
+        List<CouponEntity> coupons = new ArrayList<>();
+        List<Integer> quantities = new ArrayList<>();
+
         for (OrderItemCommand itemCommand : sortedItems) {
-            // 상품 정보 조회 (재고 잠금 적용)
+            // 상품 정보 조회 및 재고 잠금
             ProductEntity product = productService.getProductDetailLock(itemCommand.productId());
 
-            // 상품 주문 가능 여부 확인 (재고 부족 시 예외 발생)
+            // 재고 확인
             if (!product.canOrder(itemCommand.quantity())) {
                 throw new IllegalArgumentException(
                         String.format("주문할 수 없는 상품입니다. 상품 ID: %d, 요청 수량: %d, 현재 재고: %d",
@@ -79,67 +81,38 @@ public class OrderFacade {
                 );
             }
 
-            // 주문 가능한 상품 목록에 추가
-            orderableProducts.add(product);
-
-            // 항목별 금액 계산
-            BigDecimal basePrice = product.getSellingPrice().multiply(BigDecimal.valueOf(itemCommand.quantity()));
-            BigDecimal itemDiscount = BigDecimal.ZERO;
-
-            if (itemCommand.couponId() != null) {
-                CouponEntity coupon = couponService.getCouponByIdAndUserId(itemCommand.couponId(), user.getId());
-                if (coupon.isUsed()) {
-                    throw new IllegalArgumentException("이미 사용된 쿠폰입니다.");
-                }
-                itemDiscount = coupon.calculateDiscount(basePrice);
-                couponService.consumeCoupon(coupon);
+            // 쿠폰 검증 및 준비
+            CouponEntity coupon = itemCommand.couponId() != null
+                    ? couponService.getCouponByIdAndUserId(itemCommand.couponId(), user.getId())
+                    : null;
+            if (coupon != null && coupon.isUsed()) {
+                throw new IllegalArgumentException("이미 사용된 쿠폰입니다.");
             }
 
-            itemDiscounts.add(itemDiscount);
-            originalTotalAmount = originalTotalAmount.add(basePrice);
-            totalDiscountAmount = totalDiscountAmount.add(itemDiscount);
-            finalTotalAmount = finalTotalAmount.add(basePrice.subtract(itemDiscount));
+            orderableProducts.add(product);
+            coupons.add(coupon);
+            quantities.add(itemCommand.quantity());
         }
 
-        // 3. 주문 금액만큼 포인트 차감 (할인 후 금액으로)
-        pointService.use(user, finalTotalAmount);
-
-        // 4. 주문 엔티티 생성
-        OrderEntity order = orderService.createOrder(
-                new OrderDomainCreateRequest(
-                        user.getId(),
-                        originalTotalAmount,
-                        totalDiscountAmount,
-                        finalTotalAmount
-                )
+        // 4. 도메인 서비스: 주문 및 주문 항목 생성 (도메인 로직)
+        OrderCreationResult creationResult = orderService.createOrderWithItems(
+                user.getId(),
+                orderableProducts,
+                coupons,
+                quantities
         );
 
-        // 5. 주문 항목 생성 및 재고 차감 처리
-        List<OrderItemEntity> orderItems = new ArrayList<>();
-        IntStream.range(0, sortedItems.size()).forEach(i -> {
-            OrderItemCommand itemCommand = sortedItems.get(i);
-            ProductEntity product = orderableProducts.get(i);
-            BigDecimal itemDiscount = itemDiscounts.get(i);
+        // 5. 포인트 차감
+        pointService.use(user, creationResult.order().getFinalTotalAmount());
 
-            // 재고 차감 (도메인 서비스를 통해 처리)
-            productService.deductStock(product, itemCommand.quantity());
+        // 6. 쿠폰 사용 처리
+        coupons.stream().filter(Objects::nonNull).forEach(couponService::consumeCoupon);
 
-            // 주문 항목 엔티티 생성
-            OrderItemEntity orderItem = orderService.createOrderItem(
-                    new OrderItemDomainCreateRequest(
-                            order.getId(),
-                            product.getId(),
-                            itemCommand.couponId(),
-                            itemCommand.quantity(),
-                            product.getSellingPrice(),
-                            itemDiscount
-                    )
-            );
-            orderItems.add(orderItem);
-        });
+        IntStream.range(0, orderableProducts.size())
+                .forEach(i -> productService.deductStock(orderableProducts.get(i), quantities.get(i)));
 
-        // 주문 정보 반환 (주문 엔티티와 항목 목록으로 구성)
-        return OrderInfo.from(order, orderItems);
+        // 8. 주문 정보 반환
+        return OrderInfo.from(creationResult.order(), creationResult.orderItems());
     }
 
     /**
@@ -147,8 +120,8 @@ public class OrderFacade {
      *
      * <p>주문을 확정합니다. (재고는 이미 주문 생성 시 차감되었음)</p>
      *
-     * @param orderId 주문 ID
-     * @param username
+     * @param orderId  주문 ID
+     * @param username 사용자명
      * @return 확정된 주문 정보
      */
     @Transactional
@@ -168,6 +141,7 @@ public class OrderFacade {
     /**
      * 주문 취소
      *
+     * <p>여러 도메인 서비스를 조정하여 주문 취소 유스케이스를 완성합니다.</p>
      * <p>주문을 취소하고 차감된 재고를 원복하며 포인트를 환불합니다.</p>
      *
      * @param orderId  주문 ID
@@ -176,37 +150,35 @@ public class OrderFacade {
      */
     @Transactional
     public OrderInfo cancelOrder(Long orderId, String username) {
+        // 1. 사용자 조회
         UserEntity user = userService.getUserByUsername(username);
 
-        // 1. 주문 취소
+        // 2. 주문 조회
         OrderEntity order = orderService.getOrderByIdAndUserId(orderId, user.getId());
-        order.cancelOrder();
 
-        // 2. 주문 항목 조회
-        /*
-         * 데드락 시나리오:
-         * 스레드 A: [상품 1, 상품 2] 순서로 락 획득 → 락 1 획득 → 락 2 대기 중
-         * 스레드 B: [상품 2, 상품 1] 순서로 락 획득 → 락 2 획득 → 락 1 대기 중
-         * 결과: DB 수준의 원형 대기(circular wait) 발생
-         * 이를 방지하기 위해, 주문 항목을 productId 기준으로 정렬한 뒤 처리하세요:
-         */
-        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId)
-                .stream().sorted(Comparator.comparing(OrderItemEntity::getProductId))
-                .toList();
+        // 3. 도메인 서비스: 주문 취소 처리 (도메인 로직)
+        List<OrderItemEntity> orderItems = orderService.cancelOrderDomain(order);
 
-        // 3. 재고 원복
+        // 4. 재고 원복
         for (OrderItemEntity orderItem : orderItems) {
             productService.restoreStock(orderItem.getProductId(), orderItem.getQuantity());
-            if (orderItem.getCouponId() != null) {
-                CouponEntity coupon = couponService.getCouponByIdAndUserId(orderItem.getCouponId(), order.getUserId());
-                if (!coupon.isUsed()) {
-                    throw new IllegalStateException("취소하려는 주문의 쿠폰이 사용된 상태가 아닙니다.");
-                }
-                couponService.revertCoupon(coupon);
-            }
         }
 
-        // 4. 포인트 환불 (할인 후 금액으로)
+        // 5. 쿠폰 원복
+        orderItems.stream()
+                .filter(orderItem -> orderItem.getCouponId() != null)
+                .forEach(orderItem -> {
+                    CouponEntity coupon = couponService.getCouponByIdAndUserId(
+                            orderItem.getCouponId(),
+                            order.getUserId()
+                    );
+                    if (!coupon.isUsed()) {
+                        throw new IllegalStateException("취소하려는 주문의 쿠폰이 사용된 상태가 아닙니다.");
+                    }
+                    couponService.revertCoupon(coupon);
+                });
+
+        // 6. 포인트 환불 (할인 후 금액으로)
         pointService.refund(username, order.getFinalTotalAmount());
 
         return OrderInfo.from(order, orderItems);
@@ -215,13 +187,13 @@ public class OrderFacade {
     /**
      * 주문 ID로 주문 조회
      *
-     * @param username
+     * @param username 사용자명
      * @param orderId  주문 ID
      * @return 주문 정보
      */
     public OrderInfo getOrderById(String username, Long orderId) {
         UserEntity user = userService.getUserByUsername(username);
-        OrderEntity order = orderService.getOrderByIdAndUserId(orderId , user.getId());
+        OrderEntity order = orderService.getOrderByIdAndUserId(orderId, user.getId());
         List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
         return OrderInfo.from(order, orderItems);
     }
@@ -279,7 +251,7 @@ public class OrderFacade {
      * 주문 ID로 주문 항목 목록을 페이징하여 조회합니다.
      *
      * @param orderId  주문 ID
-     * @param username
+     * @param username 사용자명
      * @param pageable 페이징 정보
      * @return 주문 항목 정보 페이지
      */

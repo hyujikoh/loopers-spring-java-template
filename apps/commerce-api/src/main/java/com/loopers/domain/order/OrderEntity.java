@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.Objects;
 
 import com.loopers.domain.BaseEntity;
+import com.loopers.domain.order.dto.OrderDomainCreateRequest;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 
@@ -74,7 +75,8 @@ public class OrderEntity extends BaseEntity {
 
         // 금액 정합성 검증: 할인 전 총액 - 할인 금액 = 할인 후 총액
         BigDecimal calculatedFinalAmount = request.originalTotalAmount().subtract(request.discountAmount());
-        if (calculatedFinalAmount.compareTo(request.finalTotalAmount()) != 0) {
+        if (calculatedFinalAmount.setScale(2, RoundingMode.HALF_UP)
+                .compareTo(request.finalTotalAmount().setScale(2, RoundingMode.HALF_UP)) != 0) {
             throw new IllegalArgumentException(
                     String.format("금액 정합성 오류: 할인 전 총액(%s) - 할인 금액(%s) = 할인 후 총액(%s)이 일치하지 않습니다. (계산 결과: %s)",
                             request.originalTotalAmount(), request.discountAmount(),
