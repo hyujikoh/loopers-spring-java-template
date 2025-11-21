@@ -116,6 +116,10 @@ public class OrderCancelIntegrationTest {
 
             // Then: 주문 상태 확인
             assertThat(cancelledOrder.status()).isEqualTo(OrderStatus.CANCELLED);
+
+            // Then: 포인트 환불 확인
+            assertThat(pointService.getPointHistories(userInfo.username()).get(0).getBalanceAfter())
+                    .isEqualTo(new BigDecimal("50000").setScale(2));
         }
 
         @Test
