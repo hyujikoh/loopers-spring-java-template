@@ -8,6 +8,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.loopers.domain.order.dto.OrderItemDomainCreateRequest;
+
 /**
  * OrderItemEntity 단위 테스트
  *

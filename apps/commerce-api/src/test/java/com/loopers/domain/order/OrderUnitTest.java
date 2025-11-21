@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.ReflectionUtils;
 
+import com.loopers.domain.order.dto.OrderDomainCreateRequest;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 

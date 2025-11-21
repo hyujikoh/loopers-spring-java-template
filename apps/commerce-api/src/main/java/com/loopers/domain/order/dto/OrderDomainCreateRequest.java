@@ -1,4 +1,4 @@
-package com.loopers.domain.order;
+package com.loopers.domain.order.dto;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

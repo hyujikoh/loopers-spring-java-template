@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.Objects;
 
 import com.loopers.domain.BaseEntity;
+import com.loopers.domain.order.dto.OrderDomainCreateRequest;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 

@@ -3,6 +3,7 @@ package com.loopers.domain.order;
 import java.math.BigDecimal;
 
 import com.loopers.domain.BaseEntity;
+import com.loopers.domain.order.dto.OrderItemDomainCreateRequest;
 
 import lombok.AccessLevel;
 import lombok.Getter;
