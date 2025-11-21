@@ -331,7 +331,7 @@ class OrderV1ApiE2ETest {
                     new ParameterizedTypeReference<>() {
                     };
             ResponseEntity<ApiResponse<OrderV1Dtos.OrderDetailResponse>> response =
-                    testRestTemplate.exchange("/api/v1/orders/invalid",
+                    testRestTemplate.exchange(Uris.Order.BASE + "/invalid",
                             HttpMethod.GET, null, responseType);
 
             // then

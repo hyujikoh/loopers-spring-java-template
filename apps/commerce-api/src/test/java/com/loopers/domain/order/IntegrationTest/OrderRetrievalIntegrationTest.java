@@ -24,6 +24,7 @@ import com.loopers.domain.product.ProductService;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
+import com.loopers.support.error.CoreException;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**
@@ -219,7 +220,7 @@ public class OrderRetrievalIntegrationTest {
 
             // When & Then: 존재하지 않는 주문 조회 시 예외 발생
             assertThatThrownBy(() -> orderFacade.getOrderSummaryById(nonExistentOrderId))
-                    .isInstanceOf(Exception.class)
+                    .isInstanceOf(CoreException.class)
                     .hasMessageContaining("주문을 찾을 수 없습니다");
         }
 

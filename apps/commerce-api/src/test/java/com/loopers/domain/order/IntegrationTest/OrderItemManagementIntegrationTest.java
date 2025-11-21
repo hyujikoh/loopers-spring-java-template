@@ -25,6 +25,7 @@ import com.loopers.domain.user.UserRepository;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
+import com.loopers.support.error.CoreException;
 import com.loopers.utils.DatabaseCleanUp;
 
 /**
@@ -244,7 +245,7 @@ public class OrderItemManagementIntegrationTest {
                     nonExistentOrderId,
                     PageRequest.of(0, 10)
             ))
-                    .isInstanceOf(Exception.class)
+                    .isInstanceOf(CoreException.class)
                     .hasMessageContaining("주문을 찾을 수 없습니다");
         }
     }

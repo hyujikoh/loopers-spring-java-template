@@ -83,8 +83,6 @@ class LikeV1ApiE2ETest {
     @AfterEach
     void tearDown() {
         databaseCleanUp.truncateAllTables();
-        testUsername = null;
-        testProductId = null;
     }
 
     @Nested

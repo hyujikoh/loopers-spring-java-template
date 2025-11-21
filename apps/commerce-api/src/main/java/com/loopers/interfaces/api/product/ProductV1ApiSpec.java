@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.loopers.interfaces.api.ApiResponse;
 
@@ -21,9 +23,9 @@ public interface ProductV1ApiSpec {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
     ApiResponse<ProductV1Dtos.PageResponse<ProductV1Dtos.ProductListResponse>> getProducts(
-            Pageable pageableLong,
-            Long brandId,
-            String productName
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestParam(required = false) Long brandId,
+            @RequestParam(required = false) String productName
     );
 
     @Operation(
