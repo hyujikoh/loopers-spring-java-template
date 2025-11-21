@@ -200,7 +200,7 @@ public class OrderFacade {
         }
 
         // 4. 포인트 환불 (할인 후 금액으로)
-        pointService.charge(username, order.getFinalTotalAmount());
+        pointService.refund(username, order.getFinalTotalAmount());
 
         return OrderInfo.from(order, orderItems);
     }
