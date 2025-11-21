@@ -35,4 +35,9 @@ public class UserService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_USER));
     }
+
+    public UserEntity findByUsernameWithLock(String username) {
+        return userRepository.findByUsernameWithLock(username)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND_USER));
+    }
 }
