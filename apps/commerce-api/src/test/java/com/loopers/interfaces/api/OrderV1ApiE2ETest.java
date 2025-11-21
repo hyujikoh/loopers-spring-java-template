@@ -20,6 +20,7 @@ import com.loopers.application.order.OrderInfo;
 import com.loopers.application.order.OrderItemCommand;
 import com.loopers.application.point.PointFacade;
 import com.loopers.application.user.UserFacade;
+import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
@@ -282,6 +283,8 @@ class OrderV1ApiE2ETest {
         void get_order_detail_success() {
             // given
             Long orderId = createTestOrder(testUsername, 3);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-USER-ID", testUsername);
 
             // when
             ParameterizedTypeReference<ApiResponse<OrderV1Dtos.OrderDetailResponse>> responseType =
@@ -289,7 +292,7 @@ class OrderV1ApiE2ETest {
                     };
             ResponseEntity<ApiResponse<OrderV1Dtos.OrderDetailResponse>> response =
                     testRestTemplate.exchange(Uris.Order.GET_DETAIL,
-                            HttpMethod.GET, null, responseType, orderId);
+                            HttpMethod.GET,  new HttpEntity<>(null, headers), responseType, orderId);
 
             // then
             assertAll(
@@ -311,7 +314,10 @@ class OrderV1ApiE2ETest {
         @DisplayName("존재하지 않는 주문 ID로 조회하면 404 Not Found 응답을 반환한다")
         void get_order_detail_fail_when_order_not_found() {
             // given
+
             Long nonExistentOrderId = 99999L;
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-USER-ID", testUsername);
 
             // when
             ParameterizedTypeReference<ApiResponse<OrderV1Dtos.OrderDetailResponse>> responseType =
@@ -319,7 +325,7 @@ class OrderV1ApiE2ETest {
                     };
             ResponseEntity<ApiResponse<OrderV1Dtos.OrderDetailResponse>> response =
                     testRestTemplate.exchange(Uris.Order.GET_DETAIL,
-                            HttpMethod.GET, null, responseType, nonExistentOrderId);
+                            HttpMethod.GET,  new HttpEntity<>(null, headers), responseType, nonExistentOrderId);
 
             // then
             assertAll(

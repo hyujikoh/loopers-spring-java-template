@@ -60,9 +60,10 @@ public class OrderV1Controller implements OrderV1ApiSpec {
     @GetMapping(Uris.Order.GET_DETAIL)
     @Override
     public ApiResponse<OrderV1Dtos.OrderDetailResponse> getOrderDetail(
+            @RequestHeader("X-USER-ID") String username,
             @PathVariable Long orderId
     ) {
-        OrderInfo orderInfo = orderFacade.getOrderById(orderId);
+        OrderInfo orderInfo = orderFacade.getOrderById(username, orderId);
         OrderV1Dtos.OrderDetailResponse response = OrderV1Dtos.OrderDetailResponse.from(orderInfo);
         return ApiResponse.success(response);
     }

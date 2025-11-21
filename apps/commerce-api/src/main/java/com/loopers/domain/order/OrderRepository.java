@@ -24,10 +24,11 @@ public interface OrderRepository {
     /**
      * 주문 ID로 주문을 조회합니다.
      *
-     * @param id 주문 ID
+     * @param id     주문 ID
+     * @param userId
      * @return 조회된 주문 엔티티 (Optional)
      */
-    Optional<OrderEntity> findById(Long id);
+    Optional<OrderEntity> findByIdAndUserId(Long id, Long userId);
 
     /**
      * 사용자 ID로 주문 목록을 페이징하여 조회합니다.

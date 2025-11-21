@@ -30,8 +30,8 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public Optional<OrderEntity> findById(Long id) {
-        return orderJpaRepository.findByIdAndDeletedAtIsNull(id);
+    public Optional<OrderEntity> findByIdAndUserId(Long id, Long userId) {
+        return orderJpaRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId);
     }
 
     @Override

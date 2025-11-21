@@ -210,7 +210,7 @@ public class OrderCancelIntegrationTest {
                     .build();
 
             OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
-            OrderInfo confirmedOrder = orderFacade.confirmOrder(createdOrder.id());
+            OrderInfo confirmedOrder = orderFacade.confirmOrder(createdOrder.id() , userInfo.username());
             assertThat(confirmedOrder.status()).isEqualTo(OrderStatus.CONFIRMED);
 
             // When: 주문 취소

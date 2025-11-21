@@ -114,7 +114,7 @@ public class OrderConfirmationIntegrationTest {
             OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
 
             // When: 주문 확정
-            OrderInfo confirmedOrder = orderFacade.confirmOrder(createdOrder.id());
+            OrderInfo confirmedOrder = orderFacade.confirmOrder(createdOrder.id(), userInfo.username());
 
             // Then: 주문 상태가 CONFIRMED로 변경되었는지 검증
             assertThat(confirmedOrder.status()).isEqualTo(OrderStatus.CONFIRMED);
@@ -156,10 +156,10 @@ public class OrderConfirmationIntegrationTest {
                     ))
                     .build();
             OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
-            orderFacade.confirmOrder(createdOrder.id());  // 첫 번째 확정
+            orderFacade.confirmOrder(createdOrder.id(), userInfo.username());  // 첫 번째 확정
 
             // When & Then: 이미 확정된 주문을 다시 확정하려고 하면 예외 발생
-            assertThatThrownBy(() -> orderFacade.confirmOrder(createdOrder.id()))
+            assertThatThrownBy(() -> orderFacade.confirmOrder(createdOrder.id(), userInfo.username()))
                     .isInstanceOf(Exception.class)
                     .hasMessageContaining("주문 확정은 대기 상태 또는 활성화된 주문만 가능합니다.");
         }
@@ -170,8 +170,11 @@ public class OrderConfirmationIntegrationTest {
             // Given: 존재하지 않는 주문 ID
             Long nonExistentOrderId = 99999L;
 
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+
             // When & Then: 존재하지 않는 주문 확정 시 예외 발생
-            assertThatThrownBy(() -> orderFacade.confirmOrder(nonExistentOrderId))
+            assertThatThrownBy(() -> orderFacade.confirmOrder(nonExistentOrderId, userInfo.username()))
                     .isInstanceOf(Exception.class)
                     .hasMessageContaining("주문을 찾을 수 없습니다");
         }
@@ -213,10 +216,10 @@ public class OrderConfirmationIntegrationTest {
             OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
 
             // Given: 주문 삭제 (소프트 삭제)
-            orderService.deleteOrder(createdOrder.id());
+            orderService.deleteOrder(createdOrder.id(), userInfo.username());
 
             // When & Then: 삭제된 주문 확정 시 예외 발생 (삭제된 주문은 조회되지 않음)
-            assertThatThrownBy(() -> orderFacade.confirmOrder(createdOrder.id()))
+            assertThatThrownBy(() -> orderFacade.confirmOrder(createdOrder.id(), userInfo.username()))
                     .isInstanceOf(Exception.class)
                     .hasMessageContaining("주문을 찾을 수 없습니다");
         }

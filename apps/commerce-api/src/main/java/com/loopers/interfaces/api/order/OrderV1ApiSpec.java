@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import com.loopers.interfaces.api.ApiResponse;
 import com.loopers.interfaces.api.common.PageResponse;
@@ -39,6 +40,8 @@ public interface OrderV1ApiSpec {
             description = "주문 ID로 주문 상세 정보를 조회합니다."
     )
     ApiResponse<OrderV1Dtos.OrderDetailResponse> getOrderDetail(
+            @RequestHeader("X-USER-ID") String username,
+
             @Schema(name = "주문 ID", description = "조회할 주문의 ID")
             Long orderId
     );

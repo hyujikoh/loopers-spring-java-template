@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.loopers.domain.user.UserEntity;
+import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 
@@ -25,6 +27,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final UserService userService;
 
     /**
      * 주문을 생성합니다.
@@ -42,11 +45,12 @@ public class OrderService {
      * 주문 ID로 주문을 조회합니다.
      *
      * @param orderId 주문 ID
+     * @param userId
      * @return 조회된 주문 엔티티
      * @throws CoreException 주문을 찾을 수 없는 경우
      */
-    public OrderEntity getOrderById(Long orderId) {
-        return orderRepository.findById(orderId)
+    public OrderEntity getOrderByIdAndUserId(Long orderId, Long userId) {
+        return orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new CoreException(
                         ErrorType.NOT_FOUND,
                         String.format("주문을 찾을 수 없습니다. (ID: %d)", orderId)
@@ -82,8 +86,10 @@ public class OrderService {
      * @throws CoreException 주문을 찾을 수 없는 경우
      */
     @Transactional
-    public void deleteOrder(Long orderId) {
-        OrderEntity order = getOrderById(orderId);
+    public void deleteOrder(Long orderId, String username) {
+        UserEntity user = userService.getUserByUsername(username);
+
+        OrderEntity order = getOrderByIdAndUserId(orderId, user.getId());
         order.delete();
 
         List<OrderItemEntity> orderItemsByOrderId = getOrderItemsByOrderId(orderId);

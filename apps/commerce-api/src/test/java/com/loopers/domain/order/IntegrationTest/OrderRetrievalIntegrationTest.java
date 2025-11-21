@@ -105,7 +105,7 @@ public class OrderRetrievalIntegrationTest {
             OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
 
             // When: 주문 ID로 요약 정보 조회
-            OrderSummary retrievedOrder = orderFacade.getOrderSummaryById(createdOrder.id());
+            OrderSummary retrievedOrder = orderFacade.getOrderSummaryById(createdOrder.id(), userInfo.username());
 
             // Then: 주문 요약 정보가 정확히 조회되는지 검증
             assertThat(retrievedOrder).isNotNull();
@@ -198,7 +198,7 @@ public class OrderRetrievalIntegrationTest {
             OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
 
             // When: 주문 조회
-            OrderInfo retrievedOrder = orderFacade.getOrderById(createdOrder.id());
+            OrderInfo retrievedOrder = orderFacade.getOrderById(userInfo.username(), createdOrder.id());
 
             // Then: 주문 항목들이 함께 조회되는지 검증
             assertThat(retrievedOrder.orderItems()).isNotNull();
@@ -218,8 +218,13 @@ public class OrderRetrievalIntegrationTest {
             // Given: 존재하지 않는 주문 ID
             Long nonExistentOrderId = 99999L;
 
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("100000"));
+
             // When & Then: 존재하지 않는 주문 조회 시 예외 발생
-            assertThatThrownBy(() -> orderFacade.getOrderSummaryById(nonExistentOrderId))
+            assertThatThrownBy(() -> orderFacade.getOrderSummaryById(nonExistentOrderId, userInfo.username()))
                     .isInstanceOf(CoreException.class)
                     .hasMessageContaining("주문을 찾을 수 없습니다");
         }
@@ -249,10 +254,10 @@ public class OrderRetrievalIntegrationTest {
                     .build());
 
             // Given: 주문 삭제
-            orderService.deleteOrder(createdOrder.id());
+            orderService.deleteOrder(createdOrder.id(), userInfo.username());
 
             // When & Then: 삭제된 주문 조회 시 예외 발생
-            assertThatThrownBy(() -> orderFacade.getOrderSummaryById(createdOrder.id()))
+            assertThatThrownBy(() -> orderFacade.getOrderSummaryById(createdOrder.id(), userInfo.username()))
                     .isInstanceOf(Exception.class)
                     .hasMessageContaining("주문을 찾을 수 없습니다");
         }
@@ -333,8 +338,7 @@ public class OrderRetrievalIntegrationTest {
                     .build());
 
             // Given: 일부 주문 확정
-            orderFacade.confirmOrder(order1.id());
-            orderFacade.confirmOrder(order2.id());
+            orderFacade.confirmOrder(order1.id(), userInfo.username());
 
             // When: CONFIRMED 상태의 주문만 페이징 조회
             Page<OrderSummary> confirmedOrders = orderFacade.getOrderSummariesByUserIdAndStatus(

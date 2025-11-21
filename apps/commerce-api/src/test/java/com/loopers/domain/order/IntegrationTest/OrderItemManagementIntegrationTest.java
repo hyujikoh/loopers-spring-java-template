@@ -16,12 +16,9 @@ import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
-import com.loopers.domain.order.OrderService;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductEntity;
-import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductService;
-import com.loopers.domain.user.UserRepository;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
@@ -155,6 +152,7 @@ public class OrderItemManagementIntegrationTest {
             Page<OrderItemInfo> firstPage =
                     orderFacade.getOrderItemsByOrderId(
                             createdOrder.id(),
+                            userInfo.username(),
                             PageRequest.of(0, 3)
                     );
 
@@ -169,7 +167,7 @@ public class OrderItemManagementIntegrationTest {
             Page<OrderItemInfo> secondPage =
                     orderFacade.getOrderItemsByOrderId(
                             createdOrder.id(),
-                            PageRequest.of(1, 3)
+                            userInfo.username(), PageRequest.of(1, 3)
                     );
 
             // Then: 두 번째 페이지 검증
@@ -212,7 +210,7 @@ public class OrderItemManagementIntegrationTest {
                     .build());
 
             // When: 주문 상세 조회
-            OrderInfo orderDetail = orderFacade.getOrderById(createdOrder.id());
+            OrderInfo orderDetail = orderFacade.getOrderById(userInfo.username(), createdOrder.id());
 
             // Then: 주문 항목 전체가 조회됨
             assertThat(orderDetail.orderItems()).isNotNull();
@@ -231,11 +229,16 @@ public class OrderItemManagementIntegrationTest {
         void should_throw_exception_when_retrieving_items_of_non_existent_order() {
             // Given: 존재하지 않는 주문 ID
             Long nonExistentOrderId = 99999L;
+            // Given: 사용자 생성 및 포인트 충전
+            UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
+            UserInfo userInfo = userFacade.registerUser(userCommand);
+            pointService.charge(userInfo.username(), new BigDecimal("100000"));
+
 
             // When & Then: 존재하지 않는 주문의 항목 조회 시 예외 발생
             assertThatThrownBy(() -> orderFacade.getOrderItemsByOrderId(
                     nonExistentOrderId,
-                    PageRequest.of(0, 10)
+                    userInfo.username(), PageRequest.of(0, 10)
             ))
                     .isInstanceOf(CoreException.class)
                     .hasMessageContaining("주문을 찾을 수 없습니다");

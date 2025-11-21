@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.loopers.interfaces.api.ApiResponse;
@@ -39,9 +40,11 @@ public interface ProductV1ApiSpec {
     })
     ApiResponse<ProductV1Dtos.ProductDetailResponse> getProductDetail(
             @Parameter(description = "상품 ID", example = "1", required = true)
+            @PathVariable
             Long productId,
 
             @Parameter(description = "사용자명 (선택)", example = "testuser")
+            @RequestParam(required = false)
             String username
     );
 }
