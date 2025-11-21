@@ -20,10 +20,7 @@ public class ProductV1Controller implements ProductV1ApiSpec {
 
     private final ProductFacade productFacade;
 
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
-    })
+
     @GetMapping(Uris.Product.GET_LIST)
     @Override
     public ApiResponse<ProductV1Dtos.PageResponse<ProductV1Dtos.ProductListResponse>> getProducts(
