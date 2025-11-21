@@ -32,6 +32,9 @@ public class OrderItemEntity extends BaseEntity {
     @Column(name = "product_id", nullable = false)
     private Long productId;
 
+    @Column(name = "coupon_id", nullable = true)
+    private Long couponId;
+
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
@@ -52,6 +55,7 @@ public class OrderItemEntity extends BaseEntity {
 
         this.orderId = request.orderId();
         this.productId = request.productId();
+        this.couponId = request.couponId();
         this.quantity = request.quantity();
         this.unitPrice = request.unitPrice();
         this.totalPrice = calculateItemTotal();
