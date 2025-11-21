@@ -161,7 +161,7 @@ public class OrderConfirmationIntegrationTest {
             // When & Then: 이미 확정된 주문을 다시 확정하려고 하면 예외 발생
             assertThatThrownBy(() -> orderFacade.confirmOrder(createdOrder.id()))
                     .isInstanceOf(Exception.class)
-                    .hasMessageContaining("주문 확정은 대기 상태 또는 활성화된 주문만 가능합니다. ");
+                    .hasMessageContaining("주문 확정은 대기 상태 또는 활성화된 주문만 가능합니다.");
         }
 
         @Test
