@@ -47,7 +47,7 @@ public class CouponEntity extends BaseEntity {
     /**
      * 할인 비율 (배율 쿠폰용, 0-100)
      */
-    @Column(name = "percentage", precision = 5, scale = 2)
+    @Column(name = "percentage")
     private Integer percentage;
 
     /**
