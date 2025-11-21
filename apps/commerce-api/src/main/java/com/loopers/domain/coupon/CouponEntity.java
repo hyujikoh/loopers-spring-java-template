@@ -15,6 +15,7 @@ import jakarta.persistence.*;
 
 /**
  * 쿠폰 엔티티
+ *
  * @author hyunjikoh
  * @since 2025. 11. 18.
  */
@@ -91,7 +92,7 @@ public class CouponEntity extends BaseEntity {
      *
      * <p>정액 할인 쿠폰을 생성합니다. 고정 금액만큼 할인을 제공합니다.</p>
      *
-     * @param user 쿠폰을 소유할 사용자 ID (null 또는 0 이하일 수 없음)
+     * @param user        쿠폰을 소유할 사용자 ID (null 또는 0 이하일 수 없음)
      * @param fixedAmount 정액 할인 금액 (0보다 커야 함)
      * @return 생성된 정액 쿠폰 엔티티
      * @throws IllegalArgumentException 유효하지 않은 사용자 ID 또는 할인 금액인 경우

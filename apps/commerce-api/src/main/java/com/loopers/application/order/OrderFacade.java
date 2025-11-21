@@ -79,7 +79,7 @@ public class OrderFacade {
             BigDecimal itemTotal;
             if (itemCommand.couponId() != null) {
                 CouponEntity coupon = couponService.getCouponByIdAndUserId(itemCommand.couponId(), user.getId());
-                if(coupon.isUsed()){
+                if (coupon.isUsed()) {
                     throw new IllegalArgumentException("이미 사용된 쿠폰입니다.");
                 }
                 BigDecimal basePrice = product.getSellingPrice().multiply(BigDecimal.valueOf(itemCommand.quantity()));
@@ -115,7 +115,7 @@ public class OrderFacade {
                     new OrderItemDomainCreateRequest(
                             order.getId(),
                             product.getId(),
-                            itemCommand.couponId() != null ? itemCommand.couponId(): null,
+                            itemCommand.couponId() != null ? itemCommand.couponId() : null,
                             itemCommand.quantity(),
                             product.getSellingPrice()
                     )
@@ -177,9 +177,9 @@ public class OrderFacade {
         // 3. 재고 원복
         for (OrderItemEntity orderItem : orderItems) {
             productService.restoreStock(orderItem.getProductId(), orderItem.getQuantity());
-            if(orderItem.getCouponId() != null){
+            if (orderItem.getCouponId() != null) {
                 CouponEntity coupon = couponService.getCouponByIdAndUserId(orderItem.getCouponId(), order.getUserId());
-                if(!coupon.isUsed()){
+                if (!coupon.isUsed()) {
                     throw new IllegalStateException("취소하려는 주문의 쿠폰이 사용된 상태가 아닙니다.");
                 }
                 couponService.revertCoupon(coupon);

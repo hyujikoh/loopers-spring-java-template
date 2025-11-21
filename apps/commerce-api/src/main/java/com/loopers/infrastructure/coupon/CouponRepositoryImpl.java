@@ -1,6 +1,5 @@
 package com.loopers.infrastructure.coupon;
 
-import static com.loopers.domain.coupon.CouponStatus.UNUSED;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
