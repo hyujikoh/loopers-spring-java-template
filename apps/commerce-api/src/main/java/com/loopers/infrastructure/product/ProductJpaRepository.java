@@ -38,7 +38,7 @@ public interface ProductJpaRepository extends JpaRepository<ProductEntity, Long>
      * @param productId 상품 ID
      */
     @Query("UPDATE ProductEntity p SET p.likeCount = p.likeCount + 1 WHERE p.id = :productId")
-    @Modifying(clearAutomatically = true)
+    @Modifying
     void incrementLikeCount(@Param("productId") Long productId);
 
     /**
@@ -49,6 +49,6 @@ public interface ProductJpaRepository extends JpaRepository<ProductEntity, Long>
      * @param productId 상품 ID
      */
     @Query("UPDATE ProductEntity p SET p.likeCount = CASE WHEN p.likeCount > 0 THEN p.likeCount - 1 ELSE 0 END WHERE p.id = :productId")
-    @Modifying(clearAutomatically = true)
+    @Modifying
     void decrementLikeCount(@Param("productId") Long productId);
 }

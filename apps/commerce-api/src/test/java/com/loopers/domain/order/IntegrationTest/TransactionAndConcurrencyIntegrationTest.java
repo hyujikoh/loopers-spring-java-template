@@ -313,7 +313,8 @@ public class TransactionAndConcurrencyIntegrationTest {
             int orderQuantityPerUser = 5;
             AtomicInteger successCount;
             AtomicInteger failCount;
-            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+            ExecutorService executorService = newFixedThreadPool(threadCount);
+            try {
                 CountDownLatch latch = new CountDownLatch(threadCount);
                 successCount = new AtomicInteger(0);
                 failCount = new AtomicInteger(0);
@@ -345,6 +346,8 @@ public class TransactionAndConcurrencyIntegrationTest {
 
                 // Then: 모든 스레드 완료 대기
                 latch.await(30, TimeUnit.SECONDS);
+
+            } finally {
                 executorService.shutdown();
             }
 
@@ -406,7 +409,8 @@ public class TransactionAndConcurrencyIntegrationTest {
             int orderQuantityPerUser = 5;
             AtomicInteger successCount;
             AtomicInteger failCount;
-            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+            ExecutorService executorService = newFixedThreadPool(threadCount);
+            try {
                 CountDownLatch latch = new CountDownLatch(threadCount);
                 successCount = new AtomicInteger(0);
                 failCount = new AtomicInteger(0);
@@ -438,8 +442,8 @@ public class TransactionAndConcurrencyIntegrationTest {
 
                 // Then: 모든 스레드 완료 대기
                 latch.await(30, TimeUnit.SECONDS);
-                executorService.shutdown();
-            }
+            } finally {
+                executorService.shutdown();            }
 
             // Then: 일부 주문만 성공했는지 확인 (재고 부족으로 모두 성공할 수 없음)
             assertThat(successCount.get()).isLessThan(threadCount);
@@ -571,7 +575,8 @@ public class TransactionAndConcurrencyIntegrationTest {
             int orderQuantityPerUser = 3;
             AtomicInteger successCount;
             AtomicInteger failCount;
-            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+            ExecutorService executorService = newFixedThreadPool(threadCount);
+            try {
                 CountDownLatch latch = new CountDownLatch(threadCount);
                 successCount = new AtomicInteger(0);
                 failCount = new AtomicInteger(0);
@@ -603,6 +608,7 @@ public class TransactionAndConcurrencyIntegrationTest {
 
                 // Then: 모든 스레드 완료 대기
                 latch.await(30, TimeUnit.SECONDS);
+            } finally {
                 executorService.shutdown();
             }
 
@@ -662,7 +668,8 @@ public class TransactionAndConcurrencyIntegrationTest {
             int orderQuantityPerUser = 5;  // 총 150개 필요하지만 재고는 50개
             AtomicInteger successCount;
             AtomicInteger failCount;
-            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+            ExecutorService executorService = newFixedThreadPool(threadCount);
+            try {
                 CountDownLatch latch = new CountDownLatch(threadCount);
                 successCount = new AtomicInteger(0);
                 failCount = new AtomicInteger(0);
@@ -694,6 +701,7 @@ public class TransactionAndConcurrencyIntegrationTest {
 
                 // Then: 모든 스레드 완료 대기
                 latch.await(30, TimeUnit.SECONDS);
+            } finally {
                 executorService.shutdown();
             }
 
@@ -754,7 +762,8 @@ public class TransactionAndConcurrencyIntegrationTest {
             // Given: 동시 주문 설정
             int threadCount = 15;
             AtomicInteger successCount;
-            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+            ExecutorService executorService = newFixedThreadPool(threadCount);
+            try {
                 CountDownLatch latch = new CountDownLatch(threadCount);
                 successCount = new AtomicInteger(0);
 
@@ -784,6 +793,7 @@ public class TransactionAndConcurrencyIntegrationTest {
 
                 // Then: 모든 스레드 완료 대기
                 latch.await(30, TimeUnit.SECONDS);
+            } finally {
                 executorService.shutdown();
             }
 
@@ -843,7 +853,8 @@ public class TransactionAndConcurrencyIntegrationTest {
             int threadCount = 10;
             AtomicInteger successCount;
             AtomicInteger failCount;
-            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+            ExecutorService executorService = newFixedThreadPool(threadCount);
+            try {
                 CountDownLatch latch = new CountDownLatch(threadCount);
                 successCount = new AtomicInteger(0);
                 failCount = new AtomicInteger(0);
@@ -875,6 +886,7 @@ public class TransactionAndConcurrencyIntegrationTest {
 
                 // Then: 모든 스레드 완료 대기
                 latch.await(30, TimeUnit.SECONDS);
+            } finally {
                 executorService.shutdown();
             }
 
@@ -936,7 +948,8 @@ public class TransactionAndConcurrencyIntegrationTest {
             int threadCount = 15;
             AtomicInteger successCount;
             AtomicInteger failCount;
-            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+            ExecutorService executorService = newFixedThreadPool(threadCount);
+            try {
                 CountDownLatch latch = new CountDownLatch(threadCount);
                 successCount = new AtomicInteger(0);
                 failCount = new AtomicInteger(0);
@@ -968,6 +981,8 @@ public class TransactionAndConcurrencyIntegrationTest {
 
                 // Then: 모든 스레드 완료 대기
                 latch.await(30, TimeUnit.SECONDS);
+                executorService.shutdown();
+            } finally {
                 executorService.shutdown();
             }
 
@@ -1031,7 +1046,8 @@ public class TransactionAndConcurrencyIntegrationTest {
 
             // Given: 동시 주문 설정
             int threadCount = 20;
-            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+            ExecutorService executorService = newFixedThreadPool(threadCount);
+            try {
                 CountDownLatch latch = new CountDownLatch(threadCount);
                 AtomicInteger successCount = new AtomicInteger(0);
 
@@ -1062,6 +1078,7 @@ public class TransactionAndConcurrencyIntegrationTest {
 
                 // Then: 모든 스레드 완료 대기
                 latch.await(30, TimeUnit.SECONDS);
+            } finally {
                 executorService.shutdown();
             }
 
