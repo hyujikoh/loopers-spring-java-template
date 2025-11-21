@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.loopers.interfaces.api.ApiResponse;
@@ -44,7 +45,7 @@ public interface ProductV1ApiSpec {
             Long productId,
 
             @Parameter(description = "사용자명 (선택)", example = "testuser")
-            @RequestParam(required = false)
+            @RequestHeader(value = "X-USER-ID", required = false)
             String username
     );
 }

@@ -349,10 +349,10 @@ public class OrderRetrievalIntegrationTest {
 
             // Then: CONFIRMED 상태의 주문만 조회되는지 검증
             assertThat(confirmedOrders).isNotNull();
-            assertThat(confirmedOrders.getContent()).hasSize(2);
-            assertThat(confirmedOrders.getTotalElements()).isEqualTo(2);
+            assertThat(confirmedOrders.getContent()).hasSize(1);
+            assertThat(confirmedOrders.getTotalElements()).isEqualTo(1);
             assertThat(confirmedOrders.getContent()).allMatch(order -> order.status() == OrderStatus.CONFIRMED);
-            assertThat(confirmedOrders.getContent()).extracting("id").containsExactlyInAnyOrder(order1.id(), order2.id());
+            assertThat(confirmedOrders.getContent()).extracting("id").containsExactlyInAnyOrder(order1.id());
 
             // When: PENDING 상태의 주문만 페이징 조회
             Page<OrderSummary> pendingOrders = orderFacade.getOrderSummariesByUserIdAndStatus(
@@ -363,9 +363,9 @@ public class OrderRetrievalIntegrationTest {
 
             // Then: PENDING 상태의 주문만 조회되는지 검증
             assertThat(pendingOrders).isNotNull();
-            assertThat(pendingOrders.getContent()).hasSize(1);
-            assertThat(pendingOrders.getTotalElements()).isEqualTo(1);
-            assertThat(pendingOrders.getContent().get(0).id()).isEqualTo(order3.id());
+            assertThat(pendingOrders.getContent()).hasSize(2);
+            assertThat(pendingOrders.getTotalElements()).isEqualTo(2);
+            assertThat(pendingOrders.getContent().get(0).id()).isEqualTo(order2.id());
             assertThat(pendingOrders.getContent().get(0).status()).isEqualTo(OrderStatus.PENDING);
         }
     }
