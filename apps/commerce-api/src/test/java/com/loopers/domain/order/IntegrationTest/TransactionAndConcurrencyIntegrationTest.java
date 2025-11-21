@@ -1,5 +1,6 @@
 package com.loopers.domain.order.IntegrationTest;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.math.BigDecimal;
@@ -53,8 +54,6 @@ public class TransactionAndConcurrencyIntegrationTest {
     @Autowired
     private OrderFacade orderFacade;
 
-    @Autowired
-    private ProductRepository productRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -70,8 +69,6 @@ public class TransactionAndConcurrencyIntegrationTest {
 
     @Autowired
     private PointService pointService;
-    @Autowired
-    private OrderService orderService;
 
     @BeforeEach
     void setUp() {
@@ -300,7 +297,7 @@ public class TransactionAndConcurrencyIntegrationTest {
             }
 
             // Given: 재고가 충분한 상품 생성
-            Integer initialStock = 50;
+            int initialStock = 50;
             ProductEntity product = productService.registerProduct(
                     ProductTestFixture.createRequest(
                             brand.getId(),
@@ -314,39 +311,42 @@ public class TransactionAndConcurrencyIntegrationTest {
             // Given: 동시 주문 설정
             int threadCount = 10;
             int orderQuantityPerUser = 5;
-            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-            CountDownLatch latch = new CountDownLatch(threadCount);
-            AtomicInteger successCount = new AtomicInteger(0);
-            AtomicInteger failCount = new AtomicInteger(0);
+            AtomicInteger successCount;
+            AtomicInteger failCount;
+            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+                CountDownLatch latch = new CountDownLatch(threadCount);
+                successCount = new AtomicInteger(0);
+                failCount = new AtomicInteger(0);
 
-            // When: 10명의 사용자가 동시에 각각 5개씩 주문 시도
-            for (int i = 0; i < threadCount; i++) {
-                final int userIndex = i;
-                executorService.submit(() -> {
-                    try {
-                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
-                                .username(users.get(userIndex).username())
-                                .orderItems(List.of(
-                                        OrderItemCommand.builder()
-                                                .productId(product.getId())
-                                                .quantity(orderQuantityPerUser)
-                                                .build()
-                                ))
-                                .build();
+                // When: 10명의 사용자가 동시에 각각 5개씩 주문 시도
+                for (int i = 0; i < threadCount; i++) {
+                    final int userIndex = i;
+                    executorService.submit(() -> {
+                        try {
+                            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                                    .username(users.get(userIndex).username())
+                                    .orderItems(List.of(
+                                            OrderItemCommand.builder()
+                                                    .productId(product.getId())
+                                                    .quantity(orderQuantityPerUser)
+                                                    .build()
+                                    ))
+                                    .build();
 
-                        orderFacade.createOrder(orderCommand);
-                        successCount.incrementAndGet();
-                    } catch (Exception e) {
-                        failCount.incrementAndGet();
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                            orderFacade.createOrder(orderCommand);
+                            successCount.incrementAndGet();
+                        } catch (Exception e) {
+                            failCount.incrementAndGet();
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+
+                // Then: 모든 스레드 완료 대기
+                latch.await(30, TimeUnit.SECONDS);
+                executorService.shutdown();
             }
-
-            // Then: 모든 스레드 완료 대기
-            latch.await(30, TimeUnit.SECONDS);
-            executorService.shutdown();
 
             // Then: 재고가 충분하므로 모든 주문이 성공해야 함
             assertThat(successCount.get()).isEqualTo(threadCount);
@@ -354,7 +354,7 @@ public class TransactionAndConcurrencyIntegrationTest {
 
             // Then: 최종 재고가 정확히 차감되었는지 검증 (동시성 제어 완벽)
             ProductEntity finalProduct = productService.getProductDetail(product.getId());
-            int expectedFinalStock = initialStock - (threadCount * orderQuantityPerUser);
+            int expectedFinalStock = 0;
 
             // 엄격한 검증: 정확히 일치해야 함
             assertThat(finalProduct.getStockQuantity())
@@ -404,39 +404,42 @@ public class TransactionAndConcurrencyIntegrationTest {
             // Given: 동시 주문 설정
             int threadCount = 10;
             int orderQuantityPerUser = 5;
-            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-            CountDownLatch latch = new CountDownLatch(threadCount);
-            AtomicInteger successCount = new AtomicInteger(0);
-            AtomicInteger failCount = new AtomicInteger(0);
+            AtomicInteger successCount;
+            AtomicInteger failCount;
+            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+                CountDownLatch latch = new CountDownLatch(threadCount);
+                successCount = new AtomicInteger(0);
+                failCount = new AtomicInteger(0);
 
-            // When: 10명의 사용자가 동시에 각각 5개씩 주문 시도
-            for (int i = 0; i < threadCount; i++) {
-                final int userIndex = i;
-                executorService.submit(() -> {
-                    try {
-                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
-                                .username(users.get(userIndex).username())
-                                .orderItems(List.of(
-                                        OrderItemCommand.builder()
-                                                .productId(product.getId())
-                                                .quantity(orderQuantityPerUser)
-                                                .build()
-                                ))
-                                .build();
+                // When: 10명의 사용자가 동시에 각각 5개씩 주문 시도
+                for (int i = 0; i < threadCount; i++) {
+                    final int userIndex = i;
+                    executorService.submit(() -> {
+                        try {
+                            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                                    .username(users.get(userIndex).username())
+                                    .orderItems(List.of(
+                                            OrderItemCommand.builder()
+                                                    .productId(product.getId())
+                                                    .quantity(orderQuantityPerUser)
+                                                    .build()
+                                    ))
+                                    .build();
 
-                        orderFacade.createOrder(orderCommand);
-                        successCount.incrementAndGet();
-                    } catch (Exception e) {
-                        failCount.incrementAndGet();
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                            orderFacade.createOrder(orderCommand);
+                            successCount.incrementAndGet();
+                        } catch (Exception e) {
+                            failCount.incrementAndGet();
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+
+                // Then: 모든 스레드 완료 대기
+                latch.await(30, TimeUnit.SECONDS);
+                executorService.shutdown();
             }
-
-            // Then: 모든 스레드 완료 대기
-            latch.await(30, TimeUnit.SECONDS);
-            executorService.shutdown();
 
             // Then: 일부 주문만 성공했는지 확인 (재고 부족으로 모두 성공할 수 없음)
             assertThat(successCount.get()).isLessThan(threadCount);
@@ -552,7 +555,7 @@ public class TransactionAndConcurrencyIntegrationTest {
             }
 
             // Given: 재고가 제한된 상품 생성
-            Integer initialStock = 100;
+            int initialStock = 100;
             ProductEntity product = productService.registerProduct(
                     ProductTestFixture.createRequest(
                             brand.getId(),
@@ -566,39 +569,42 @@ public class TransactionAndConcurrencyIntegrationTest {
             // Given: 동시 주문 설정
             int threadCount = 20;
             int orderQuantityPerUser = 3;
-            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-            CountDownLatch latch = new CountDownLatch(threadCount);
-            AtomicInteger successCount = new AtomicInteger(0);
-            AtomicInteger failCount = new AtomicInteger(0);
+            AtomicInteger successCount;
+            AtomicInteger failCount;
+            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+                CountDownLatch latch = new CountDownLatch(threadCount);
+                successCount = new AtomicInteger(0);
+                failCount = new AtomicInteger(0);
 
-            // When: 20명의 사용자가 동시에 각각 3개씩 주문 시도 (총 60개 필요, 재고 100개)
-            for (int i = 0; i < threadCount; i++) {
-                final int userIndex = i;
-                executorService.submit(() -> {
-                    try {
-                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
-                                .username(users.get(userIndex).username())
-                                .orderItems(List.of(
-                                        OrderItemCommand.builder()
-                                                .productId(product.getId())
-                                                .quantity(orderQuantityPerUser)
-                                                .build()
-                                ))
-                                .build();
+                // When: 20명의 사용자가 동시에 각각 3개씩 주문 시도 (총 60개 필요, 재고 100개)
+                for (int i = 0; i < threadCount; i++) {
+                    final int userIndex = i;
+                    executorService.submit(() -> {
+                        try {
+                            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                                    .username(users.get(userIndex).username())
+                                    .orderItems(List.of(
+                                            OrderItemCommand.builder()
+                                                    .productId(product.getId())
+                                                    .quantity(orderQuantityPerUser)
+                                                    .build()
+                                    ))
+                                    .build();
 
-                        orderFacade.createOrder(orderCommand);
-                        successCount.incrementAndGet();
-                    } catch (Exception e) {
-                        failCount.incrementAndGet();
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                            orderFacade.createOrder(orderCommand);
+                            successCount.incrementAndGet();
+                        } catch (Exception e) {
+                            failCount.incrementAndGet();
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+
+                // Then: 모든 스레드 완료 대기
+                latch.await(30, TimeUnit.SECONDS);
+                executorService.shutdown();
             }
-
-            // Then: 모든 스레드 완료 대기
-            latch.await(30, TimeUnit.SECONDS);
-            executorService.shutdown();
 
             // Then: 재고가 충분하므로 모든 주문이 성공해야 함
             assertThat(successCount.get()).isEqualTo(threadCount);
@@ -654,39 +660,42 @@ public class TransactionAndConcurrencyIntegrationTest {
             // Given: 동시 주문 설정
             int threadCount = 30;
             int orderQuantityPerUser = 5;  // 총 150개 필요하지만 재고는 50개
-            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-            CountDownLatch latch = new CountDownLatch(threadCount);
-            AtomicInteger successCount = new AtomicInteger(0);
-            AtomicInteger failCount = new AtomicInteger(0);
+            AtomicInteger successCount;
+            AtomicInteger failCount;
+            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+                CountDownLatch latch = new CountDownLatch(threadCount);
+                successCount = new AtomicInteger(0);
+                failCount = new AtomicInteger(0);
 
-            // When: 30명의 사용자가 동시에 각각 5개씩 주문 시도
-            for (int i = 0; i < threadCount; i++) {
-                final int userIndex = i;
-                executorService.submit(() -> {
-                    try {
-                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
-                                .username(users.get(userIndex).username())
-                                .orderItems(List.of(
-                                        OrderItemCommand.builder()
-                                                .productId(product.getId())
-                                                .quantity(orderQuantityPerUser)
-                                                .build()
-                                ))
-                                .build();
+                // When: 30명의 사용자가 동시에 각각 5개씩 주문 시도
+                for (int i = 0; i < threadCount; i++) {
+                    final int userIndex = i;
+                    executorService.submit(() -> {
+                        try {
+                            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                                    .username(users.get(userIndex).username())
+                                    .orderItems(List.of(
+                                            OrderItemCommand.builder()
+                                                    .productId(product.getId())
+                                                    .quantity(orderQuantityPerUser)
+                                                    .build()
+                                    ))
+                                    .build();
 
-                        orderFacade.createOrder(orderCommand);
-                        successCount.incrementAndGet();
-                    } catch (Exception e) {
-                        failCount.incrementAndGet();
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                            orderFacade.createOrder(orderCommand);
+                            successCount.incrementAndGet();
+                        } catch (Exception e) {
+                            failCount.incrementAndGet();
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+
+                // Then: 모든 스레드 완료 대기
+                latch.await(30, TimeUnit.SECONDS);
+                executorService.shutdown();
             }
-
-            // Then: 모든 스레드 완료 대기
-            latch.await(30, TimeUnit.SECONDS);
-            executorService.shutdown();
 
             // Then: 재고 부족으로 일부만 성공해야 함
             int maxPossibleOrders = initialStock / orderQuantityPerUser;
@@ -744,37 +753,39 @@ public class TransactionAndConcurrencyIntegrationTest {
 
             // Given: 동시 주문 설정
             int threadCount = 15;
-            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-            CountDownLatch latch = new CountDownLatch(threadCount);
-            AtomicInteger successCount = new AtomicInteger(0);
+            AtomicInteger successCount;
+            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+                CountDownLatch latch = new CountDownLatch(threadCount);
+                successCount = new AtomicInteger(0);
 
-            // When: 15명의 사용자가 동시에 여러 상품을 주문
-            for (int i = 0; i < threadCount; i++) {
-                final int userIndex = i;
-                executorService.submit(() -> {
-                    try {
-                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
-                                .username(users.get(userIndex).username())
-                                .orderItems(List.of(
-                                        OrderItemCommand.builder().productId(product1.getId()).quantity(2).build(),
-                                        OrderItemCommand.builder().productId(product2.getId()).quantity(3).build(),
-                                        OrderItemCommand.builder().productId(product3.getId()).quantity(1).build()
-                                ))
-                                .build();
+                // When: 15명의 사용자가 동시에 여러 상품을 주문
+                for (int i = 0; i < threadCount; i++) {
+                    final int userIndex = i;
+                    executorService.submit(() -> {
+                        try {
+                            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                                    .username(users.get(userIndex).username())
+                                    .orderItems(List.of(
+                                            OrderItemCommand.builder().productId(product1.getId()).quantity(2).build(),
+                                            OrderItemCommand.builder().productId(product2.getId()).quantity(3).build(),
+                                            OrderItemCommand.builder().productId(product3.getId()).quantity(1).build()
+                                    ))
+                                    .build();
 
-                        orderFacade.createOrder(orderCommand);
-                        successCount.incrementAndGet();
-                    } catch (Exception e) {
-                        // 재고 부족 등의 이유로 실패 가능
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                            orderFacade.createOrder(orderCommand);
+                            successCount.incrementAndGet();
+                        } catch (Exception e) {
+                            // 재고 부족 등의 이유로 실패 가능
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+
+                // Then: 모든 스레드 완료 대기
+                latch.await(30, TimeUnit.SECONDS);
+                executorService.shutdown();
             }
-
-            // Then: 모든 스레드 완료 대기
-            latch.await(30, TimeUnit.SECONDS);
-            executorService.shutdown();
 
             // Then: 각 상품의 재고가 독립적으로 정확히 차감되었는지 확인
             ProductEntity finalProduct1 = productService.getProductDetail(product1.getId());
@@ -830,39 +841,42 @@ public class TransactionAndConcurrencyIntegrationTest {
 
             // Given: 동시 주문 설정
             int threadCount = 10;
-            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-            CountDownLatch latch = new CountDownLatch(threadCount);
-            AtomicInteger successCount = new AtomicInteger(0);
-            AtomicInteger failCount = new AtomicInteger(0);
+            AtomicInteger successCount;
+            AtomicInteger failCount;
+            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+                CountDownLatch latch = new CountDownLatch(threadCount);
+                successCount = new AtomicInteger(0);
+                failCount = new AtomicInteger(0);
 
-            // When: 동일 사용자가 동시에 10개의 서로 다른 주문 시도
-            for (int i = 0; i < threadCount; i++) {
-                final int productIndex = i;
-                executorService.submit(() -> {
-                    try {
-                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
-                                .username(userInfo.username())
-                                .orderItems(List.of(
-                                        OrderItemCommand.builder()
-                                                .productId(products.get(productIndex).getId())
-                                                .quantity(2)
-                                                .build()
-                                ))
-                                .build();
+                // When: 동일 사용자가 동시에 10개의 서로 다른 주문 시도
+                for (int i = 0; i < threadCount; i++) {
+                    final int productIndex = i;
+                    executorService.submit(() -> {
+                        try {
+                            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                                    .username(userInfo.username())
+                                    .orderItems(List.of(
+                                            OrderItemCommand.builder()
+                                                    .productId(products.get(productIndex).getId())
+                                                    .quantity(2)
+                                                    .build()
+                                    ))
+                                    .build();
 
-                        orderFacade.createOrder(orderCommand);
-                        successCount.incrementAndGet();
-                    } catch (Exception e) {
-                        failCount.incrementAndGet();
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                            orderFacade.createOrder(orderCommand);
+                            successCount.incrementAndGet();
+                        } catch (Exception e) {
+                            failCount.incrementAndGet();
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+
+                // Then: 모든 스레드 완료 대기
+                latch.await(30, TimeUnit.SECONDS);
+                executorService.shutdown();
             }
-
-            // Then: 모든 스레드 완료 대기
-            latch.await(30, TimeUnit.SECONDS);
-            executorService.shutdown();
 
             // Then: 포인트가 충분하므로 모든 주문이 성공해야 함
             assertThat(successCount.get()).isEqualTo(threadCount);
@@ -920,39 +934,42 @@ public class TransactionAndConcurrencyIntegrationTest {
 
             // Given: 동시 주문 설정
             int threadCount = 15;
-            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-            CountDownLatch latch = new CountDownLatch(threadCount);
-            AtomicInteger successCount = new AtomicInteger(0);
-            AtomicInteger failCount = new AtomicInteger(0);
+            AtomicInteger successCount;
+            AtomicInteger failCount;
+            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+                CountDownLatch latch = new CountDownLatch(threadCount);
+                successCount = new AtomicInteger(0);
+                failCount = new AtomicInteger(0);
 
-            // When: 동일 사용자가 동시에 15개의 주문 시도 (총 225,000 포인트 필요, 보유 50,000)
-            for (int i = 0; i < threadCount; i++) {
-                final int productIndex = i;
-                executorService.submit(() -> {
-                    try {
-                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
-                                .username(userInfo.username())
-                                .orderItems(List.of(
-                                        OrderItemCommand.builder()
-                                                .productId(products.get(productIndex).getId())
-                                                .quantity(1)
-                                                .build()
-                                ))
-                                .build();
+                // When: 동일 사용자가 동시에 15개의 주문 시도 (총 225,000 포인트 필요, 보유 50,000)
+                for (int i = 0; i < threadCount; i++) {
+                    final int productIndex = i;
+                    executorService.submit(() -> {
+                        try {
+                            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                                    .username(userInfo.username())
+                                    .orderItems(List.of(
+                                            OrderItemCommand.builder()
+                                                    .productId(products.get(productIndex).getId())
+                                                    .quantity(1)
+                                                    .build()
+                                    ))
+                                    .build();
 
-                        orderFacade.createOrder(orderCommand);
-                        successCount.incrementAndGet();
-                    } catch (Exception e) {
-                        failCount.incrementAndGet();
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                            orderFacade.createOrder(orderCommand);
+                            successCount.incrementAndGet();
+                        } catch (Exception e) {
+                            failCount.incrementAndGet();
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+
+                // Then: 모든 스레드 완료 대기
+                latch.await(30, TimeUnit.SECONDS);
+                executorService.shutdown();
             }
-
-            // Then: 모든 스레드 완료 대기
-            latch.await(30, TimeUnit.SECONDS);
-            executorService.shutdown();
 
             // Then: 포인트 부족으로 일부만 성공해야 함
             int maxPossibleOrders = initialPoints.divide(new BigDecimal("15000"), 0, RoundingMode.DOWN).intValue();
@@ -1014,38 +1031,39 @@ public class TransactionAndConcurrencyIntegrationTest {
 
             // Given: 동시 주문 설정
             int threadCount = 20;
-            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-            CountDownLatch latch = new CountDownLatch(threadCount);
-            AtomicInteger successCount = new AtomicInteger(0);
+            try (ExecutorService executorService = newFixedThreadPool(threadCount)) {
+                CountDownLatch latch = new CountDownLatch(threadCount);
+                AtomicInteger successCount = new AtomicInteger(0);
 
-            // When: 20명의 사용자가 동시에 주문
-            for (int i = 0; i < threadCount; i++) {
-                final int userIndex = i;
-                executorService.submit(() -> {
-                    try {
-                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
-                                .username(users.get(userIndex).username())
-                                .orderItems(List.of(
-                                        OrderItemCommand.builder()
-                                                .productId(product.getId())
-                                                .quantity(1)
-                                                .build()
-                                ))
-                                .build();
+                // When: 20명의 사용자가 동시에 주문
+                for (int i = 0; i < threadCount; i++) {
+                    final int userIndex = i;
+                    executorService.submit(() -> {
+                        try {
+                            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                                    .username(users.get(userIndex).username())
+                                    .orderItems(List.of(
+                                            OrderItemCommand.builder()
+                                                    .productId(product.getId())
+                                                    .quantity(1)
+                                                    .build()
+                                    ))
+                                    .build();
 
-                        orderFacade.createOrder(orderCommand);
-                        successCount.incrementAndGet();
-                    } catch (Exception e) {
-                        // 포인트 부족으로 실패 가능
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                            orderFacade.createOrder(orderCommand);
+                            successCount.incrementAndGet();
+                        } catch (Exception e) {
+                            // 포인트 부족으로 실패 가능
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+
+                // Then: 모든 스레드 완료 대기
+                latch.await(30, TimeUnit.SECONDS);
+                executorService.shutdown();
             }
-
-            // Then: 모든 스레드 완료 대기
-            latch.await(30, TimeUnit.SECONDS);
-            executorService.shutdown();
 
             // Then: 각 사용자의 포인트가 독립적으로 차감되었는지 확인
             for (int i = 0; i < users.size(); i++) {

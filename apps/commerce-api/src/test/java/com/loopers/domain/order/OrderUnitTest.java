@@ -1,5 +1,6 @@
 package com.loopers.domain.order;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 
@@ -191,7 +192,7 @@ class OrderUnitTest {
             OrderEntity order = OrderEntity.createOrder(request);
 
             // when & then
-            Assertions.assertThatCode(() -> order.guard())
+            Assertions.assertThatCode(order::guard)
                     .doesNotThrowAnyException();
         }
 
@@ -203,11 +204,12 @@ class OrderUnitTest {
             OrderEntity order = OrderEntity.createOrder(request);
 
             Field userIdField = ReflectionUtils.findField(OrderEntity.class, "userId");
+            assertNotNull(userIdField);
             ReflectionUtils.makeAccessible(userIdField);
             ReflectionUtils.setField(userIdField, order, null);
 
             // when & then
-            Assertions.assertThatThrownBy(() -> order.guard())
+            Assertions.assertThatThrownBy(order::guard)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("사용자 ID는 필수입니다.");
         }
@@ -220,6 +222,7 @@ class OrderUnitTest {
             OrderEntity order = OrderEntity.createOrder(request);
 
             Field totalAmountField = ReflectionUtils.findField(OrderEntity.class, "totalAmount");
+            assertNotNull(totalAmountField);
             ReflectionUtils.makeAccessible(totalAmountField);
             ReflectionUtils.setField(totalAmountField, order, null);
 
@@ -237,11 +240,18 @@ class OrderUnitTest {
             OrderEntity order = OrderEntity.createOrder(request);
 
             Field totalAmountField = ReflectionUtils.findField(OrderEntity.class, "totalAmount");
+            assertNotNull(totalAmountField);
             ReflectionUtils.makeAccessible(totalAmountField);
-            ReflectionUtils.setField(totalAmountField, order, BigDecimal.ZERO);
 
-            // when & then
-            Assertions.assertThatThrownBy(() -> order.guard())
+            // 0인 경우
+            ReflectionUtils.setField(totalAmountField, order, BigDecimal.ZERO);
+            Assertions.assertThatThrownBy(order::guard)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("주문 총액은 0보다 커야 합니다.");
+
+            // 음수인 경우
+            ReflectionUtils.setField(totalAmountField, order, new BigDecimal("-1000"));
+            Assertions.assertThatThrownBy(order::guard)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("주문 총액은 0보다 커야 합니다.");
         }
@@ -254,11 +264,12 @@ class OrderUnitTest {
             OrderEntity order = OrderEntity.createOrder(request);
 
             Field statusField = ReflectionUtils.findField(OrderEntity.class, "status");
+            assertNotNull(statusField);
             ReflectionUtils.makeAccessible(statusField);
             ReflectionUtils.setField(statusField, order, null);
 
             // when & then
-            Assertions.assertThatThrownBy(() -> order.guard())
+            Assertions.assertThatThrownBy(order::guard)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("주문 상태는 필수입니다.");
         }

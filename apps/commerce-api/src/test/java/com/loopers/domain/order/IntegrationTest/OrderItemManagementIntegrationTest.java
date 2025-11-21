@@ -41,12 +41,6 @@ public class OrderItemManagementIntegrationTest {
     private OrderFacade orderFacade;
 
     @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private UserFacade userFacade;
 
     @Autowired
@@ -57,8 +51,6 @@ public class OrderItemManagementIntegrationTest {
 
     @Autowired
     private PointService pointService;
-    @Autowired
-    private OrderService orderService;
 
     @BeforeEach
     void setUp() {
