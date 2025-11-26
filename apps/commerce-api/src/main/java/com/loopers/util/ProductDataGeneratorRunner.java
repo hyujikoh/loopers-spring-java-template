@@ -115,10 +115,8 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
                 stockQuantity
         );
 
-        int likeCount = random.nextInt(10001);
-        for (int i = 0; i < likeCount; i++) {
-            product.increaseLikeCount();
-        }
+        // 좋아요 수는 MV 테이블에서 관리하므로 여기서는 설정하지 않음
+        // 필요시 ProductLikeStatsEntity를 별도로 생성
 
         return product;
     }
