@@ -3,8 +3,10 @@ package com.loopers.application.like;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.loopers.application.product.ProductCacheService;
 import com.loopers.domain.like.LikeEntity;
 import com.loopers.domain.like.LikeService;
+import com.loopers.domain.like.ProductLikeStatsService;
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.UserEntity;
@@ -12,6 +14,7 @@ import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 좋아요 애플리케이션 파사드
@@ -22,12 +25,15 @@ import lombok.RequiredArgsConstructor;
  * @author hyunjikoh
  * @since 2025. 11. 11.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class LikeFacade {
     private final ProductService productService;
     private final UserService userService;
     private final LikeService likeService;
+    private final ProductLikeStatsService statsService;
+    private final ProductCacheService cacheService; // 향후 캐시 무효화 로직 추가 예정
 
     /**
      * 좋아요를 등록하거나 복원합니다.
@@ -39,6 +45,8 @@ public class LikeFacade {
      */
     @Transactional
     public LikeInfo upsertLike(String username, Long productId) {
+        log.debug("좋아요 등록/복원 시작 - username: {}, productId: {}", username, productId);
+        
         // 1. 사용자 검증
         UserEntity user = userService.getUserByUsername(username);
 
@@ -48,7 +56,16 @@ public class LikeFacade {
         // 3. 좋아요 등록/복원
         LikeEntity likeEntity = likeService.upsertLike(user, product);
 
-        // 5. DTO 변환 후 반환
+        // 4. 좋아요 통계 업데이트 (MV 테이블)
+        statsService.increaseLikeCount(productId);
+
+        // 5. 캐시 무효화 - 상품 상세 캐시 삭제
+        cacheService.evictProductDetail(productId);
+        cacheService.evictProductIdsByBrand(com.loopers.infrastructure.cache.CacheStrategy.HOT, product.getBrandId());
+        
+        log.info("좋아요 등록/복원 완료 - username: {}, productId: {}", username, productId);
+
+        // 6. DTO 변환 후 반환
         return LikeInfo.of(likeEntity, product, user);
     }
 
@@ -63,13 +80,24 @@ public class LikeFacade {
      */
     @Transactional
     public void unlikeProduct(String username, Long productId) {
+        log.debug("좋아요 취소 시작 - username: {}, productId: {}", username, productId);
+        
         // 1. 사용자 검증
         UserEntity user = userService.getUserByUsername(username);
 
         // 2. 상품 검증
         ProductEntity product = productService.getProductDetail(productId);
 
-        // 3. 좋아요 취소 (Product 카운트 감소 포함)
+        // 3. 좋아요 취소
         likeService.unlikeProduct(user, product);
+        
+        // 4. 좋아요 통계 업데이트 (MV 테이블)
+        statsService.decreaseLikeCount(productId);
+        
+        // 5. 캐시 무효화 - 상품 상세 캐시 삭제
+        cacheService.evictProductDetail(productId);
+        cacheService.evictProductIdsByBrand(com.loopers.infrastructure.cache.CacheStrategy.HOT, product.getBrandId());
+        
+        log.info("좋아요 취소 완료 - username: {}, productId: {}", username, productId);
     }
 }

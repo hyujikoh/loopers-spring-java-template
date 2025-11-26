@@ -1,10 +1,12 @@
 package com.loopers.infrastructure.cache;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -127,8 +129,8 @@ public class ProductCacheServiceImpl implements ProductCacheService {
     
     @Override
     public void cacheProductIds(CacheStrategy strategy, Long brandId, 
-                                org.springframework.data.domain.Pageable pageable, 
-                                java.util.List<Long> productIds) {
+                                Pageable pageable,
+                                List<Long> productIds) {
         try {
             String key = cacheKeyGenerator.generateProductIdsKey(strategy, brandId, pageable);
             String value = objectMapper.writeValueAsString(productIds);
@@ -148,8 +150,8 @@ public class ProductCacheServiceImpl implements ProductCacheService {
     }
     
     @Override
-    public Optional<java.util.List<Long>> getProductIdsFromCache(CacheStrategy strategy, Long brandId, 
-                                                                  org.springframework.data.domain.Pageable pageable) {
+    public Optional<List<Long>> getProductIdsFromCache(CacheStrategy strategy, Long brandId,
+                                                       Pageable pageable) {
         try {
             String key = cacheKeyGenerator.generateProductIdsKey(strategy, brandId, pageable);
             String value = redisTemplate.opsForValue().get(key);
@@ -159,8 +161,8 @@ public class ProductCacheServiceImpl implements ProductCacheService {
                 return Optional.empty();
             }
             
-            java.util.List<Long> productIds = objectMapper.readValue(value, 
-                objectMapper.getTypeFactory().constructCollectionType(java.util.List.class, Long.class));
+            List<Long> productIds = objectMapper.readValue(value,
+                objectMapper.getTypeFactory().constructCollectionType(List.class, Long.class));
             
             log.debug("상품 ID 리스트 캐시 히트 - strategy: {}, brandId: {}, size: {}", 
                     strategy, brandId, productIds.size());
