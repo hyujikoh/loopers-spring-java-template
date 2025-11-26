@@ -47,6 +47,7 @@ public class ProductFacade {
     private final LikeService likeService;
     private final UserService userService;
     private final ProductCacheService productCacheService;
+    private final com.loopers.domain.like.ProductLikeStatsService statsService;
 
     /**
      * 상품 목록 조회 (Hot/Warm/Cold 전략 적용)
@@ -64,16 +65,12 @@ public class ProductFacade {
     @Transactional(readOnly = true)
     public Page<ProductInfo> getProducts(ProductSearchFilter productSearchFilter) {
         CacheStrategy strategy = determineCacheStrategy(productSearchFilter);
-        
-        switch (strategy) {
-            case HOT:
-                return getProductsWithHotCache(productSearchFilter);
-            case WARM:
-                return getProductsWithWarmCache(productSearchFilter);
-            case COLD:
-            default:
-                return getProductsWithoutCache(productSearchFilter);
-        }
+
+        return switch (strategy) {
+            case HOT -> getProductsWithHotCache(productSearchFilter);
+            case WARM -> getProductsWithWarmCache(productSearchFilter);
+            default -> getProductsWithoutCache(productSearchFilter);
+        };
     }
     
     /**
@@ -206,12 +203,16 @@ public class ProductFacade {
             return new PageImpl<>(List.of(), pageable, 0);
         }
         
+        // 좋아요 수 배치 조회 (N+1 방지)
+        var likeCountMap = statsService.getLikeCountMap(productIds);
+        
         // 개별 상품 정보 조회 (Hot 캐시 활용)
         List<ProductInfo> products = new ArrayList<>();
         for (Long productId : productIds) {
             try {
                 ProductEntity product = productService.getProductDetail(productId);
-                products.add(ProductInfo.of(product));
+                Long likeCount = likeCountMap.getOrDefault(productId, 0L);
+                products.add(ProductInfo.of(product, likeCount));
             } catch (Exception e) {
                 log.warn("상품 조회 실패 - productId: {}, error: {}", productId, e.getMessage());
             }
@@ -249,14 +250,17 @@ public class ProductFacade {
             ProductEntity product = productService.getProductDetail(productId);
             BrandEntity brand = brandService.getBrandById(product.getBrandId());
             
-            // 좋아요 정보는 캐시하지 않음 (사용자별로 다름)
-            productDetail = ProductDetailInfo.of(product, brand, false);
+            // 3. MV 테이블에서 좋아요 수 조회
+            Long likeCount = statsService.getLikeCount(productId);
             
-            // 3. 캐시 저장
+            // 좋아요 여부는 캐시하지 않음 (사용자별로 다름)
+            productDetail = ProductDetailInfo.of(product, brand, likeCount, false);
+            
+            // 4. 캐시 저장
             productCacheService.cacheProductDetail(productId, productDetail);
         }
         
-        // 4. 사용자별 좋아요 여부 확인 (캐시 불가)
+        // 5. 사용자별 좋아요 여부 확인 (캐시 불가)
         if (username != null) {
             Boolean isLiked = likeService.findLike(
                 userService.getUserByUsername(username).getId(), 
