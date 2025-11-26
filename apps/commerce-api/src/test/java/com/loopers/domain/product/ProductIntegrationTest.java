@@ -33,6 +33,7 @@ import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
+import com.loopers.utils.RedisCleanUp;
 
 /**
  * @author hyunjikoh
@@ -43,6 +44,10 @@ import com.loopers.utils.DatabaseCleanUp;
 public class ProductIntegrationTest {
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
+
+    @Autowired
+    private RedisCleanUp redisCleanUp;
+
     @Autowired
     private BrandRepository brandRepository;
 
@@ -64,6 +69,7 @@ public class ProductIntegrationTest {
     @AfterEach
     void tearDown() {
         databaseCleanUp.truncateAllTables();
+        redisCleanUp.truncateAll();
     }
 
     @Nested

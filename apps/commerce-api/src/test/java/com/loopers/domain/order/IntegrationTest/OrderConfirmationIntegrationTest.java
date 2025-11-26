@@ -8,6 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 
 import com.loopers.application.order.OrderCreateCommand;
 import com.loopers.application.order.OrderFacade;
@@ -29,6 +30,7 @@ import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
 import com.loopers.utils.DatabaseCleanUp;
+import com.loopers.utils.RedisCleanUp;
 
 /**
  * @author hyunjikoh
@@ -39,6 +41,9 @@ public class OrderConfirmationIntegrationTest {
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
+
+    @Autowired
+    private RedisCleanUp redisCleanUp;
 
     @Autowired
     private OrderFacade orderFacade;
@@ -71,6 +76,8 @@ public class OrderConfirmationIntegrationTest {
     @AfterEach
     void tearDown() {
         databaseCleanUp.truncateAllTables();
+        redisCleanUp.truncateAll();
+
     }
 
     @Nested

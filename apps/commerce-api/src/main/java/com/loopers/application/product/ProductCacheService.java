@@ -51,6 +51,16 @@ public interface ProductCacheService {
     void evictProductDetail(Long productId);
     
     /**
+     * 상품 상세 정보의 좋아요 수만 업데이트
+     * 
+     * <p>캐시가 없는 경우 무시하고, 있는 경우에만 좋아요 수를 업데이트합니다.</p>
+     * 
+     * @param productId 상품 ID
+     * @param likeCount 새로운 좋아요 수
+     */
+    void updateProductDetailLikeCount(Long productId, Long likeCount);
+    
+    /**
      * 여러 상품의 상세 정보를 배치로 캐시에 저장
      * 
      * <p>배치 갱신 시스템에서 사용합니다.</p>

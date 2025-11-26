@@ -27,6 +27,7 @@ import com.loopers.interfaces.api.like.LikeV1Dtos;
 import com.loopers.interfaces.api.product.ProductV1Dtos;
 import com.loopers.support.Uris;
 import com.loopers.utils.DatabaseCleanUp;
+import com.loopers.utils.RedisCleanUp;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DisplayName("Like API E2E 테스트")
@@ -34,7 +35,7 @@ class LikeV1ApiE2ETest {
 
     private final TestRestTemplate testRestTemplate;
     private final DatabaseCleanUp databaseCleanUp;
-
+    private final RedisCleanUp redisCleanUp;
     @Autowired
     private ProductService productService;
 
@@ -47,10 +48,12 @@ class LikeV1ApiE2ETest {
     @Autowired
     public LikeV1ApiE2ETest(
             TestRestTemplate testRestTemplate,
-            DatabaseCleanUp databaseCleanUp
+            DatabaseCleanUp databaseCleanUp,
+            RedisCleanUp redisCleanUp
     ) {
         this.testRestTemplate = testRestTemplate;
         this.databaseCleanUp = databaseCleanUp;
+        this.redisCleanUp = redisCleanUp;
     }
 
     private String testUsername;
@@ -83,6 +86,8 @@ class LikeV1ApiE2ETest {
     @AfterEach
     void tearDown() {
         databaseCleanUp.truncateAllTables();
+        redisCleanUp.truncateAll();
+
     }
 
     @Nested

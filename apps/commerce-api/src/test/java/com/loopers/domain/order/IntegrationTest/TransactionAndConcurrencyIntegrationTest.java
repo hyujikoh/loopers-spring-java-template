@@ -40,6 +40,7 @@ import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
 import com.loopers.utils.DatabaseCleanUp;
+import com.loopers.utils.RedisCleanUp;
 
 /**
  * @author hyunjikoh
@@ -50,6 +51,9 @@ public class TransactionAndConcurrencyIntegrationTest {
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
+
+    @Autowired
+    private RedisCleanUp redisCleanUp;
 
     @Autowired
     private OrderFacade orderFacade;
@@ -78,6 +82,8 @@ public class TransactionAndConcurrencyIntegrationTest {
     @AfterEach
     void tearDown() {
         databaseCleanUp.truncateAllTables();
+        redisCleanUp.truncateAll();
+
     }
 
     @Nested

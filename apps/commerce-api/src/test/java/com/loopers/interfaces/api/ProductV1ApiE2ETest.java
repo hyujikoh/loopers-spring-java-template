@@ -30,6 +30,7 @@ import com.loopers.interfaces.api.common.PageResponse;
 import com.loopers.interfaces.api.product.ProductV1Dtos;
 import com.loopers.support.Uris;
 import com.loopers.utils.DatabaseCleanUp;
+import com.loopers.utils.RedisCleanUp;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DisplayName("Product API E2E 테스트")
@@ -37,7 +38,7 @@ class ProductV1ApiE2ETest {
 
     private final TestRestTemplate testRestTemplate;
     private final DatabaseCleanUp databaseCleanUp;
-
+    private final RedisCleanUp redisCleanUp;
     @Autowired
     private ProductService productService;
 
@@ -53,10 +54,12 @@ class ProductV1ApiE2ETest {
     @Autowired
     public ProductV1ApiE2ETest(
             TestRestTemplate testRestTemplate,
-            DatabaseCleanUp databaseCleanUp
+            DatabaseCleanUp databaseCleanUp,
+            RedisCleanUp redisCleanUp
     ) {
         this.testRestTemplate = testRestTemplate;
         this.databaseCleanUp = databaseCleanUp;
+        this.redisCleanUp = redisCleanUp;
     }
 
     private Long testBrandId;
@@ -97,6 +100,8 @@ class ProductV1ApiE2ETest {
         testProductIds.clear();
         testBrandId = null;
         testUsername = null;
+        redisCleanUp.truncateAll();
+
     }
 
     @Nested

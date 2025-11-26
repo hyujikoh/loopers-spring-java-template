@@ -8,10 +8,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 /**
  * @author hyunjikoh
@@ -21,7 +18,7 @@ import jakarta.persistence.Table;
 @Table(name = "product_like_stats")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ProductLikeStatsEntity extends BaseEntity {
+public class ProductLikeStatsEntity  {
 
     @Id
     private Long productId;  // 단순 외래키
@@ -31,6 +28,51 @@ public class ProductLikeStatsEntity extends BaseEntity {
 
     @Column(name = "last_updated_at", nullable = false)
     private ZonedDateTime lastUpdatedAt;
+
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private ZonedDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private ZonedDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private ZonedDateTime deletedAt;
+
+    @PrePersist
+    private void prePersist() {
+        guard();
+
+        ZonedDateTime now = ZonedDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    private void preUpdate() {
+        guard();
+
+        this.updatedAt = ZonedDateTime.now();
+    }
+
+    /**
+     * delete 연산은 멱등하게 동작할 수 있도록 한다. (삭제된 엔티티를 다시 삭제해도 동일한 결과가 나오도록)
+     */
+    public void delete() {
+        if (this.deletedAt == null) {
+            this.deletedAt = ZonedDateTime.now();
+        }
+    }
+
+    /**
+     * restore 연산은 멱등하게 동작할 수 있도록 한다. (삭제되지 않은 엔티티를 복원해도 동일한 결과가 나오도록)
+     */
+    public void restore() {
+        if (this.deletedAt != null) {
+            this.deletedAt = null;
+        }
+    }
+
 
     // 생성자
     private ProductLikeStatsEntity(Long productId) {
@@ -68,7 +110,6 @@ public class ProductLikeStatsEntity extends BaseEntity {
         this.lastUpdatedAt = ZonedDateTime.now();
     }
 
-    @Override
     protected void guard() {
         if (this.productId == null) {
             throw new IllegalStateException("상품 ID는 필수입니다.");

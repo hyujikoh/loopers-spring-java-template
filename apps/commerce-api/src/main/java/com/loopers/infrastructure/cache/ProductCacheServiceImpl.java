@@ -125,6 +125,52 @@ public class ProductCacheServiceImpl implements ProductCacheService {
         }
     }
     
+    @Override
+    public void updateProductDetailLikeCount(Long productId, Long likeCount) {
+        try {
+            String key = cacheKeyGenerator.generateProductDetailKey(productId);
+            String value = redisTemplate.opsForValue().get(key);
+            
+            if (value == null) {
+                log.debug("상품 상세 캐시 없음 - 좋아요 수 업데이트 스킵 - productId: {}", productId);
+                return;
+            }
+            
+            // 기존 캐시 데이터 역직렬화
+            ProductDetailInfo cachedDetail = objectMapper.readValue(value, ProductDetailInfo.class);
+            
+            // 좋아요 수만 업데이트한 새 객체 생성
+            ProductDetailInfo updatedDetail = new ProductDetailInfo(
+                cachedDetail.id(),
+                cachedDetail.name(),
+                cachedDetail.description(),
+                likeCount, // 새로운 좋아요 수
+                cachedDetail.stockQuantity(),
+                cachedDetail.price(),
+                cachedDetail.brand(),
+                cachedDetail.isLiked()
+            );
+            
+            // 업데이트된 데이터를 캐시에 저장 (기존 TTL 유지)
+            Long ttl = redisTemplate.getExpire(key, TTL_UNIT);
+            if (ttl != null && ttl > 0) {
+                String updatedValue = objectMapper.writeValueAsString(updatedDetail);
+                redisTemplate.opsForValue().set(key, updatedValue, ttl, TTL_UNIT);
+                
+                log.debug("상품 상세 캐시 좋아요 수 업데이트 성공 - productId: {}, likeCount: {}, TTL: {}분", 
+                        productId, likeCount, ttl);
+            } else {
+                log.debug("상품 상세 캐시 TTL 만료 - 업데이트 스킵 - productId: {}", productId);
+            }
+        } catch (JsonProcessingException e) {
+            log.warn("상품 상세 캐시 좋아요 수 업데이트 실패 (JSON 처리 오류) - productId: {}, error: {}", 
+                    productId, e.getMessage());
+        } catch (Exception e) {
+            log.warn("상품 상세 캐시 좋아요 수 업데이트 실패 - productId: {}, error: {}", 
+                    productId, e.getMessage());
+        }
+    }
+    
     // ========== Hot/Warm 데이터: 상품 ID 리스트 ==========
     
     @Override
