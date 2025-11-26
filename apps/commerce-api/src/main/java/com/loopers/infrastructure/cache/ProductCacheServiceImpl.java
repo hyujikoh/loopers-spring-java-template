@@ -33,10 +33,13 @@ public class ProductCacheServiceImpl implements ProductCacheService {
     private final CacheKeyGenerator cacheKeyGenerator;
     private final ObjectMapper objectMapper;
     
-    // TTL 상수
-    private static final long PRODUCT_DETAIL_TTL = 30; // 30분
-    private static final long PRODUCT_LIST_TTL = 5; // 5분
+    // TTL 상수 - Hot/Warm/Cold 전략별 차별화
+    private static final long HOT_DATA_TTL = 60; // Hot: 60분 (배치 갱신)
+    private static final long WARM_DATA_TTL = 10; // Warm: 10분 (Cache-Aside)
+    private static final long COLD_DATA_TTL = 5; // Cold: 5분 (레거시)
     private static final TimeUnit TTL_UNIT = TimeUnit.MINUTES;
+    
+    // ========== Hot 데이터: 상품 상세 (배치 갱신) ==========
     
     @Override
     public void cacheProductDetail(Long productId, ProductDetailInfo productDetail) {
@@ -44,9 +47,9 @@ public class ProductCacheServiceImpl implements ProductCacheService {
             String key = cacheKeyGenerator.generateProductDetailKey(productId);
             String value = objectMapper.writeValueAsString(productDetail);
             
-            redisTemplate.opsForValue().set(key, value, PRODUCT_DETAIL_TTL, TTL_UNIT);
+            redisTemplate.opsForValue().set(key, value, HOT_DATA_TTL, TTL_UNIT);
             
-            log.debug("상품 상세 캐시 저장 성공 - productId: {}, key: {}", productId, key);
+            log.debug("상품 상세 캐시 저장 성공 (Hot) - productId: {}, TTL: {}분", productId, HOT_DATA_TTL);
         } catch (JsonProcessingException e) {
             log.warn("상품 상세 캐시 저장 실패 (JSON 직렬화 오류) - productId: {}, error: {}", 
                     productId, e.getMessage());
@@ -54,6 +57,31 @@ public class ProductCacheServiceImpl implements ProductCacheService {
             log.warn("상품 상세 캐시 저장 실패 - productId: {}, error: {}", 
                     productId, e.getMessage());
         }
+    }
+    
+    @Override
+    public void batchCacheProductDetails(java.util.List<ProductDetailInfo> productDetails) {
+        if (productDetails == null || productDetails.isEmpty()) {
+            log.debug("배치 캐시 저장 대상 없음");
+            return;
+        }
+        
+        int successCount = 0;
+        int failCount = 0;
+        
+        for (ProductDetailInfo productDetail : productDetails) {
+            try {
+                cacheProductDetail(productDetail.id(), productDetail);
+                successCount++;
+            } catch (Exception e) {
+                failCount++;
+                log.warn("배치 캐시 저장 실패 - productId: {}, error: {}", 
+                        productDetail.id(), e.getMessage());
+            }
+        }
+        
+        log.info("상품 상세 배치 캐시 저장 완료 - 성공: {}, 실패: {}, 전체: {}", 
+                successCount, failCount, productDetails.size());
     }
     
     @Override
@@ -95,15 +123,99 @@ public class ProductCacheServiceImpl implements ProductCacheService {
         }
     }
     
+    // ========== Hot/Warm 데이터: 상품 ID 리스트 ==========
+    
+    @Override
+    public void cacheProductIds(CacheStrategy strategy, Long brandId, 
+                                org.springframework.data.domain.Pageable pageable, 
+                                java.util.List<Long> productIds) {
+        try {
+            String key = cacheKeyGenerator.generateProductIdsKey(strategy, brandId, pageable);
+            String value = objectMapper.writeValueAsString(productIds);
+            
+            long ttl = strategy == CacheStrategy.HOT ? HOT_DATA_TTL : WARM_DATA_TTL;
+            redisTemplate.opsForValue().set(key, value, ttl, TTL_UNIT);
+            
+            log.debug("상품 ID 리스트 캐시 저장 성공 - strategy: {}, brandId: {}, size: {}, TTL: {}분", 
+                    strategy, brandId, productIds.size(), ttl);
+        } catch (JsonProcessingException e) {
+            log.warn("상품 ID 리스트 캐시 저장 실패 (JSON 직렬화 오류) - strategy: {}, error: {}", 
+                    strategy, e.getMessage());
+        } catch (Exception e) {
+            log.warn("상품 ID 리스트 캐시 저장 실패 - strategy: {}, error: {}", 
+                    strategy, e.getMessage());
+        }
+    }
+    
+    @Override
+    public Optional<java.util.List<Long>> getProductIdsFromCache(CacheStrategy strategy, Long brandId, 
+                                                                  org.springframework.data.domain.Pageable pageable) {
+        try {
+            String key = cacheKeyGenerator.generateProductIdsKey(strategy, brandId, pageable);
+            String value = redisTemplate.opsForValue().get(key);
+            
+            if (value == null) {
+                log.debug("상품 ID 리스트 캐시 미스 - strategy: {}, brandId: {}", strategy, brandId);
+                return Optional.empty();
+            }
+            
+            java.util.List<Long> productIds = objectMapper.readValue(value, 
+                objectMapper.getTypeFactory().constructCollectionType(java.util.List.class, Long.class));
+            
+            log.debug("상품 ID 리스트 캐시 히트 - strategy: {}, brandId: {}, size: {}", 
+                    strategy, brandId, productIds.size());
+            
+            return Optional.of(productIds);
+        } catch (JsonProcessingException e) {
+            log.warn("상품 ID 리스트 캐시 조회 실패 (JSON 역직렬화 오류) - strategy: {}, error: {}", 
+                    strategy, e.getMessage());
+            return Optional.empty();
+        } catch (Exception e) {
+            log.warn("상품 ID 리스트 캐시 조회 실패 - strategy: {}, error: {}", 
+                    strategy, e.getMessage());
+            return Optional.empty();
+        }
+    }
+    
+    @Override
+    public void evictProductIdsByStrategy(CacheStrategy strategy) {
+        try {
+            String pattern = cacheKeyGenerator.generateProductIdsPattern(strategy);
+            deleteByPattern(pattern);
+            
+            log.debug("전략별 상품 ID 리스트 캐시 삭제 성공 - strategy: {}, pattern: {}", 
+                    strategy, pattern);
+        } catch (Exception e) {
+            log.warn("전략별 상품 ID 리스트 캐시 삭제 실패 - strategy: {}, error: {}", 
+                    strategy, e.getMessage());
+        }
+    }
+    
+    @Override
+    public void evictProductIdsByBrand(CacheStrategy strategy, Long brandId) {
+        try {
+            String pattern = cacheKeyGenerator.generateProductIdsPatternByBrand(strategy, brandId);
+            deleteByPattern(pattern);
+            
+            log.debug("브랜드별 상품 ID 리스트 캐시 삭제 성공 - strategy: {}, brandId: {}, pattern: {}", 
+                    strategy, brandId, pattern);
+        } catch (Exception e) {
+            log.warn("브랜드별 상품 ID 리스트 캐시 삭제 실패 - strategy: {}, brandId: {}, error: {}", 
+                    strategy, brandId, e.getMessage());
+        }
+    }
+    
+    // ========== 레거시: 전체 Page 객체 캐싱 (Cold 전략) ==========
+    
     @Override
     public void cacheProductList(String cacheKey, Page<ProductInfo> productList) {
         try {
             String value = objectMapper.writeValueAsString(productList);
             
-            redisTemplate.opsForValue().set(cacheKey, value, PRODUCT_LIST_TTL, TTL_UNIT);
+            redisTemplate.opsForValue().set(cacheKey, value, COLD_DATA_TTL, TTL_UNIT);
             
-            log.debug("상품 목록 캐시 저장 성공 - key: {}, size: {}", 
-                    cacheKey, productList.getContent().size());
+            log.debug("상품 목록 캐시 저장 성공 (Cold/레거시) - key: {}, size: {}, TTL: {}분", 
+                    cacheKey, productList.getContent().size(), COLD_DATA_TTL);
         } catch (JsonProcessingException e) {
             log.warn("상품 목록 캐시 저장 실패 (JSON 직렬화 오류) - key: {}, error: {}", 
                     cacheKey, e.getMessage());
@@ -119,7 +231,7 @@ public class ProductCacheServiceImpl implements ProductCacheService {
             String value = redisTemplate.opsForValue().get(cacheKey);
             
             if (value == null) {
-                log.debug("상품 목록 캐시 미스 - key: {}", cacheKey);
+                log.debug("상품 목록 캐시 미스 (레거시) - key: {}", cacheKey);
                 return Optional.empty();
             }
             
@@ -130,7 +242,7 @@ public class ProductCacheServiceImpl implements ProductCacheService {
                     ProductInfo.class
                 ));
             
-            log.debug("상품 목록 캐시 히트 - key: {}, size: {}", 
+            log.debug("상품 목록 캐시 히트 (레거시) - key: {}, size: {}", 
                     cacheKey, productList.getContent().size());
             
             return Optional.of(productList);
@@ -165,11 +277,13 @@ public class ProductCacheServiceImpl implements ProductCacheService {
             String pattern = cacheKeyGenerator.generateProductListPattern();
             deleteByPattern(pattern);
             
-            log.debug("전체 상품 목록 캐시 삭제 성공 - pattern: {}", pattern);
+            log.debug("전체 상품 목록 캐시 삭제 성공 (레거시) - pattern: {}", pattern);
         } catch (Exception e) {
             log.warn("전체 상품 목록 캐시 삭제 실패 - error: {}", e.getMessage());
         }
     }
+    
+    // ========== 범용 캐시 연산 ==========
     
     @Override
     public void set(String key, Object value, long timeout, TimeUnit timeUnit) {
