@@ -32,9 +32,12 @@ import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserRepository;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
+import com.loopers.infrastructure.like.ProductLikeStatsSyncScheduler;
 import com.loopers.support.error.CoreException;
 import com.loopers.utils.DatabaseCleanUp;
 import com.loopers.utils.RedisCleanUp;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * LikeFacade 통합 테스트
@@ -45,6 +48,7 @@ import com.loopers.utils.RedisCleanUp;
  * @author hyunjikoh
  * @since 2025. 11. 12.
  */
+@Slf4j
 @SpringBootTest
 @DisplayName("LikeFacade 통합 테스트")
 public class LikeIntegrationTest {
@@ -66,6 +70,12 @@ public class LikeIntegrationTest {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private ProductLikeStatsService statsService;
+
+    @Autowired
+    private ProductLikeStatsSyncScheduler syncScheduler;
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
@@ -760,6 +770,21 @@ public class LikeIntegrationTest {
                         .count();
                 assertThat(userLikeCount).isEqualTo(1);
             }
+
+            // MV 테이블 실시간 업데이트 확인
+            Long mvTableLikeCount = statsService.getLikeCount(product.getId());
+            assertThat(mvTableLikeCount).isEqualTo((long) successCount.get());
+            
+            // 배치 동기화 스케줄러를 수동으로 실행하여 동기화 검증
+            syncScheduler.syncProductLikeStats(product.getId());
+            
+            // 동기화 후 MV 테이블 수량 재확인
+            Long afterSyncCount = statsService.getLikeCount(product.getId());
+
+            // 동기화 후에도 정확한 수치가 유지되는지 확인
+            assertThat(afterSyncCount).isEqualTo((long) successCount.get());
+            assertThat(afterSyncCount).isEqualTo(activeLikes);
+            
         }
     }
 }

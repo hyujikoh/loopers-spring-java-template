@@ -72,6 +72,12 @@ public class ProductLikeStatsSyncScheduler {
             log.info("총 대상: {}, 성공: {}, 실패: {}, 소요시간: {}ms", 
                     productIds.size(), successCount, failureCount, elapsedTime);
             
+            // 불일치 건수가 많으면 경고 (실시간 동기화 문제 가능성)
+            if (failureCount > productIds.size() * 0.01) { // 1% 이상 실패
+                log.warn("⚠️ 동기화 실패율이 높습니다 ({}/{}). 실시간 동기화 로직을 점검하세요.", 
+                        failureCount, productIds.size());
+            }
+            
         } catch (Exception e) {
             log.error("상품 좋아요 통계 전체 동기화 중 오류 발생", e);
         }

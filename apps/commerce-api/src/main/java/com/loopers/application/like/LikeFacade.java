@@ -4,8 +4,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.application.product.ProductCacheService;
-import com.loopers.config.redis.RedisLockService;
-import com.loopers.domain.like.LikeEntity;
 import com.loopers.domain.like.LikeResult;
 import com.loopers.domain.like.LikeService;
 import com.loopers.domain.like.ProductLikeStatsService;
@@ -36,7 +34,6 @@ public class LikeFacade {
     private final LikeService likeService;
     private final ProductLikeStatsService statsService;
     private final ProductCacheService cacheService;
-    private final RedisLockService redisLockService;
 
     /**
      * 좋아요를 등록하거나 복원합니다.
