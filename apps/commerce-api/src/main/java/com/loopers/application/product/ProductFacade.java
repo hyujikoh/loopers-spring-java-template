@@ -62,7 +62,6 @@ public class ProductFacade {
     private final UserService userService;
     private final ProductCacheService productCacheService;
     private final com.loopers.domain.brand.BrandService brandService; // 폴백용: 브랜드 정보 조회
-    private final com.loopers.domain.like.ProductLikeStatsService statsService; // 폴백용: 좋아요 수 조회
 
     /**
      * 상품 목록 조회 (Hot/Warm/Cold 전략 적용)
@@ -258,7 +257,7 @@ public class ProductFacade {
         // MV에서 조회된 상품 ID 목록
         List<Long> foundMVIds = mvEntities.stream()
             .map(ProductMaterializedViewEntity::getProductId)
-            .collect(Collectors.toList());
+            .toList();
         
         // MV 엔티티를 ProductInfo로 변환
         List<ProductInfo> products = mvEntities.stream()
@@ -277,7 +276,7 @@ public class ProductFacade {
             for (Long productId : missingIds) {
                 try {
                     ProductEntity product = productService.getActiveProductDetail(productId);
-                    Long likeCount = statsService.getLikeCount(productId);
+                    Long likeCount = likeService.countByProduct(product);
                     products.add(ProductInfo.of(product, likeCount));
                 } catch (Exception e) {
                     log.error("폴백 조회 실패 - productId: {}, error: {}", productId, e.getMessage());
@@ -336,7 +335,7 @@ public class ProductFacade {
                 
                 ProductEntity product = productService.getActiveProductDetail(productId);
                 BrandEntity brand = brandService.getBrandById(product.getBrandId());
-                Long likeCount = statsService.getLikeCount(productId);
+                Long likeCount = likeService.countByProduct(product);
                 
                 productDetail = ProductDetailInfo.of(product, brand, likeCount, false);
                 

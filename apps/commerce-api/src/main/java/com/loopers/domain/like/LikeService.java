@@ -98,4 +98,14 @@ public class LikeService {
         like.delete();
         return true; // 삭제됨 - 통계 업데이트 필요
     }
+
+    /**
+     * 상품의 좋아요 수를 조회합니다.
+     * @param product
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public Long countByProduct(ProductEntity product) {
+        return likeRepository.countByProductIdAndDeletedAtIsNull(product.getId());
+    }
 }

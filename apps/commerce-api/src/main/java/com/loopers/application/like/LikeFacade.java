@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.loopers.application.product.ProductCacheService;
 import com.loopers.domain.like.LikeResult;
 import com.loopers.domain.like.LikeService;
-import com.loopers.domain.like.ProductLikeStatsService;
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.UserEntity;
@@ -32,7 +31,6 @@ public class LikeFacade {
     private final ProductService productService;
     private final UserService userService;
     private final LikeService likeService;
-    private final ProductLikeStatsService statsService;
     private final ProductCacheService cacheService;
 
     /**
@@ -55,24 +53,6 @@ public class LikeFacade {
 
         // 3. 좋아요 등록/복원 (실제 변경 여부 확인)
         LikeResult result = likeService.upsertLike(user, product);
-
-        // 4. 실제로 변경이 발생한 경우에만 통계 업데이트 및 캐시 처리
-        if (result.changed()) {
-            // 4-1. 좋아요 통계 업데이트 (MV 테이블)
-            statsService.increaseLikeCount(productId);
-            
-            // 4-2. 캐시 업데이트 - 좋아요 수만 업데이트 (evict 대신 update)
-            Long newLikeCount = statsService.getLikeCount(productId);
-            cacheService.updateProductDetailLikeCount(productId, newLikeCount);
-            
-            // 4-3. 브랜드별 상품 ID 리스트 캐시 무효화 (정렬 순서 변경 가능성)
-            cacheService.evictProductIdsByBrand(com.loopers.infrastructure.cache.CacheStrategy.HOT, product.getBrandId());
-            
-            log.info("좋아요 등록/복원 완료 (통계 업데이트) - username: {}, productId: {}, newLikeCount: {}", 
-                    username, productId, newLikeCount);
-        } else {
-            log.debug("좋아요 이미 존재 (중복 요청) - username: {}, productId: {}", username, productId);
-        }
 
         // 5. DTO 변환 후 반환
         return LikeInfo.of(result.entity(), product, user);
@@ -97,25 +77,7 @@ public class LikeFacade {
         // 2. 상품 검증
         ProductEntity product = productService.getActiveProductDetail(productId);
 
-        // 3. 좋아요 취소 (실제 변경 여부 확인)
-        boolean changed = likeService.unlikeProduct(user, product);
-        
-        // 4. 실제로 변경이 발생한 경우에만 통계 업데이트 및 캐시 처리
-        if (changed) {
-            // 4-1. 좋아요 통계 업데이트 (MV 테이블)
-            statsService.decreaseLikeCount(productId);
-            
-            // 4-2. 캐시 업데이트 - 좋아요 수만 업데이트 (evict 대신 update)
-            Long newLikeCount = statsService.getLikeCount(productId);
-            cacheService.updateProductDetailLikeCount(productId, newLikeCount);
-            
-            // 4-3. 브랜드별 상품 ID 리스트 캐시 무효화 (정렬 순서 변경 가능성)
-            cacheService.evictProductIdsByBrand(com.loopers.infrastructure.cache.CacheStrategy.HOT, product.getBrandId());
-            
-            log.info("좋아요 취소 완료 (통계 업데이트) - username: {}, productId: {}, newLikeCount: {}", 
-                    username, productId, newLikeCount);
-        } else {
-            log.debug("좋아요 이미 취소됨 (중복 요청) - username: {}, productId: {}", username, productId);
-        }
+        // 3. 좋아요 취소
+        likeService.unlikeProduct(user, product);
     }
 }

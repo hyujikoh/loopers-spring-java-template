@@ -58,7 +58,6 @@ public record ProductInfo(
      * @param likeCount 좋아요 수 (MV 테이블에서 조회)
      * @return ProductInfo
      */
-    @Deprecated
     public static ProductInfo of(ProductEntity product, Long likeCount) {
         if (product == null) {
             throw new IllegalArgumentException("상품 정보는 필수입니다.");
@@ -85,7 +84,6 @@ public record ProductInfo(
      * @param product 상품 엔티티
      * @return ProductInfo
      */
-    @Deprecated
     public static ProductInfo of(ProductEntity product) {
         return of(product, 0L);
     }

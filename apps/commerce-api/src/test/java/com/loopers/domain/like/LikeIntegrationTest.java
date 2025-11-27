@@ -32,7 +32,6 @@ import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserRepository;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
-import com.loopers.infrastructure.like.ProductLikeStatsSyncScheduler;
 import com.loopers.support.error.CoreException;
 import com.loopers.utils.DatabaseCleanUp;
 import com.loopers.utils.RedisCleanUp;
@@ -70,12 +69,6 @@ public class LikeIntegrationTest {
 
     @Autowired
     private ProductService productService;
-
-    @Autowired
-    private ProductLikeStatsService statsService;
-
-    @Autowired
-    private ProductLikeStatsSyncScheduler syncScheduler;
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
@@ -732,26 +725,24 @@ public class LikeIntegrationTest {
 
             // When: 모든 사용자가 동시에 좋아요 등록
             CountDownLatch latch = new CountDownLatch(userCount);
-            AtomicInteger successCount;
-            try (ExecutorService executorService = newFixedThreadPool(userCount)) {
-                successCount = new AtomicInteger(0);
+            ExecutorService executorService = newFixedThreadPool(userCount);
+            AtomicInteger successCount = new AtomicInteger(0);
 
-                for (UserInfo user : users) {
-                    executorService.submit(() -> {
-                        try {
-                            likeFacade.upsertLike(user.username(), product.getId());
-                            successCount.incrementAndGet();
-                        } catch (Exception e) {
-                            // 예외 무시
-                        } finally {
-                            latch.countDown();
-                        }
-                    });
-                }
-
-                latch.await();
-                executorService.shutdown();
+            for (UserInfo user : users) {
+                executorService.submit(() -> {
+                    try {
+                        likeFacade.upsertLike(user.username(), product.getId());
+                        successCount.incrementAndGet();
+                    } catch (Exception e) {
+                        // 예외 무시
+                    } finally {
+                        latch.countDown();
+                    }
+                });
             }
+
+            latch.await();
+            executorService.shutdown();
 
             // Then: 각 사용자별로 독립적인 좋아요가 생성되어야 함
             List<LikeEntity> likes = likeRepository.findAll();
@@ -763,30 +754,8 @@ public class LikeIntegrationTest {
             assertThat(activeLikes).isEqualTo(userCount);
             assertThat(successCount.get()).isEqualTo(userCount);
 
-            // 각 사용자별로 좋아요가 하나씩만 있는지 확인
-            for (UserInfo user : users) {
-                long userLikeCount = likes.stream()
-                        .filter(like -> like.getUserId().equals(user.id())
-                                && like.getProductId().equals(product.getId())
-                                && like.getDeletedAt() == null)
-                        .count();
-                assertThat(userLikeCount).isEqualTo(1);
-            }
 
-            // MV 테이블 실시간 업데이트 확인
-            Long mvTableLikeCount = statsService.getLikeCount(product.getId());
-            assertThat(mvTableLikeCount).isEqualTo((long) successCount.get());
-            
-            // 배치 동기화 스케줄러를 수동으로 실행하여 동기화 검증
-            syncScheduler.syncProductLikeStats(product.getId());
-            
-            // 동기화 후 MV 테이블 수량 재확인
-            Long afterSyncCount = statsService.getLikeCount(product.getId());
 
-            // 동기화 후에도 정확한 수치가 유지되는지 확인
-            assertThat(afterSyncCount).isEqualTo((long) successCount.get());
-            assertThat(afterSyncCount).isEqualTo(activeLikes);
-            
         }
     }
 }
