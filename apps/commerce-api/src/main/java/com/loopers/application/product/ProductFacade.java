@@ -12,9 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.like.LikeService;
-import com.loopers.domain.product.ProductEntity;
-import com.loopers.domain.product.ProductMaterializedViewEntity;
-import com.loopers.domain.product.ProductService;
+import com.loopers.domain.product.*;
 import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.domain.user.UserService;
 import com.loopers.infrastructure.cache.CacheStrategy;

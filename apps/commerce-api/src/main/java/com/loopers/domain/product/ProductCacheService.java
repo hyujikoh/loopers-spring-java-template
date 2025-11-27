@@ -1,12 +1,15 @@
-package com.loopers.application.product;
+package com.loopers.domain.product;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.loopers.application.product.ProductDetailInfo;
+import com.loopers.application.product.ProductInfo;
 import com.loopers.infrastructure.cache.CacheStrategy;
 
 /**
@@ -174,4 +177,34 @@ public interface ProductCacheService {
      * @param pattern 캐시 키 패턴 (예: "product:ids:hot:*")
      */
     void deleteByPattern(String pattern);
+
+    // ========== 세밀한 캐시 무효화 (Incremental Cache Invalidation) ==========
+
+    /**
+     * 특정 상품들의 모든 관련 캐시를 무효화합니다.
+     *
+     * <p>상품 상세 캐시와 해당 상품이 포함된 목록 캐시를 모두 삭제합니다.</p>
+     *
+     * @param productIds 무효화할 상품 ID 목록
+     */
+    void evictProductCaches(Set<Long> productIds);
+
+    /**
+     * 특정 브랜드의 모든 관련 캐시를 무효화합니다.
+     *
+     * <p>해당 브랜드의 상품 목록 캐시를 전략별로 모두 삭제합니다.</p>
+     *
+     * @param brandIds 무효화할 브랜드 ID 목록
+     */
+    void evictBrandCaches(Set<Long> brandIds);
+
+    /**
+     * MV 갱신 후 관련 캐시를 무효화합니다.
+     *
+     * <p>변경된 상품과 영향받은 브랜드의 캐시를 선택적으로 무효화합니다.</p>
+     *
+     * @param changedProductIds 변경된 상품 ID 목록
+     * @param affectedBrandIds  영향받은 브랜드 ID 목록
+     */
+    void evictCachesAfterMVSync(Set<Long> changedProductIds, Set<Long> affectedBrandIds);
 }

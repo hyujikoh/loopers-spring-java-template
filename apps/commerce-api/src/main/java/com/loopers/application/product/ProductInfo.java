@@ -56,7 +56,7 @@ public record ProductInfo(
      * @param product   상품 엔티티
      * @param likeCount 좋아요 수 (MV 테이블에서 조회)
      * @return ProductInfo
-     * @deprecated MV 테이블을 사용하는 {@link #from(ProductMaterializedViewEntity)}를 사용하세요.
+     * MV 테이블을 사용하는 {@link #from(ProductMaterializedViewEntity)}를 사용하세요.
      */
     public static ProductInfo of(ProductEntity product, Long likeCount) {
         if (product == null) {
@@ -82,7 +82,7 @@ public record ProductInfo(
      *
      * @param product 상품 엔티티
      * @return ProductInfo
-     * @deprecated MV 테이블을 사용하는 {@link #from(ProductMaterializedViewEntity)}를 사용하세요.
+     * MV 테이블을 사용하는 {@link #from(ProductMaterializedViewEntity)}를 사용하세요.
      */
     public static ProductInfo of(ProductEntity product) {
         return of(product, 0L);

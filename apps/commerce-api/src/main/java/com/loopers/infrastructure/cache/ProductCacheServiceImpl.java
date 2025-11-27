@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.loopers.application.product.ProductCacheService;
+import com.loopers.domain.product.ProductCacheService;
 import com.loopers.application.product.ProductDetailInfo;
 import com.loopers.application.product.ProductInfo;
 
@@ -397,6 +397,110 @@ public class ProductCacheServiceImpl implements ProductCacheService {
         } catch (Exception e) {
             log.warn("패턴 매칭 캐시 삭제 실패 - pattern: {}, error: {}",
                     pattern, e.getMessage());
+        }
+    }
+
+    // ========== 세밀한 캐시 무효화 (Incremental Cache Invalidation) ==========
+
+    @Override
+    public void evictProductCaches(Set<Long> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            log.debug("무효화할 상품 ID가 없습니다.");
+            return;
+        }
+
+        log.info("상품 캐시 무효화 시작 - 대상 상품 수: {}", productIds.size());
+
+        int deletedCount = 0;
+
+        // 1. 각 상품의 상세 캐시 삭제
+        for (Long productId : productIds) {
+            try {
+                evictProductDetail(productId);
+                deletedCount++;
+            } catch (Exception e) {
+                log.warn("상품 상세 캐시 삭제 실패 - productId: {}", productId, e);
+            }
+        }
+
+        log.info("상품 캐시 무효화 완료 - 삭제된 상세 캐시: {}", deletedCount);
+    }
+
+    @Override
+    public void evictBrandCaches(Set<Long> brandIds) {
+        if (brandIds == null || brandIds.isEmpty()) {
+            log.debug("무효화할 브랜드 ID가 없습니다.");
+            return;
+        }
+
+        log.info("브랜드 캐시 무효화 시작 - 대상 브랜드 수: {}", brandIds.size());
+
+        int deletedKeyCount = 0;
+
+        // 각 브랜드별로 Hot/Warm 캐시 삭제
+        for (Long brandId : brandIds) {
+            try {
+                // Hot 전략 캐시 삭제 (브랜드별 인기순 목록)
+                String hotPattern = String.format("product:ids:hot:brand:%d:*", brandId);
+                Set<String> hotKeys = redisTemplate.keys(hotPattern);
+                if (hotKeys != null && !hotKeys.isEmpty()) {
+                    redisTemplate.delete(hotKeys);
+                    deletedKeyCount += hotKeys.size();
+                    log.debug("Hot 캐시 삭제 - brandId: {}, 삭제 키 수: {}", brandId, hotKeys.size());
+                }
+
+                // Warm 전략 캐시 삭제 (브랜드별 일반 목록)
+                String warmPattern = String.format("product:ids:warm:brand:%d:*", brandId);
+                Set<String> warmKeys = redisTemplate.keys(warmPattern);
+                if (warmKeys != null && !warmKeys.isEmpty()) {
+                    redisTemplate.delete(warmKeys);
+                    deletedKeyCount += warmKeys.size();
+                    log.debug("Warm 캐시 삭제 - brandId: {}, 삭제 키 수: {}", brandId, warmKeys.size());
+                }
+
+                // 레거시 캐시 삭제
+                evictProductListByBrand(brandId);
+
+            } catch (Exception e) {
+                log.warn("브랜드 캐시 삭제 실패 - brandId: {}", brandId, e);
+            }
+        }
+
+        log.info("브랜드 캐시 무효화 완료 - 삭제된 키 수: {}", deletedKeyCount);
+    }
+
+    @Override
+    public void evictCachesAfterMVSync(Set<Long> changedProductIds, Set<Long> affectedBrandIds) {
+        log.info("MV 동기화 후 캐시 무효화 시작 - 변경된 상품: {}개, 영향받은 브랜드: {}개",
+                changedProductIds.size(), affectedBrandIds.size());
+
+        long startTime = System.currentTimeMillis();
+
+        try {
+            // 1. 변경된 상품의 상세 캐시 무효화
+            evictProductCaches(changedProductIds);
+
+            // 2. 영향받은 브랜드의 목록 캐시 무효화
+            evictBrandCaches(affectedBrandIds);
+
+            // 3. 전체 상품 목록 캐시 무효화 (Hot/Warm 전략)
+            // 인기순 정렬이나 전체 목록에도 영향이 있으므로 전체 목록 캐시도 무효화
+            if (!changedProductIds.isEmpty()) {
+                // Hot 전략 - 전체 상품 목록 (브랜드 필터 없음)
+                deleteByPattern("product:ids:hot:brand:null:*");
+
+                // Warm 전략 - 전체 상품 목록 (브랜드 필터 없음)
+                deleteByPattern("product:ids:warm:brand:null:*");
+
+                log.debug("전체 상품 목록 캐시 무효화 완료");
+            }
+
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("MV 동기화 후 캐시 무효화 완료 - 소요 시간: {}ms", duration);
+
+        } catch (Exception e) {
+            long duration = System.currentTimeMillis() - startTime;
+            log.error("MV 동기화 후 캐시 무효화 실패 - 소요 시간: {}ms", duration, e);
         }
     }
 }

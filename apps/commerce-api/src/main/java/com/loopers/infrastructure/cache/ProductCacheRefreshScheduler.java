@@ -9,7 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.loopers.application.product.ProductCacheService;
+import com.loopers.domain.product.ProductCacheService;
 import com.loopers.application.product.ProductDetailInfo;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
