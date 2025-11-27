@@ -3,7 +3,6 @@ package com.loopers.interfaces.api.product;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 import com.loopers.application.product.ProductDetailInfo;
 import com.loopers.application.product.ProductInfo;

@@ -1,5 +1,7 @@
 package com.loopers.domain.brand;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -36,6 +38,18 @@ public class BrandService {
     @Transactional(readOnly = true)
     public Page<BrandEntity> listBrands(Pageable pageable) {
         return brandRepository.listBrands(pageable);
+    }
+
+    /**
+     * 모든 활성 브랜드를 조회합니다.
+     *
+     * <p>캐시 배치 갱신 등에서 사용됩니다.</p>
+     *
+     * @return 모든 활성 브랜드 목록
+     */
+    @Transactional(readOnly = true)
+    public List<BrandEntity> getAllBrands() {
+        return brandRepository.findAll();
     }
 
     /**

@@ -45,6 +45,22 @@ public class ProductService {
      * @throws CoreException 상품을 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
+    public ProductEntity getActiveProductDetail(Long id) {
+        return productRepository.findActiveById(id)
+                .orElseThrow(() -> new CoreException(
+                        ErrorType.NOT_FOUND_PRODUCT,
+                        String.format("상품을 찾을 수 없습니다. (ID: %d)", id)
+                ));
+    }
+
+    /**
+     * 상품 ID로 상품 상세 정보를 조회합니다.
+     *
+     * @param id 상품 ID
+     * @return 조회된 상품 엔티티
+     * @throws CoreException 상품을 찾을 수 없는 경우
+     */
+    @Transactional(readOnly = true)
     public ProductEntity getProductDetail(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new CoreException(
@@ -86,26 +102,6 @@ public class ProductService {
     }
 
     /**
-     * 상품 재고를 차감합니다.
-     * <p>
-     * 재고 차감은 상품 도메인의 핵심 비즈니스 로직입니다.
-     *
-     * @param productId 상품 ID
-     * @param quantity  차감할 재고 수량
-     * @return 재고가 차감된 상품 엔티티
-     * @throws CoreException 상품을 찾을 수 없거나 재고가 부족한 경우
-     */
-    @Transactional
-    public ProductEntity deductStock(Long productId, int quantity) {
-        // 비관적 락을 사용하여 동시성 제어
-        ProductEntity product = productRepository.findByIdWithLock(productId)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다. ID: " + productId));
-
-        product.deductStock(quantity);
-        return productRepository.save(product);
-    }
-
-    /**
      * 상품 엔티티의 재고를 차감합니다.
      * <p>
      * 이미 조회된 상품 엔티티의 재고를 차감할 때 사용합니다.
@@ -137,35 +133,6 @@ public class ProductService {
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다. ID: " + productId));
 
         product.restoreStock(quantity);
-        return productRepository.save(product);
-    }
-
-
-    /**
-     * 상품의 좋아요 수를 증가시킵니다.
-     *
-     * @param productId 상품 ID
-     * @return 좋아요 수가 증가된 상품 엔티티
-     * @throws CoreException 상품을 찾을 수 없는 경우
-     */
-    @Transactional
-    public ProductEntity increaseLikeCount(Long productId) {
-        ProductEntity product = getProductDetail(productId);
-        product.increaseLikeCount();
-        return productRepository.save(product);
-    }
-
-    /**
-     * 상품의 좋아요 수를 감소시킵니다.
-     *
-     * @param productId 상품 ID
-     * @return 좋아요 수가 감소된 상품 엔티티
-     * @throws CoreException 상품을 찾을 수 없는 경우
-     */
-    @Transactional
-    public ProductEntity decreaseLikeCount(Long productId) {
-        ProductEntity product = getProductDetail(productId);
-        product.decreaseLikeCount();
         return productRepository.save(product);
     }
 }
