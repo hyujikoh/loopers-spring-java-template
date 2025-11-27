@@ -15,6 +15,8 @@ public interface ProductRepository {
 
     Page<ProductEntity> getProducts(ProductSearchFilter searchFilter);
 
+    Optional<ProductEntity> findActiveById(Long id);
+
     Optional<ProductEntity> findById(Long id);
 
     /**

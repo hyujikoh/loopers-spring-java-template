@@ -45,6 +45,22 @@ public class ProductService {
      * @throws CoreException 상품을 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
+    public ProductEntity getActiveProductDetail(Long id) {
+        return productRepository.findActiveById(id)
+                .orElseThrow(() -> new CoreException(
+                        ErrorType.NOT_FOUND_PRODUCT,
+                        String.format("상품을 찾을 수 없습니다. (ID: %d)", id)
+                ));
+    }
+
+    /**
+     * 상품 ID로 상품 상세 정보를 조회합니다.
+     *
+     * @param id 상품 ID
+     * @return 조회된 상품 엔티티
+     * @throws CoreException 상품을 찾을 수 없는 경우
+     */
+    @Transactional(readOnly = true)
     public ProductEntity getProductDetail(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new CoreException(
