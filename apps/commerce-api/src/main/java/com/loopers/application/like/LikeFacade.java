@@ -3,9 +3,9 @@ package com.loopers.application.like;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.loopers.domain.product.ProductCacheService;
 import com.loopers.domain.like.LikeResult;
 import com.loopers.domain.like.LikeService;
+import com.loopers.domain.product.ProductCacheService;
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.UserEntity;

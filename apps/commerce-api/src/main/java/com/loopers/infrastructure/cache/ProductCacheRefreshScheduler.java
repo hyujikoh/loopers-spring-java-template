@@ -9,10 +9,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.loopers.domain.product.ProductCacheService;
 import com.loopers.application.product.ProductDetailInfo;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
+import com.loopers.domain.product.ProductCacheService;
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.product.dto.ProductSearchFilter;
@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 상품 캐시 배치 갱신 스케줄러
- *
+ * <p>
  * Hot 데이터를 주기적으로 갱신하여 캐시 스탬피드 방지
  * - 인기 상품 상세 정보 (좋아요 수 상위 100개)
  * - 브랜드별 인기순 상품 ID 리스트 (첫 3페이지)

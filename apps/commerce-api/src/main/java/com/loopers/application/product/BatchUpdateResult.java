@@ -47,21 +47,21 @@ public class BatchUpdateResult {
         this.durationMs = durationMs;
         this.errorMessage = errorMessage;
         this.changedProductIds = changedProductIds != null
-            ? Collections.unmodifiableSet(changedProductIds)
-            : Collections.emptySet();
+                ? Collections.unmodifiableSet(changedProductIds)
+                : Collections.emptySet();
         this.affectedBrandIds = affectedBrandIds != null
-            ? Collections.unmodifiableSet(affectedBrandIds)
-            : Collections.emptySet();
+                ? Collections.unmodifiableSet(affectedBrandIds)
+                : Collections.emptySet();
     }
 
     /**
      * 성공 결과를 생성합니다.
      *
-     * @param createdCount       생성된 레코드 수
-     * @param updatedCount       갱신된 레코드 수
-     * @param durationMs         소요 시간 (밀리초)
-     * @param changedProductIds  변경된 상품 ID 목록
-     * @param affectedBrandIds   영향받은 브랜드 ID 목록
+     * @param createdCount      생성된 레코드 수
+     * @param updatedCount      갱신된 레코드 수
+     * @param durationMs        소요 시간 (밀리초)
+     * @param changedProductIds 변경된 상품 ID 목록
+     * @param affectedBrandIds  영향받은 브랜드 ID 목록
      * @return 성공 결과
      */
     public static BatchUpdateResult success(
@@ -72,13 +72,13 @@ public class BatchUpdateResult {
             Set<Long> affectedBrandIds
     ) {
         return new BatchUpdateResult(
-            true,
-            createdCount,
-            updatedCount,
-            durationMs,
-            null,
-            changedProductIds,
-            affectedBrandIds
+                true,
+                createdCount,
+                updatedCount,
+                durationMs,
+                null,
+                changedProductIds,
+                affectedBrandIds
         );
     }
 
@@ -103,13 +103,13 @@ public class BatchUpdateResult {
      */
     public static BatchUpdateResult failure(String errorMessage, long durationMs) {
         return new BatchUpdateResult(
-            false,
-            0,
-            0,
-            durationMs,
-            errorMessage,
-            Collections.emptySet(),
-            Collections.emptySet()
+                false,
+                0,
+                0,
+                durationMs,
+                errorMessage,
+                Collections.emptySet(),
+                Collections.emptySet()
         );
     }
 

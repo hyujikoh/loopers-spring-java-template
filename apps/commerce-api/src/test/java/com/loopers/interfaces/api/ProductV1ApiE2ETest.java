@@ -16,13 +16,13 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
 import com.loopers.application.product.ProductFacade;
-import com.loopers.domain.product.ProductMVService;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.ProductDomainCreateRequest;
 import com.loopers.domain.product.ProductEntity;
+import com.loopers.domain.product.ProductMVService;
 import com.loopers.domain.product.ProductService;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;

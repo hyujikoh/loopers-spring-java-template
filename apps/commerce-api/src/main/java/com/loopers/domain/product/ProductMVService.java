@@ -1,11 +1,6 @@
 package com.loopers.domain.product;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -200,11 +195,11 @@ public class ProductMVService {
                     createdCount, updatedCount, changedProductIds.size(), affectedBrandIds.size(), duration);
 
             return BatchUpdateResult.success(
-                createdCount,
-                updatedCount,
-                duration,
-                changedProductIds,
-                affectedBrandIds
+                    createdCount,
+                    updatedCount,
+                    duration,
+                    changedProductIds,
+                    affectedBrandIds
             );
 
         } catch (Exception e) {
@@ -354,7 +349,7 @@ public class ProductMVService {
 
         // 가격 변경
         if (!mv.getPrice().getOriginPrice().equals(product.getPrice().getOriginPrice()) ||
-            !mv.getPrice().getDiscountPrice().equals(product.getPrice().getDiscountPrice())) {
+                !mv.getPrice().getDiscountPrice().equals(product.getPrice().getDiscountPrice())) {
             return true;
         }
 

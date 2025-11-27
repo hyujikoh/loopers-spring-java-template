@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.application.product.ProductDetailInfo;
-import com.loopers.application.product.ProductInfo;
 import com.loopers.infrastructure.cache.CacheKeyGenerator;
 import com.loopers.infrastructure.cache.CacheStrategy;
 
@@ -119,49 +117,6 @@ public class ProductCacheService {
         }
     }
 
-
-    public void updateProductDetailLikeCount(Long productId, Long likeCount) {
-        try {
-            String key = cacheKeyGenerator.generateProductDetailKey(productId);
-            String value = redisTemplate.opsForValue().get(key);
-
-            if (value == null) {
-                log.debug("캐시 없음 - 좋아요 수 업데이트 스킵 - productId: {}", productId);
-                return;
-            }
-
-            // 기존 캐시 데이터 역직렬화
-            ProductDetailInfo cachedDetail = objectMapper.readValue(value, ProductDetailInfo.class);
-
-            // 좋아요 수만 업데이트한 새 객체 생성
-            ProductDetailInfo updatedDetail = new ProductDetailInfo(
-                    cachedDetail.id(),
-                    cachedDetail.name(),
-                    cachedDetail.description(),
-                    likeCount, // 새로운 좋아요 수
-                    cachedDetail.stockQuantity(),
-                    cachedDetail.price(),
-                    cachedDetail.brand(),
-                    cachedDetail.isLiked()
-            );
-
-            // 업데이트된 데이터를 캐시에 저장 (기존 TTL 유지)
-            Long ttl = redisTemplate.getExpire(key, TTL_UNIT);
-            if (ttl != null && ttl > 0) {
-                String updatedValue = objectMapper.writeValueAsString(updatedDetail);
-                redisTemplate.opsForValue().set(key, updatedValue, ttl, TTL_UNIT);
-
-                log.debug("좋아요 수 업데이트 - productId: {}, likeCount: {}", productId, likeCount);
-            } else {
-                log.debug("캐시 TTL 만료 - 업데이트 스킵 - productId: {}", productId);
-            }
-        } catch (JsonProcessingException e) {
-            log.warn("좋아요 수 업데이트 실패 (JSON 처리) - productId: {}", productId);
-        } catch (Exception e) {
-            log.warn("좋아요 수 업데이트 실패 - productId: {}", productId);
-        }
-    }
-
     // ========== Hot/Warm: 상품 ID 리스트 (Hot: 60분, Warm: 10분) ==========
 
 
@@ -222,63 +177,7 @@ public class ProductCacheService {
         }
     }
 
-
-    public void evictProductIdsByBrand(CacheStrategy strategy, Long brandId) {
-        try {
-            String pattern = cacheKeyGenerator.generateProductIdsPatternByBrand(strategy, brandId);
-            deleteByPattern(pattern);
-
-            log.debug("브랜드별 캐시 삭제 - strategy: {}, brandId: {}", strategy, brandId);
-        } catch (Exception e) {
-            log.warn("브랜드별 캐시 삭제 실패 - strategy: {}, brandId: {}", strategy, brandId);
-        }
-    }
-
     // ========== Cold: 전체 Page 객체 (레거시, TTL 5분) ==========
-
-
-    public void cacheProductList(String cacheKey, Page<ProductInfo> productList) {
-        try {
-            String value = objectMapper.writeValueAsString(productList);
-
-            redisTemplate.opsForValue().set(cacheKey, value, COLD_DATA_TTL, TTL_UNIT);
-
-            log.debug("목록 캐시 저장 - key: {}", cacheKey);
-        } catch (JsonProcessingException e) {
-            log.warn("목록 캐시 저장 실패 (JSON 직렬화) - key: {}", cacheKey);
-        } catch (Exception e) {
-            log.warn("목록 캐시 저장 실패 - key: {}", cacheKey);
-        }
-    }
-
-
-    public Optional<Page<ProductInfo>> getProductListFromCache(String cacheKey) {
-        try {
-            String value = redisTemplate.opsForValue().get(cacheKey);
-
-            if (value == null) {
-                log.debug("캐시 미스 - key: {}", cacheKey);
-                return Optional.empty();
-            }
-
-            // Page 객체 역직렬화
-            Page<ProductInfo> productList = objectMapper.readValue(value,
-                    objectMapper.getTypeFactory().constructParametricType(
-                            org.springframework.data.domain.PageImpl.class,
-                            ProductInfo.class
-                    ));
-
-            log.debug("캐시 히트 - key: {}", cacheKey);
-
-            return Optional.of(productList);
-        } catch (JsonProcessingException e) {
-            log.warn("캐시 조회 실패 (JSON 역직렬화) - key: {}", cacheKey);
-            return Optional.empty();
-        } catch (Exception e) {
-            log.warn("캐시 조회 실패 - key: {}", cacheKey);
-            return Optional.empty();
-        }
-    }
 
 
     public void evictProductListByBrand(Long brandId) {
@@ -289,18 +188,6 @@ public class ProductCacheService {
             log.debug("브랜드 목록 캐시 삭제 - brandId: {}", brandId);
         } catch (Exception e) {
             log.warn("브랜드 목록 캐시 삭제 실패 - brandId: {}", brandId);
-        }
-    }
-
-
-    public void evictAllProductList() {
-        try {
-            String pattern = cacheKeyGenerator.generateProductListPattern();
-            deleteByPattern(pattern);
-
-            log.debug("전체 목록 캐시 삭제");
-        } catch (Exception e) {
-            log.warn("전체 목록 캐시 삭제 실패");
         }
     }
 
@@ -342,17 +229,6 @@ public class ProductCacheService {
             return Optional.empty();
         }
     }
-
-
-    public void delete(String key) {
-        try {
-            redisTemplate.delete(key);
-            log.debug("캐시 삭제 - key: {}", key);
-        } catch (Exception e) {
-            log.warn("캐시 삭제 실패 - key: {}", key);
-        }
-    }
-
 
     public void deleteByPattern(String pattern) {
         try {
