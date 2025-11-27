@@ -732,24 +732,26 @@ public class LikeIntegrationTest {
 
             // When: 모든 사용자가 동시에 좋아요 등록
             CountDownLatch latch = new CountDownLatch(userCount);
-            ExecutorService executorService = newFixedThreadPool(userCount);
-            AtomicInteger successCount = new AtomicInteger(0);
+            AtomicInteger successCount;
+            try (ExecutorService executorService = newFixedThreadPool(userCount)) {
+                successCount = new AtomicInteger(0);
 
-            for (UserInfo user : users) {
-                executorService.submit(() -> {
-                    try {
-                        likeFacade.upsertLike(user.username(), product.getId());
-                        successCount.incrementAndGet();
-                    } catch (Exception e) {
-                        // 예외 무시
-                    } finally {
-                        latch.countDown();
-                    }
-                });
+                for (UserInfo user : users) {
+                    executorService.submit(() -> {
+                        try {
+                            likeFacade.upsertLike(user.username(), product.getId());
+                            successCount.incrementAndGet();
+                        } catch (Exception e) {
+                            // 예외 무시
+                        } finally {
+                            latch.countDown();
+                        }
+                    });
+                }
+
+                latch.await();
+                executorService.shutdown();
             }
-
-            latch.await();
-            executorService.shutdown();
 
             // Then: 각 사용자별로 독립적인 좋아요가 생성되어야 함
             List<LikeEntity> likes = likeRepository.findAll();

@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,11 +26,9 @@ import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
-import com.loopers.domain.order.OrderService;
 import com.loopers.domain.order.OrderStatus;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductEntity;
-import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.Gender;
 import com.loopers.domain.user.UserEntity;
@@ -145,11 +142,11 @@ public class TransactionAndConcurrencyIntegrationTest {
                     .hasMessageContaining("주문할 수 없는 상품입니다.");
 
             // Then: 첫 번째 상품의 재고가 원래대로 복구되었는지 확인
-            ProductEntity product1AfterFail = productService.getProductDetail(product1.getId());
+            ProductEntity product1AfterFail = productService.getActiveProductDetail(product1.getId());
             assertThat(product1AfterFail.getStockQuantity()).isEqualTo(100);
 
             // Then: 두 번째 상품의 재고도 변경되지 않았는지 확인
-            ProductEntity product2AfterFail = productService.getProductDetail(product2.getId());
+            ProductEntity product2AfterFail = productService.getActiveProductDetail(product2.getId());
             assertThat(product2AfterFail.getStockQuantity()).isEqualTo(5);
         }
 
@@ -213,13 +210,13 @@ public class TransactionAndConcurrencyIntegrationTest {
                     .hasMessageContaining("포인트가 부족합니다");
 
             // Then: 모든 상품의 재고가 원래대로 복구되었는지 확인
-            ProductEntity product1AfterFail = productService.getProductDetail(product1.getId());
+            ProductEntity product1AfterFail = productService.getActiveProductDetail(product1.getId());
             assertThat(product1AfterFail.getStockQuantity()).isEqualTo(100);
 
-            ProductEntity product2AfterFail = productService.getProductDetail(product2.getId());
+            ProductEntity product2AfterFail = productService.getActiveProductDetail(product2.getId());
             assertThat(product2AfterFail.getStockQuantity()).isEqualTo(50);
 
-            ProductEntity product3AfterFail = productService.getProductDetail(product3.getId());
+            ProductEntity product3AfterFail = productService.getActiveProductDetail(product3.getId());
             assertThat(product3AfterFail.getStockQuantity()).isEqualTo(30);
 
             // Then: 사용자 포인트도 차감되지 않았는지 확인
@@ -271,7 +268,7 @@ public class TransactionAndConcurrencyIntegrationTest {
                     .isInstanceOf(IllegalArgumentException.class);
 
             // Then: 재고가 원래대로 복구되었는지 확인
-            ProductEntity productAfterFail = productService.getProductDetail(product.getId());
+            ProductEntity productAfterFail = productService.getActiveProductDetail(product.getId());
             assertThat(productAfterFail.getStockQuantity()).isEqualTo(initialStock);
 
             // Then: 포인트가 차감되지 않았는지 확인
@@ -362,7 +359,7 @@ public class TransactionAndConcurrencyIntegrationTest {
             assertThat(failCount.get()).isZero();
 
             // Then: 최종 재고가 정확히 차감되었는지 검증 (동시성 제어 완벽)
-            ProductEntity finalProduct = productService.getProductDetail(product.getId());
+            ProductEntity finalProduct = productService.getActiveProductDetail(product.getId());
             int expectedFinalStock = 0;
 
             // 엄격한 검증: 정확히 일치해야 함
@@ -458,7 +455,7 @@ public class TransactionAndConcurrencyIntegrationTest {
             // Then: 성공 + 실패 = 전체 시도 수
             assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount);
 
-            ProductEntity finalProduct = productService.getProductDetail(product.getId());
+            ProductEntity finalProduct = productService.getActiveProductDetail(product.getId());
             assertThat(finalProduct.getStockQuantity())
                     .as("재고는 절대 음수가 될 수 없음 (Oversell 방지)")
                     .isGreaterThanOrEqualTo(0)
@@ -513,7 +510,7 @@ public class TransactionAndConcurrencyIntegrationTest {
             OrderInfo createdOrder = orderFacade.createOrder(orderCommand);
 
             // Given: 주문 생성 후 상태 확인
-            ProductEntity productAfterOrder = productService.getProductDetail(product.getId());
+            ProductEntity productAfterOrder = productService.getActiveProductDetail(product.getId());
             assertThat(productAfterOrder.getStockQuantity()).isEqualTo(initialStock - orderQuantity);
 
             UserEntity userAfterOrder = userRepository.findByUsername(userInfo.username())
@@ -525,7 +522,7 @@ public class TransactionAndConcurrencyIntegrationTest {
             OrderInfo cancelledOrder = orderFacade.cancelOrder(createdOrder.id(), userInfo.username());
 
             // Then: 재고 원복 확인
-            ProductEntity productAfterCancel = productService.getProductDetail(product.getId());
+            ProductEntity productAfterCancel = productService.getActiveProductDetail(product.getId());
             assertThat(productAfterCancel.getStockQuantity()).isEqualTo(initialStock);
 
             // Then: 포인트 환불 확인
@@ -623,7 +620,7 @@ public class TransactionAndConcurrencyIntegrationTest {
             assertThat(failCount.get()).isZero();
 
             // Then: 최종 재고가 정확히 차감되었는지 검증
-            ProductEntity finalProduct = productService.getProductDetail(product.getId());
+            ProductEntity finalProduct = productService.getActiveProductDetail(product.getId());
             int expectedFinalStock = initialStock - (threadCount * orderQuantityPerUser);
             assertThat(finalProduct.getStockQuantity())
                     .as("동시성 제어로 재고는 정확히 차감되어야 함")
@@ -719,7 +716,7 @@ public class TransactionAndConcurrencyIntegrationTest {
             assertThat(failCount.get()).isGreaterThan(0);
 
             // Then: 최종 재고 확인 - Oversell 절대 발생하지 않음
-            ProductEntity finalProduct = productService.getProductDetail(product.getId());
+            ProductEntity finalProduct = productService.getActiveProductDetail(product.getId());
             assertThat(finalProduct.getStockQuantity())
                     .as("재고는 절대 음수가 될 수 없음 (Oversell 방지)")
                     .isGreaterThanOrEqualTo(0);
@@ -804,9 +801,9 @@ public class TransactionAndConcurrencyIntegrationTest {
             }
 
             // Then: 각 상품의 재고가 독립적으로 정확히 차감되었는지 확인
-            ProductEntity finalProduct1 = productService.getProductDetail(product1.getId());
-            ProductEntity finalProduct2 = productService.getProductDetail(product2.getId());
-            ProductEntity finalProduct3 = productService.getProductDetail(product3.getId());
+            ProductEntity finalProduct1 = productService.getActiveProductDetail(product1.getId());
+            ProductEntity finalProduct2 = productService.getActiveProductDetail(product2.getId());
+            ProductEntity finalProduct3 = productService.getActiveProductDetail(product3.getId());
 
             // 모든 주문이 성공했다면
             if (successCount.get() == threadCount) {

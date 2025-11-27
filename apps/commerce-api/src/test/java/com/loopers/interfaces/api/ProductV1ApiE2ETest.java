@@ -15,6 +15,8 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
+import com.loopers.application.product.ProductFacade;
+import com.loopers.application.product.ProductMVService;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
@@ -52,6 +54,13 @@ class ProductV1ApiE2ETest {
     private UserFacade userFacade;
 
     @Autowired
+    private ProductMVService productMVService;
+
+    @Autowired
+    private ProductFacade productFacade;
+
+
+    @Autowired
     public ProductV1ApiE2ETest(
             TestRestTemplate testRestTemplate,
             DatabaseCleanUp databaseCleanUp,
@@ -87,6 +96,7 @@ class ProductV1ApiE2ETest {
             ProductEntity product = productService.registerProduct(productRequest);
             testProductIds.add(product.getId());
         }
+        productMVService.syncMaterializedView();
 
         // 테스트용 사용자 생성 (상품 상세 조회 시 좋아요 정보 테스트용)
         UserRegisterCommand userCommand = UserTestFixture.createDefaultUserCommand();
@@ -169,6 +179,7 @@ class ProductV1ApiE2ETest {
                 );
                 productService.registerProduct(productRequest);
             }
+            productMVService.syncMaterializedView();
 
             // when
             ParameterizedTypeReference<ApiResponse<PageResponse<ProductV1Dtos.ProductListResponse>>> responseType =
@@ -193,11 +204,9 @@ class ProductV1ApiE2ETest {
         void get_products_returns_empty_list_when_no_products() {
             // given - 모든 상품 삭제
             testProductIds.forEach(productId -> {
-                ProductEntity product = productService.getProductDetail(productId);
-                product.delete();
-                productJpaRepository.save(product);
-
+                productFacade.deletedProduct(productId);
             });
+            productMVService.syncMaterializedView();
 
             // when
             ParameterizedTypeReference<ApiResponse<PageResponse<ProductV1Dtos.ProductListResponse>>> responseType =
@@ -330,9 +339,9 @@ class ProductV1ApiE2ETest {
         void get_product_detail_fail_when_product_deleted() {
             // given
             Long productId = testProductIds.get(0);
-            ProductEntity product = productService.getProductDetail(productId);
-            product.delete();
-            productJpaRepository.save(product);
+            ProductEntity product = productService.getActiveProductDetail(productId);
+            productFacade.deletedProduct(product.getId());
+
 
             // when
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> responseType =

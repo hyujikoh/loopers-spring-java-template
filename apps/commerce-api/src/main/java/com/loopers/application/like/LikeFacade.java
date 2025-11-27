@@ -51,7 +51,7 @@ public class LikeFacade {
         UserEntity user = userService.getUserByUsername(username);
 
         // 2. 상품 검증
-        ProductEntity product = productService.getProductDetail(productId);
+        ProductEntity product = productService.getActiveProductDetail(productId);
 
         // 3. 좋아요 등록/복원 (실제 변경 여부 확인)
         LikeResult result = likeService.upsertLike(user, product);
@@ -95,7 +95,7 @@ public class LikeFacade {
         UserEntity user = userService.getUserByUsername(username);
 
         // 2. 상품 검증
-        ProductEntity product = productService.getProductDetail(productId);
+        ProductEntity product = productService.getActiveProductDetail(productId);
 
         // 3. 좋아요 취소 (실제 변경 여부 확인)
         boolean changed = likeService.unlikeProduct(user, product);

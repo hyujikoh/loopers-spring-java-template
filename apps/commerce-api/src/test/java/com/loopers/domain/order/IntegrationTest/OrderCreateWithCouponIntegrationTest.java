@@ -768,7 +768,7 @@ public class OrderCreateWithCouponIntegrationTest {
             assertThat(unusedCoupon.getStatus()).isEqualTo(CouponStatus.UNUSED);
 
             // Then: 상품 재고는 변경되지 않음
-            ProductEntity unchangedProduct = productService.getProductDetail(product.getId());
+            ProductEntity unchangedProduct = productService.getActiveProductDetail(product.getId());
             assertThat(unchangedProduct.getStockQuantity()).isEqualTo(5);
         }
     }

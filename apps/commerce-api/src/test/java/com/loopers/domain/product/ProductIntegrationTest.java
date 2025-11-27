@@ -20,6 +20,7 @@ import com.loopers.application.like.LikeFacade;
 import com.loopers.application.product.ProductDetailInfo;
 import com.loopers.application.product.ProductFacade;
 import com.loopers.application.product.ProductInfo;
+import com.loopers.application.product.ProductMVService;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
@@ -31,6 +32,7 @@ import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
+import com.loopers.infrastructure.cache.ProductCacheRefreshScheduler;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
 import com.loopers.utils.RedisCleanUp;
@@ -65,6 +67,9 @@ public class ProductIntegrationTest {
 
     @Autowired
     private LikeRepository likeRepository;
+
+    @Autowired
+    private ProductMVService productMVService;
 
     @AfterEach
     void tearDown() {
@@ -108,6 +113,7 @@ public class ProductIntegrationTest {
         void get_product_pagination() {
             // given
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
+            productMVService.syncMaterializedView();
 
             Pageable pageable = PageRequest.of(0, 5);
             ProductSearchFilter productSearchFilter = new ProductSearchFilter(null, null, pageable);
@@ -131,7 +137,7 @@ public class ProductIntegrationTest {
         void filter_products_by_brand() {
             // given
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
-
+            productMVService.syncMaterializedView();
             Pageable pageable = PageRequest.of(0, 25);
             ProductSearchFilter productSearchFilter = new ProductSearchFilter(1L, null, pageable);
 
@@ -153,7 +159,7 @@ public class ProductIntegrationTest {
         void return_empty_list_when_no_products() {
             Pageable pageable = PageRequest.of(0, 25);
             ProductSearchFilter productSearchFilter = new ProductSearchFilter(1L, null, pageable);
-
+            productMVService.syncMaterializedView();
             // when
             Page<ProductInfo> productInfos = productFacade.getProducts(productSearchFilter);
 
@@ -168,7 +174,7 @@ public class ProductIntegrationTest {
         void get_products_sorted_by_latest() {
             // given
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 1, 5); // 1개 브랜드, 5개 상품 생성
-
+            productMVService.syncMaterializedView();
             Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
             ProductSearchFilter productSearchFilter = new ProductSearchFilter(null, null, pageable);
 
@@ -192,7 +198,7 @@ public class ProductIntegrationTest {
         void return_empty_list_when_filtering_by_non_existent_brand() {
             // given
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
-
+            productMVService.syncMaterializedView();
             Pageable pageable = PageRequest.of(0, 25);
             ProductSearchFilter productSearchFilter = new ProductSearchFilter(9L, null, pageable);
 
