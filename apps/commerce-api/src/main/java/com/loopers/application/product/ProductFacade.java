@@ -96,6 +96,12 @@ public class ProductFacade {
      * </ul>
      */
     private CacheStrategy determineCacheStrategy(ProductSearchFilter filter) {
+        if(filter.pageable().getPageNumber() == 0)
+            return CacheStrategy.HOT;
+
+        if(filter.pageable().getPageNumber() > 2)
+            return CacheStrategy.COLD;
+
         // 상품명 검색이 있으면 Cold (캐시 미사용)
         if (filter.productName() != null && !filter.productName().trim().isEmpty()) {
             log.debug("Cold 전략 선택 - 상품명 검색: {}", filter.productName());

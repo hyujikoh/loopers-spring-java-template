@@ -16,7 +16,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
 import com.loopers.application.product.ProductFacade;
-import com.loopers.application.product.ProductMVService;
+import com.loopers.domain.product.ProductMVService;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
