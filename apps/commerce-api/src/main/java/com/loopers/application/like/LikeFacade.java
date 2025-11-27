@@ -3,7 +3,7 @@ package com.loopers.application.like;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.loopers.application.product.ProductCacheService;
+import com.loopers.domain.product.ProductCacheService;
 import com.loopers.domain.like.LikeResult;
 import com.loopers.domain.like.LikeService;
 import com.loopers.domain.product.ProductEntity;
