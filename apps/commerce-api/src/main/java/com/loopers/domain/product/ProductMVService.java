@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import com.loopers.application.product.BatchUpdateResult;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.like.LikeRepository;
+import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 
@@ -116,9 +118,9 @@ public class ProductMVService {
 
             // 1. 모든 활성 상품 조회
             List<ProductEntity> allProducts = productRepository.getProducts(
-                    new com.loopers.domain.product.dto.ProductSearchFilter(
+                    new ProductSearchFilter(
                             null, null,
-                            org.springframework.data.domain.PageRequest.of(0, Integer.MAX_VALUE)
+                            PageRequest.of(0, Integer.MAX_VALUE)
                     )
             ).getContent();
 
@@ -140,7 +142,7 @@ public class ProductMVService {
             Map<Long, Long> likeCountMap = productIds.stream()
                     .collect(Collectors.toMap(
                             productId -> productId,
-                            productId -> likeRepository.countByProductIdAndDeletedAtIsNull(productId)
+                            likeRepository::countByProductIdAndDeletedAtIsNull
                     ));
 
             // 4. 기존 MV 조회
@@ -278,9 +280,9 @@ public class ProductMVService {
 
         // 해당 브랜드의 모든 상품 조회
         Page<ProductEntity> products = productRepository.getProducts(
-                new com.loopers.domain.product.dto.ProductSearchFilter(
+                new ProductSearchFilter(
                         brandId, null,
-                        org.springframework.data.domain.PageRequest.of(0, Integer.MAX_VALUE)
+                        PageRequest.of(0, Integer.MAX_VALUE)
                 )
         );
 

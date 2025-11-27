@@ -23,19 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 상품 캐시 배치 갱신 스케줄러
  *
- * <p>Hot 데이터를 주기적으로 갱신하여 캐시 스탬피드를 방지합니다.</p>
- *
- * <p>갱신 대상:</p>
- * <ul>
- *   <li>인기 상품 상세 정보 (좋아요 수 상위 100개)</li>
- *   <li>브랜드별 인기순 상품 ID 리스트 (첫 3페이지)</li>
- * </ul>
- *
- * <p>실행 주기:</p>
- * <ul>
- *   <li>상품 상세: 매 50분마다 (TTL 60분보다 10분 전)</li>
- *   <li>상품 ID 리스트: 매 50분마다</li>
- * </ul>
+ * Hot 데이터를 주기적으로 갱신하여 캐시 스탬피드 방지
+ * - 인기 상품 상세 정보 (좋아요 수 상위 100개)
+ * - 브랜드별 인기순 상품 ID 리스트 (첫 3페이지)
+ * - 실행 주기: 50분마다 (TTL 60분보다 10분 전에 갱신)
  */
 @Component
 @RequiredArgsConstructor
@@ -52,9 +43,8 @@ public class ProductCacheRefreshScheduler {
     private static final int PAGE_SIZE = 20; // 페이지당 20개
 
     /**
-     * Hot 데이터 배치 갱신 - 매 50분마다 실행
-     *
-     * <p>TTL이 60분이므로 만료 10분 전에 갱신하여 캐시 스탬피드 방지</p>
+     * Hot 데이터 배치 갱신 (50분마다)
+     * TTL 60분보다 10분 전에 갱신하여 스탬피드 방지
      */
     @Scheduled(fixedRate = 50 * 60 * 1000, initialDelay = 60 * 1000) // 50분마다, 1분 후 시작
     public void refreshHotDataCache() {
@@ -63,14 +53,11 @@ public class ProductCacheRefreshScheduler {
         long startTime = System.currentTimeMillis();
 
         try {
-            // 1. 인기 상품 상세 정보 갱신
             refreshPopularProductDetails();
-
-            // 2. 브랜드별 인기순 상품 ID 리스트 갱신
             refreshBrandPopularProductIds();
 
             long duration = System.currentTimeMillis() - startTime;
-            log.info("Hot 데이터 배치 갱신 완료 - 소요시간: {}ms", duration);
+            log.info("Hot 데이터 배치 갱신 완료 - {}ms", duration);
 
         } catch (Exception e) {
             log.error("Hot 데이터 배치 갱신 실패", e);
@@ -78,29 +65,25 @@ public class ProductCacheRefreshScheduler {
     }
 
     /**
-     * 인기 상품 상세 정보 갱신
-     *
-     * <p>좋아요 수 상위 100개 상품의 상세 정보를 캐시에 저장합니다.</p>
+     * 인기 상품 상세 정보 갱신 (좋아요 수 상위 100개)
      */
     private void refreshPopularProductDetails() {
-        log.debug("인기 상품 상세 정보 갱신 시작");
+        log.debug("인기 상품 상세 정보 갱신");
 
         try {
-            // 좋아요 수 상위 100개 상품 조회
             Pageable pageable = PageRequest.of(0, TOP_PRODUCTS_COUNT,
                     Sort.by(Sort.Direction.DESC, "likeCount"));
 
             ProductSearchFilter filter = new ProductSearchFilter(null, null, pageable);
             List<ProductEntity> popularProducts = productService.getProducts(filter).getContent();
 
-            // 상품 상세 정보 생성 및 배치 캐싱
             List<ProductDetailInfo> productDetails = popularProducts.stream()
                     .map(product -> {
                         try {
                             BrandEntity brand = brandService.getBrandById(product.getBrandId());
                             return ProductDetailInfo.of(product, brand, false);
                         } catch (Exception e) {
-                            log.warn("상품 상세 정보 생성 실패 - productId: {}", product.getId(), e);
+                            log.warn("상품 상세 생성 실패 - productId: {}", product.getId());
                             return null;
                         }
                     })
@@ -109,24 +92,20 @@ public class ProductCacheRefreshScheduler {
 
             productCacheService.batchCacheProductDetails(productDetails);
 
-            log.info("인기 상품 상세 정보 갱신 완료 - 대상: {}개, 성공: {}개",
-                    popularProducts.size(), productDetails.size());
+            log.info("인기 상품 상세 갱신 완료 - {}개", productDetails.size());
 
         } catch (Exception e) {
-            log.error("인기 상품 상세 정보 갱신 실패", e);
+            log.error("인기 상품 상세 갱신 실패", e);
         }
     }
 
     /**
-     * 브랜드별 인기순 상품 ID 리스트 갱신
-     *
-     * <p>각 브랜드의 인기순 상품 ID 리스트 첫 3페이지를 캐시에 저장합니다.</p>
+     * 브랜드별 인기순 상품 ID 리스트 갱신 (첫 3페이지)
      */
     private void refreshBrandPopularProductIds() {
-        log.debug("브랜드별 인기순 상품 ID 리스트 갱신 시작");
+        log.debug("브랜드별 인기순 ID 리스트 갱신");
 
         try {
-            // 모든 활성 브랜드 조회
             List<BrandEntity> brands = brandService.getAllBrands();
 
             int totalRefreshed = 0;
@@ -136,31 +115,25 @@ public class ProductCacheRefreshScheduler {
                     int refreshed = refreshBrandProductIds(brand.getId());
                     totalRefreshed += refreshed;
                 } catch (Exception e) {
-                    log.warn("브랜드 상품 ID 리스트 갱신 실패 - brandId: {}", brand.getId(), e);
+                    log.warn("브랜드 ID 리스트 갱신 실패 - brandId: {}", brand.getId());
                 }
             }
 
-            log.info("브랜드별 인기순 상품 ID 리스트 갱신 완료 - 브랜드 수: {}, 갱신된 페이지: {}개",
+            log.info("브랜드별 ID 리스트 갱신 완료 - 브랜드: {}개, 갱신: {}개",
                     brands.size(), totalRefreshed);
 
         } catch (Exception e) {
-            log.error("브랜드별 인기순 상품 ID 리스트 갱신 실패", e);
+            log.error("브랜드별 ID 리스트 갱신 실패", e);
         }
     }
 
     /**
-     * 특정 브랜드의 상품 ID 리스트 갱신
-     *
-     * @param brandId 브랜드 ID
-     * @return 갱신된 페이지 수
+     * 특정 브랜드의 상품 ID 리스트 갱신 (첫 3페이지)
      */
     private int refreshBrandProductIds(Long brandId) {
         int refreshedPages = 0;
-
-        // 인기순 정렬
         Sort sort = Sort.by(Sort.Direction.DESC, "likeCount");
 
-        // 첫 3페이지 갱신
         for (int page = 0; page < CACHE_PAGES_PER_BRAND; page++) {
             try {
                 Pageable pageable = PageRequest.of(page, PAGE_SIZE, sort);
@@ -169,23 +142,20 @@ public class ProductCacheRefreshScheduler {
                 List<ProductEntity> products = productService.getProducts(filter).getContent();
 
                 if (products.isEmpty()) {
-                    break; // 더 이상 상품이 없으면 중단
+                    break;
                 }
 
-                // ID 리스트 추출 및 캐싱
                 List<Long> productIds = products.stream()
                         .map(ProductEntity::getId)
                         .collect(Collectors.toList());
 
                 productCacheService.cacheProductIds(CacheStrategy.HOT, brandId, pageable, productIds);
-
                 refreshedPages++;
 
-                log.debug("브랜드 상품 ID 리스트 갱신 - brandId: {}, page: {}, size: {}",
-                        brandId, page, productIds.size());
+                log.debug("브랜드 ID 리스트 갱신 - brandId: {}, page: {}", brandId, page);
 
             } catch (Exception e) {
-                log.warn("브랜드 상품 ID 리스트 갱신 실패 - brandId: {}, page: {}", brandId, page, e);
+                log.warn("브랜드 ID 리스트 갱신 실패 - brandId: {}, page: {}", brandId, page);
             }
         }
 
