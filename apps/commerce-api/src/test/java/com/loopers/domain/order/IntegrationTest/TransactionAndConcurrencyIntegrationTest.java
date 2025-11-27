@@ -446,7 +446,8 @@ public class TransactionAndConcurrencyIntegrationTest {
                 // Then: 모든 스레드 완료 대기
                 latch.await(30, TimeUnit.SECONDS);
             } finally {
-                executorService.shutdown();            }
+                executorService.shutdown();
+            }
 
             // Then: 일부 주문만 성공했는지 확인 (재고 부족으로 모두 성공할 수 없음)
             assertThat(successCount.get()).isLessThan(threadCount);

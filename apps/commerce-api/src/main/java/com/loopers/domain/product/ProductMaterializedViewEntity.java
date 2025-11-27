@@ -1,31 +1,33 @@
 package com.loopers.domain.product;
 
+import java.time.ZonedDateTime;
+import java.util.Objects;
+
 import com.loopers.domain.BaseEntity;
 import com.loopers.domain.brand.BrandEntity;
-import jakarta.persistence.*;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.ZonedDateTime;
-import java.util.Objects;
+import jakarta.persistence.*;
 
 /**
  * 상품 Materialized View 엔티티
- * 
+ *
  * <p>상품, 브랜드, 좋아요 정보를 통합하여 조회 성능을 최적화하기 위한 MV 테이블입니다.
  * 실시간 업데이트가 아닌 배치 업데이트(2분 간격)를 통해 데이터를 동기화합니다.</p>
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 11. 27.
  */
 @Entity
 @Table(name = "product_materialized_view", indexes = {
-    @Index(name = "idx_pmv_brand_id", columnList = "brand_id"),
-    @Index(name = "idx_pmv_like_count", columnList = "like_count"),
-    @Index(name = "idx_pmv_brand_like", columnList = "brand_id, like_count"),
-    @Index(name = "idx_pmv_name", columnList = "name"),
-    @Index(name = "idx_pmv_updated_at", columnList = "last_updated_at")
+        @Index(name = "idx_pmv_brand_id", columnList = "brand_id"),
+        @Index(name = "idx_pmv_like_count", columnList = "like_count"),
+        @Index(name = "idx_pmv_brand_like", columnList = "brand_id, like_count"),
+        @Index(name = "idx_pmv_name", columnList = "name"),
+        @Index(name = "idx_pmv_updated_at", columnList = "last_updated_at")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -89,9 +91,9 @@ public class ProductMaterializedViewEntity extends BaseEntity {
 
     /**
      * Product, Brand, 좋아요 수로부터 MV 엔티티를 생성합니다.
-     * 
-     * @param product 상품 엔티티
-     * @param brand 브랜드 엔티티
+     *
+     * @param product   상품 엔티티
+     * @param brand     브랜드 엔티티
      * @param likeCount 좋아요 수
      * @return 생성된 MV 엔티티
      * @throws IllegalArgumentException 필수 파라미터가 null인 경우
@@ -124,9 +126,9 @@ public class ProductMaterializedViewEntity extends BaseEntity {
 
     /**
      * 기존 MV 엔티티를 최신 데이터로 동기화합니다.
-     * 
-     * @param product 최신 상품 엔티티
-     * @param brand 최신 브랜드 엔티티
+     *
+     * @param product   최신 상품 엔티티
+     * @param brand     최신 브랜드 엔티티
      * @param likeCount 최신 좋아요 수
      * @throws IllegalArgumentException 필수 파라미터가 null인 경우
      */
@@ -141,7 +143,7 @@ public class ProductMaterializedViewEntity extends BaseEntity {
 
         if (!this.productId.equals(product.getId())) {
             throw new IllegalArgumentException(
-                    String.format("상품 ID가 일치하지 않습니다. (MV: %d, Product: %d)", 
+                    String.format("상품 ID가 일치하지 않습니다. (MV: %d, Product: %d)",
                             this.productId, product.getId())
             );
         }
@@ -158,7 +160,7 @@ public class ProductMaterializedViewEntity extends BaseEntity {
 
     /**
      * 마지막 배치 시간 이후 업데이트가 필요한지 확인합니다.
-     * 
+     *
      * @param lastBatchTime 마지막 배치 실행 시간
      * @return 업데이트 필요 여부
      */

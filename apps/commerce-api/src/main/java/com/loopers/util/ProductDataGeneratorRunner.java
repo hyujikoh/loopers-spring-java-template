@@ -1,15 +1,6 @@
 package com.loopers.util;
 
-import com.loopers.domain.product.ProductEntity;
-import com.loopers.infrastructure.product.ProductJpaRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import net.datafaker.Faker;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -18,16 +9,27 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.loopers.domain.product.ProductEntity;
+import com.loopers.infrastructure.product.ProductJpaRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 상품 데이터 생성 Runner
- * 
+ *
  * <p>애플리케이션 시작 시 자동으로 상품 데이터를 생성합니다.</p>
- * 
+ *
  * <p>실행 방법:</p>
  * <pre>
  * --args='--spring.profiles.active=local --product.data.generate=true'
  * </pre>
- * 
+ *
  * <p>또는 application-local.yml에 다음 설정 추가:</p>
  * <pre>
  * product:
@@ -61,7 +63,7 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
         }
 
         int totalCount = 100_000; // 기본값
-        
+
         log.info("생성 개수: {}개", totalCount);
         log.info("배치 크기: {}개", BATCH_SIZE);
 

@@ -32,7 +32,6 @@ import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
-import com.loopers.infrastructure.cache.ProductCacheRefreshScheduler;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
 import com.loopers.utils.RedisCleanUp;

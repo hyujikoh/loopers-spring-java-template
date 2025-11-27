@@ -20,7 +20,6 @@ import com.loopers.application.order.OrderInfo;
 import com.loopers.application.order.OrderItemCommand;
 import com.loopers.application.point.PointFacade;
 import com.loopers.application.user.UserFacade;
-import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
@@ -297,7 +296,7 @@ class OrderV1ApiE2ETest {
                     };
             ResponseEntity<ApiResponse<OrderV1Dtos.OrderDetailResponse>> response =
                     testRestTemplate.exchange(Uris.Order.GET_DETAIL,
-                            HttpMethod.GET,  new HttpEntity<>(null, headers), responseType, orderId);
+                            HttpMethod.GET, new HttpEntity<>(null, headers), responseType, orderId);
 
             // then
             assertAll(
@@ -330,7 +329,7 @@ class OrderV1ApiE2ETest {
                     };
             ResponseEntity<ApiResponse<OrderV1Dtos.OrderDetailResponse>> response =
                     testRestTemplate.exchange(Uris.Order.GET_DETAIL,
-                            HttpMethod.GET,  new HttpEntity<>(null, headers), responseType, nonExistentOrderId);
+                            HttpMethod.GET, new HttpEntity<>(null, headers), responseType, nonExistentOrderId);
 
             // then
             assertAll(

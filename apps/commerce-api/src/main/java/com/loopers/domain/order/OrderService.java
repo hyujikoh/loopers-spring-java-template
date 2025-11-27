@@ -62,10 +62,10 @@ public class OrderService {
      *   <li>주문 엔티티 및 주문 항목 엔티티 생성</li>
      * </ul>
      *
-     * @param userId 사용자 ID
+     * @param userId            사용자 ID
      * @param orderableProducts 주문 가능한 상품 목록 (재고 확인 완료)
-     * @param coupons 적용할 쿠폰 목록 (주문 항목과 동일 순서)
-     * @param quantities 주문 수량 목록 (주문 항목과 동일 순서)
+     * @param coupons           적용할 쿠폰 목록 (주문 항목과 동일 순서)
+     * @param quantities        주문 수량 목록 (주문 항목과 동일 순서)
      * @return 생성된 주문 엔티티와 주문 항목 목록
      */
     @Transactional
@@ -161,7 +161,7 @@ public class OrderService {
      * 주문 ID로 주문을 조회합니다.
      *
      * @param orderId 주문 ID
-     * @param userId 사용자 ID
+     * @param userId  사용자 ID
      * @return 조회된 주문 엔티티
      * @throws CoreException 주문을 찾을 수 없는 경우
      */

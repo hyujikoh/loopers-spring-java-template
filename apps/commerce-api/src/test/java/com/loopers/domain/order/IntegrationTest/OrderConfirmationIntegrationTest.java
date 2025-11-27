@@ -8,7 +8,6 @@ import java.util.List;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 
 import com.loopers.application.order.OrderCreateCommand;
 import com.loopers.application.order.OrderFacade;

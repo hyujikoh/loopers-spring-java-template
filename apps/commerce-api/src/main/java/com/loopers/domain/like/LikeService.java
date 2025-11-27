@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.product.ProductEntity;
-import com.loopers.domain.product.ProductRepository;
 import com.loopers.domain.user.UserEntity;
 
 import lombok.RequiredArgsConstructor;
@@ -53,7 +52,7 @@ public class LikeService {
     @Transactional
     public LikeResult upsertLike(UserEntity user, ProductEntity product) {
         Optional<LikeEntity> existingLike = likeRepository.findByUserIdAndProductId(user.getId(), product.getId());
-        
+
         if (existingLike.isPresent()) {
             LikeEntity like = existingLike.get();
             // 삭제된 좋아요인 경우만 복원 및 카운트 증가
@@ -64,7 +63,7 @@ public class LikeService {
             // 활성 좋아요인 경우: 카운트 변경 없음 (중복 방지)
             return new LikeResult(like, false); // 이미 존재 - 통계 업데이트 불필요
         }
-        
+
         // 좋아요가 없는 경우 새로 생성
         LikeEntity newLike = likeRepository.save(LikeEntity.createEntity(user.getId(), product.getId()));
         return new LikeResult(newLike, true); // 새로 생성됨 - 통계 업데이트 필요
@@ -83,24 +82,25 @@ public class LikeService {
     @Transactional
     public boolean unlikeProduct(UserEntity user, ProductEntity product) {
         Optional<LikeEntity> existingLike = likeRepository.findByUserIdAndProductId(user.getId(), product.getId());
-        
+
         if (existingLike.isEmpty()) {
             return false; // 좋아요가 없음 - 통계 업데이트 불필요
         }
-        
+
         LikeEntity like = existingLike.get();
-        
+
         // 이미 삭제된 좋아요인 경우 무시 (멱등성 보장)
         if (like.getDeletedAt() != null) {
             return false; // 이미 삭제됨 - 통계 업데이트 불필요
         }
-        
+
         like.delete();
         return true; // 삭제됨 - 통계 업데이트 필요
     }
 
     /**
      * 상품의 좋아요 수를 조회합니다.
+     *
      * @param product
      * @return
      */

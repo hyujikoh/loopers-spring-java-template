@@ -33,6 +33,7 @@ class ExampleV1ApiE2ETest {
     private final ExampleJpaRepository exampleJpaRepository;
     private final DatabaseCleanUp databaseCleanUp;
     private final RedisCleanUp redisCleanUp;
+
     @Autowired
     public ExampleV1ApiE2ETest(
             TestRestTemplate testRestTemplate,

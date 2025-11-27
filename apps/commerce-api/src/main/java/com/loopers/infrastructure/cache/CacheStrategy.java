@@ -7,9 +7,9 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 캐시 전략 정의
- * 
+ *
  * <p>Hot/Warm/Cold 데이터에 따른 차별화된 캐시 전략을 제공합니다.</p>
- * 
+ *
  * <p>멘토링 핵심 원칙:</p>
  * <ul>
  *   <li>Hot 데이터: 배치로 미리 갱신하여 캐시 스탬피드 방지</li>
@@ -20,10 +20,10 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum CacheStrategy {
-    
+
     /**
      * Hot 데이터 전략
-     * 
+     *
      * <p>특징:</p>
      * <ul>
      *   <li>대상: 1페이지, 인기 정렬 (가장 빈번하게 조회되는 데이터)</li>
@@ -33,10 +33,10 @@ public enum CacheStrategy {
      * </ul>
      */
     HOT(60, TimeUnit.MINUTES, true, CacheUpdateStrategy.BATCH_REFRESH),
-    
+
     /**
      * Warm 데이터 전략
-     * 
+     *
      * <p>특징:</p>
      * <ul>
      *   <li>대상: 2~3페이지 (꾸준히 조회되는 데이터)</li>
@@ -46,10 +46,10 @@ public enum CacheStrategy {
      * </ul>
      */
     WARM(10, TimeUnit.MINUTES, false, CacheUpdateStrategy.CACHE_ASIDE),
-    
+
     /**
      * Cold 데이터 전략
-     * 
+     *
      * <p>특징:</p>
      * <ul>
      *   <li>대상: 4페이지 이상 (거의 조회되지 않는 데이터)</li>
@@ -59,19 +59,19 @@ public enum CacheStrategy {
      * </ul>
      */
     COLD(0, TimeUnit.MINUTES, false, CacheUpdateStrategy.NO_CACHE);
-    
+
     private final long ttl;
     private final TimeUnit timeUnit;
     private final boolean useBatchUpdate;
     private final CacheUpdateStrategy updateStrategy;
-    
+
     /**
      * 캐시 사용 여부 확인
      */
     public boolean shouldCache() {
         return this != COLD;
     }
-    
+
     /**
      * 배치 갱신 사용 여부 확인
      */

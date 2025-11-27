@@ -19,6 +19,6 @@ public interface BrandJpaRepository extends JpaRepository<BrandEntity, Long> {
     Optional<BrandEntity> findByIdAndDeletedAtNull(long id);
 
     Optional<BrandEntity> findByNameAndDeletedAtNull(String name);
-    
+
     List<BrandEntity> findByDeletedAtNull();
 }

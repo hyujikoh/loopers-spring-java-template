@@ -44,7 +44,7 @@ public class LikeFacade {
     @Transactional
     public LikeInfo upsertLike(String username, Long productId) {
         log.debug("좋아요 등록/복원 시작 - username: {}, productId: {}", username, productId);
-        
+
         // 1. 사용자 검증
         UserEntity user = userService.getUserByUsername(username);
 
@@ -70,7 +70,7 @@ public class LikeFacade {
     @Transactional
     public void unlikeProduct(String username, Long productId) {
         log.debug("좋아요 취소 시작 - username: {}, productId: {}", username, productId);
-        
+
         // 1. 사용자 검증
         UserEntity user = userService.getUserByUsername(username);
 

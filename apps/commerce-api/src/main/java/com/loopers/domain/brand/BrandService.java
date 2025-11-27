@@ -39,10 +39,10 @@ public class BrandService {
     public Page<BrandEntity> listBrands(Pageable pageable) {
         return brandRepository.listBrands(pageable);
     }
-    
+
     /**
      * 모든 활성 브랜드를 조회합니다.
-     * 
+     *
      * <p>캐시 배치 갱신 등에서 사용됩니다.</p>
      *
      * @return 모든 활성 브랜드 목록

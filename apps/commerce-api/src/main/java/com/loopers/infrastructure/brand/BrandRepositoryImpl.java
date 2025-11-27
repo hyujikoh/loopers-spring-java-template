@@ -48,7 +48,7 @@ public class BrandRepositoryImpl implements BrandRepository {
     public Page<BrandEntity> searchBrands(BrandSearchFilter filter, Pageable pageable) {
         return queryRepository.searchBrands(filter, pageable);
     }
-    
+
     @Override
     public List<BrandEntity> findAll() {
         return brandJpaRepository.findByDeletedAtNull();

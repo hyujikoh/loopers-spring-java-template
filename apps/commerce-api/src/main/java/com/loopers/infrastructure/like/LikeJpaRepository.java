@@ -13,14 +13,14 @@ import com.loopers.domain.like.LikeEntity;
  * @since 2025. 11. 11.
  */
 public interface LikeJpaRepository extends JpaRepository<LikeEntity, Long> {
-    
+
     Optional<LikeEntity> findByUserIdAndProductId(Long userId, Long productId);
-    
+
     /**
      * 특정 상품의 활성 좋아요 수를 조회한다.
      */
     Long countByProductIdAndDeletedAtIsNull(Long productId);
-    
+
     /**
      * 좋아요가 있는 모든 상품 ID를 중복 없이 조회한다.
      */

@@ -1,21 +1,21 @@
 package com.loopers.infrastructure.product;
 
-import com.loopers.domain.product.ProductMaterializedViewEntity;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.query.Param;
+
+import com.loopers.domain.product.ProductMaterializedViewEntity;
+
 /**
  * 상품 Materialized View JPA 리포지토리
- * 
+ *
  * <p>Spring Data JPA를 활용한 기본 CRUD 및 쿼리 메서드를 제공합니다.</p>
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 11. 27.
  */
@@ -23,7 +23,7 @@ public interface ProductMVJpaRepository extends JpaRepository<ProductMaterialize
 
     /**
      * 상품 ID로 MV를 조회합니다.
-     * 
+     *
      * @param productId 상품 ID
      * @return 상품 MV
      */
@@ -31,8 +31,8 @@ public interface ProductMVJpaRepository extends JpaRepository<ProductMaterialize
 
     /**
      * 브랜드 ID로 MV를 페이징 조회합니다.
-     * 
-     * @param brandId 브랜드 ID
+     *
+     * @param brandId  브랜드 ID
      * @param pageable 페이징 정보
      * @return 페이징된 상품 MV 목록
      */
@@ -40,8 +40,8 @@ public interface ProductMVJpaRepository extends JpaRepository<ProductMaterialize
 
     /**
      * 상품명으로 검색하여 MV를 페이징 조회합니다.
-     * 
-     * @param keyword 검색 키워드
+     *
+     * @param keyword  검색 키워드
      * @param pageable 페이징 정보
      * @return 페이징된 상품 MV 목록
      */
@@ -49,7 +49,7 @@ public interface ProductMVJpaRepository extends JpaRepository<ProductMaterialize
 
     /**
      * 여러 상품 ID로 MV를 일괄 조회합니다.
-     * 
+     *
      * @param productIds 상품 ID 목록
      * @return 상품 MV 목록
      */
@@ -57,7 +57,7 @@ public interface ProductMVJpaRepository extends JpaRepository<ProductMaterialize
 
     /**
      * 지정된 시간 이전에 업데이트된 MV를 조회합니다.
-     * 
+     *
      * @param time 기준 시간
      * @return 업데이트가 필요한 MV 목록
      */
@@ -65,14 +65,14 @@ public interface ProductMVJpaRepository extends JpaRepository<ProductMaterialize
 
     /**
      * 지정된 상품 ID 목록에 해당하는 MV를 삭제합니다.
-     * 
+     *
      * @param productIds 삭제할 상품 ID 목록
      */
     void deleteByProductIdIn(List<Long> productIds);
 
     /**
      * 상품 ID로 MV 존재 여부를 확인합니다.
-     * 
+     *
      * @param productId 상품 ID
      * @return 존재 여부
      */

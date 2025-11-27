@@ -755,7 +755,6 @@ public class LikeIntegrationTest {
             assertThat(successCount.get()).isEqualTo(userCount);
 
 
-
         }
     }
 }
