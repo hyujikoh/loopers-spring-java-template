@@ -36,6 +36,8 @@ public class LikeService {
         return likeRepository.findByUserIdAndProductId(userId, productId);
     }
 
+
+
     /**
      * 좋아요를 등록하거나 복원합니다 (Upsert).
      * 

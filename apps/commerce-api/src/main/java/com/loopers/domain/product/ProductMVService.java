@@ -5,14 +5,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.application.product.BatchUpdateResult;
 import com.loopers.domain.brand.BrandEntity;
-import com.loopers.domain.brand.BrandRepository;
-import com.loopers.domain.like.LikeRepository;
+import com.loopers.infrastructure.product.ProductMVQueryRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 
@@ -35,10 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ProductMVService {
 
     private final ProductMVRepository mvRepository;
-    private final ProductRepository productRepository;
-    private final BrandRepository brandRepository;
-    private final LikeRepository likeRepository;
-    private final com.loopers.infrastructure.product.ProductMVQueryRepository mvQueryRepository;
+    private final ProductMVQueryRepository mvQueryRepository;
 
     /**
      * 상품 ID로 MV를 조회합니다.
@@ -76,23 +73,13 @@ public class ProductMVService {
     }
 
     /**
-     * 여러 상품 ID로 MV를 일괄 조회합니다.
-     *
-     * @param productIds 상품 ID 목록
-     * @return 상품 MV 목록
-     */
-    public List<ProductMaterializedViewEntity> findByIds(List<Long> productIds) {
-        return mvRepository.findByIdIn(productIds);
-    }
-
-    /**
      * @param productIds 상품 ID 목록
      * @param pageable   페이징 정보
      * @return 페이징된 상품 MV 목록
      */
     public Page<ProductMaterializedViewEntity> findByIdsAsPage(List<Long> productIds, Pageable pageable) {
         List<ProductMaterializedViewEntity> mvEntities = mvRepository.findByIdIn(productIds);
-        return new org.springframework.data.domain.PageImpl<>(mvEntities, pageable, mvEntities.size());
+        return new PageImpl<>(mvEntities, pageable, mvEntities.size());
     }
 
     /**
@@ -261,55 +248,8 @@ public class ProductMVService {
         return false;
     }
 
-    /**
-     * 특정 상품의 MV를 동기화합니다.
-     *
-     * @param productId 상품 ID
-     */
     @Transactional
-    public void syncProduct(Long productId) {
-        log.debug("상품 MV 동기화 시작: productId={}", productId);
-
-        ProductEntity product = productRepository.findById(productId)
-                .orElseThrow(() -> new CoreException(
-                        ErrorType.NOT_FOUND,
-                        String.format("상품을 찾을 수 없습니다. productId=%d", productId)
-                ));
-
-        BrandEntity brand = brandRepository.getBrandById(product.getBrandId())
-                .orElseThrow(() -> new CoreException(
-                        ErrorType.NOT_FOUND,
-                        String.format("브랜드를 찾을 수 없습니다. brandId=%d", product.getBrandId())
-                ));
-
-        Long likeCount = likeRepository.countByProductIdAndDeletedAtIsNull(productId);
-        ZonedDateTime likeUpdatedAt = ZonedDateTime.now(); // TODO: Like 테이블에서 최신 업데이트 시간 조회
-
-        if (product.getDeletedAt() != null) {
-            // 상품이 삭제된 경우 MV도 삭제
-            mvRepository.deleteByProductIdIn(List.of(productId));
-            log.debug("상품 MV 삭제 완료: productId={}", productId);
-            return;
-        }
-
-
-        Optional<ProductMaterializedViewEntity> existingMV = mvRepository.findById(productId);
-
-        if (existingMV.isPresent()) {
-            // 기존 MV 업데이트
-            ProductMaterializedViewEntity mv = existingMV.get();
-            mv.sync(product, brand, likeCount);
-            mvRepository.save(mv);
-            log.debug("상품 MV 갱신 완료: productId={}", productId);
-        } else {
-            // 신규 MV 생성
-            ProductMaterializedViewEntity newMV = ProductMaterializedViewEntity.from(
-                    product, brand, likeCount, likeUpdatedAt
-            );
-            mvRepository.save(newMV);
-            log.debug("상품 MV 생성 완료: productId={}", productId);
-        }
+    public void deleteById(Long productId) {
+        mvRepository.deleteByProductIdIn(List.of(productId));
     }
-
-
 }

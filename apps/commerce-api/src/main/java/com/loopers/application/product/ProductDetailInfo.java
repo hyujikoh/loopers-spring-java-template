@@ -80,19 +80,16 @@ public record ProductDetailInfo(
         );
     }
 
-    /**
-     * ProductEntity + BrandEntity로 생성 (레거시, MV 사용 권장)
-     */
-    @Deprecated
-    public static ProductDetailInfo of(ProductEntity product, BrandEntity brand) {
-        return of(product, brand, 0L, false);
-    }
-
-    /**
-     * ProductEntity + BrandEntity + 좋아요여부로 생성 (레거시, MV 사용 권장)
-     */
-    @Deprecated
-    public static ProductDetailInfo of(ProductEntity product, BrandEntity brand, Boolean isLiked) {
-        return of(product, brand, 0L, isLiked);
+    public static ProductDetailInfo fromWithSyncLike(ProductDetailInfo productDetailInfo, Boolean isLiked) {
+        return new ProductDetailInfo(
+                productDetailInfo.id(),
+                productDetailInfo.name(),
+                productDetailInfo.description(),
+                productDetailInfo.likeCount(),
+                productDetailInfo.stockQuantity(),
+                productDetailInfo.price(),
+                productDetailInfo.brand(),
+                isLiked
+        );
     }
 }

@@ -218,15 +218,4 @@ public class ProductService {
                 ? mvService.findByBrandId(filter.brandId(), filter.pageable())
                 : mvService.findAll(filter.pageable());
     }
-
-    /**
-     * 상품 ID로 MV 엔티티를 조회합니다.
-     *
-     * @param productId 상품 ID
-     * @return MV 엔티티 (Optional)
-     */
-    @Transactional(readOnly = true)
-    public ProductMaterializedViewEntity getMVEntityById(Long productId) {
-        return mvService.findById(productId);
-    }
 }
