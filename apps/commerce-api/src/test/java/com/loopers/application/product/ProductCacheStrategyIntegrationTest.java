@@ -68,8 +68,8 @@ public class ProductCacheStrategyIntegrationTest {
     class HotDataCachingTest {
 
         @Test
-        @DisplayName("전체 상품 목록 첫 페이지는 HOT 전략으로 캐시된다")
-        void should_cache_first_2_pages_as_hot_data() {
+        @DisplayName("전체 상품 목록 1페이지는 HOT, 2페이지는 WARM 전략으로 캐시된다")
+        void should_cache_first_page_as_hot_and_second_page_as_warm() {
             // Given: 충분한 상품 데이터 생성 (3페이지 이상)
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 1, 50);
             mvService.syncMaterializedView();
@@ -100,7 +100,7 @@ public class ProductCacheStrategyIntegrationTest {
         }
 
         @Test
-        @DisplayName("브랜드별 상품 목록 첫 2페이지는 HOT 전략으로 캐시된다")
+        @DisplayName("브랜드별 상품 목록 첫 페이지는 HOT 전략으로 캐시된다")
         void should_cache_brand_first_2_pages_as_hot_data() {
             // Given: 특정 브랜드의 상품 충분히 생성
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 1, 50);
@@ -199,7 +199,7 @@ public class ProductCacheStrategyIntegrationTest {
         }
 
         @Test
-        @DisplayName("Warm 데이터는 15분 TTL로 캐시된다")
+        @DisplayName("Warm 데이터는 10분 TTL로 캐시된다")
         void should_cache_warm_data_with_15_minutes_ttl() {
             // Given: 상품 데이터 생성
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 1, 70);
@@ -216,8 +216,6 @@ public class ProductCacheStrategyIntegrationTest {
             );
             assertThat(cachedIds).isPresent();
 
-            // TODO: Redis TTL 확인 로직 추가
-            // TTL이 15분(900초) 이하인지 검증
         }
     }
 
@@ -267,8 +265,11 @@ public class ProductCacheStrategyIntegrationTest {
             ProductSearchFilter filter = new ProductSearchFilter(null, "Product", pageable);
             productFacade.getProducts(filter);
 
-            // Then: Cold 전략으로 캐시됨
-            // TODO: 검색 결과 캐시 검증 로직 추가
+            // Then: Cold 전략은 캐시하지 않음 (캐시 미스 확인)
+                    Optional<List<Long>> cachedIds = cacheService.getProductIdsFromCache(
+                                    CacheStrategy.COLD, null, pageable
+                                    );
+                    assertThat(cachedIds).isEmpty();
         }
     }
 

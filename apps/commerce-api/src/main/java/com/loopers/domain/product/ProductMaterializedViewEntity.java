@@ -283,11 +283,16 @@ public class ProductMaterializedViewEntity extends BaseEntity {
             return true;
         }
 
+        if (!Objects.equals(mv.getDescription(), dto.getProductDescription())) {
+            return true;
+        }
+
         // 가격 변경
         if (!mv.getPrice().getOriginPrice().equals(dto.getOriginPrice())) {
             return true;
         }
 
+        // 할인 가격 변경
         if (dto.getDiscountPrice() != null && !mv.getPrice().getDiscountPrice().equals(dto.getDiscountPrice())) {
             return true;
         }

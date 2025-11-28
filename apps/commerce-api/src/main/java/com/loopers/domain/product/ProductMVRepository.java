@@ -111,5 +111,12 @@ public interface ProductMVRepository {
     Page<ProductMaterializedViewEntity> findBySearchFilter(ProductSearchFilter searchFilter);
 
 
+    /**
+     * 지정된 시간 이후에 변경된 상품 MV를 동기화용 DTO로 조회합니다.
+     * 배치 동기화 작업에 사용됩니다.
+     *
+     * @param lastBatchTime 마지막 배치 처리 시간
+     * @return 변경된 상품 MV DTO 목록
+     */
     List<ProductMVSyncDto> findChangedProductsForSync(ZonedDateTime lastBatchTime);
 }

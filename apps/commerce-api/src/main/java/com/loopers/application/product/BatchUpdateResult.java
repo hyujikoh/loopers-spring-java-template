@@ -1,14 +1,13 @@
 package com.loopers.application.product;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import lombok.Getter;
 
 /**
  * 배치 업데이트 결과 DTO
- *
- * MV 배치 동기화 작업의 결과를 담는 불변 객체
  * 변경된 상품/브랜드 ID를 포함하여 캐시 무효화에 사용
  */
 @Getter
@@ -41,10 +40,10 @@ public class BatchUpdateResult {
         this.durationMs = durationMs;
         this.errorMessage = errorMessage;
         this.changedProductIds = changedProductIds != null
-                ? Collections.unmodifiableSet(changedProductIds)
+                ? Set.copyOf(changedProductIds)
                 : Collections.emptySet();
         this.affectedBrandIds = affectedBrandIds != null
-                ? Collections.unmodifiableSet(affectedBrandIds)
+                ? Set.copyOf(affectedBrandIds)
                 : Collections.emptySet();
     }
 

@@ -19,6 +19,7 @@ import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.ProductDomainCreateRequest;
 import com.loopers.domain.product.ProductEntity;
+import com.loopers.domain.product.ProductMVService;
 import com.loopers.domain.product.ProductService;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
@@ -44,6 +45,9 @@ class LikeV1ApiE2ETest {
 
     @Autowired
     private UserFacade userFacade;
+
+    @Autowired
+    private ProductMVService productMVService;
 
     @Autowired
     public LikeV1ApiE2ETest(
@@ -124,6 +128,9 @@ class LikeV1ApiE2ETest {
                             .isEqualTo(testProductId)
             );
 
+            // MV 동기화
+            productMVService.syncMaterializedView();
+
             // when - 2. 상품 상세 조회 (좋아요 여부 확인)
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =
                     new ParameterizedTypeReference<>() {
@@ -188,6 +195,9 @@ class LikeV1ApiE2ETest {
                     () -> assertThat(unlikeResponse.getStatusCode()).isEqualTo(HttpStatus.OK)
             );
 
+            // MV 동기화
+            productMVService.syncMaterializedView();
+
             // when - 3. 상품 상세 조회 (좋아요 여부 확인)
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =
                     new ParameterizedTypeReference<>() {
@@ -232,6 +242,9 @@ class LikeV1ApiE2ETest {
                     testProductId
             );
 
+            // MV 동기화
+            productMVService.syncMaterializedView();
+
             // when - 비로그인 사용자가 상품 상세 조회 (헤더 없음)
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =
                     new ParameterizedTypeReference<>() {
@@ -244,6 +257,7 @@ class LikeV1ApiE2ETest {
                             productResponseType,
                             testProductId
                     );
+
 
             // then - 비로그인 사용자는 좋아요 여부가 false
             assertAll(
@@ -282,6 +296,9 @@ class LikeV1ApiE2ETest {
                     likeResponseType,
                     testProductId
             );
+
+            // MV 동기화
+            productMVService.syncMaterializedView();
 
             // when - 3. 상품 상세 조회
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =

@@ -60,13 +60,11 @@ public class ProductMVRepositoryImpl implements ProductMVRepository {
     }
 
     @Override
-    @Transactional
     public ProductMaterializedViewEntity save(ProductMaterializedViewEntity entity) {
         return jpaRepository.save(entity);
     }
 
     @Override
-    @Transactional
     public List<ProductMaterializedViewEntity> saveAll(List<ProductMaterializedViewEntity> entities) {
         return jpaRepository.saveAll(entities);
     }

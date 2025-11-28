@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
  * 상품 및 브랜드 데이터 생성 Runner
  * 애플리케이션 시작 시 자동으로 브랜드 및 상품 데이터를 생성합니다
  *
- * ✅ 생성 규칙:
+ *  생성 규칙:
  *
  *   상품: 정확히 100,000개
  *   브랜드: 유니크 이름으로 필요한 만큼 자동 생성
@@ -48,7 +48,7 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
     private final Random random = new Random();
 
     private static final int BATCH_SIZE = 1000;
-    private static final int TOTAL_PRODUCTS = 100000; // ✅ 정확히 10만 개
+    private static final int TOTAL_PRODUCTS = 100000; //  정확히 10만 개
     private static final int INITIAL_BRAND_COUNT = 100; // 초기 브랜드 개수
 
     private final Set<String> generatedBrandNames = new HashSet<>();
@@ -69,7 +69,7 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
             generateAndSaveProducts(brands);
 
             long duration = System.currentTimeMillis() - startTime;
-            log.info("✅ 데이터 생성 완료 - 소요 시간: {}ms ({}초)", duration, duration / 1000);
+            log.info(" 데이터 생성 완료 - 소요 시간: {}ms ({}초)", duration, duration / 1000);
 
         } catch (Exception e) {
             log.error("데이터 생성 중 오류 발생", e);
@@ -79,7 +79,7 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
 
     /**
      * 브랜드 데이터를 생성하고 저장합니다.
-     * ✅ 중복된 브랜드명을 방지합니다.
+     *  중복된 브랜드명을 방지합니다.
      */
     private List<BrandEntity> generateAndSaveBrands() {
         List<BrandEntity> brands = new ArrayList<>();
@@ -91,7 +91,7 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
         while (createdCount < INITIAL_BRAND_COUNT && attemptCount < maxAttempts) {
             attemptCount++;
 
-            // ✅ 유니크한 브랜드명 생성
+            //  유니크한 브랜드명 생성
             String brandName = generateUniqueBrandName();
 
             if (brandName == null) {
@@ -129,7 +129,7 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
                     createdCount, INITIAL_BRAND_COUNT);
         }
 
-        // ✅ 저장된 모든 브랜드 반환
+        //  저장된 모든 브랜드 반환
         return brandRepository.findAll();
     }
 
@@ -146,7 +146,7 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
         for (int i = 0; i < maxRetries; i++) {
             String brandName = faker.company().name();
 
-            // ✅ 중복 검사 (메모리 + 데이터베이스)
+            //  중복 검사 (메모리 + 데이터베이스)
             if (!generatedBrandNames.contains(brandName) &&
                     !brandRepository.existsByNameAndDeletedAtNull(brandName)) {
 
@@ -161,7 +161,7 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
 
     /**
      * 정확히 100,000개의 상품 데이터를 생성하고 저장합니다.
-     * ✅ 브랜드 리스트에서 라운드로빈으로 선택하여 모든 브랜드에 상품이 분배됩니다.
+     *  브랜드 리스트에서 라운드로빈으로 선택하여 모든 브랜드에 상품이 분배됩니다.
      */
     private void generateAndSaveProducts(List<BrandEntity> brands) {
         if (brands.isEmpty()) {
@@ -175,7 +175,7 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
 
         log.info("상품 생성 시작: {}개 (브랜드별로 분배됨)", TOTAL_PRODUCTS);
 
-        // ✅ 정확히 100,000개 생성
+        //  정확히 100,000개 생성
         for (int i = 0; i < TOTAL_PRODUCTS; i++) {
             // 라운드로빈으로 브랜드 선택 (모든 브랜드에 균등 분배)
             BrandEntity brand = brands.get(brandIndex % brands.size());
@@ -206,9 +206,9 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
             totalProducts += products.size();
         }
 
-        // ✅ 최종 생성 개수 검증
+        //  최종 생성 개수 검증
         long dbProductCount = productRepository.count();
-        log.info("✅ 상품 생성 완료: {}개 (DB 확인: {}개)", totalProducts, dbProductCount);
+        log.info(" 상품 생성 완료: {}개 (DB 확인: {}개)", totalProducts, dbProductCount);
 
         if (dbProductCount != TOTAL_PRODUCTS) {
             log.warn("⚠️ 상품 개수 불일치 - 요청: {}개, DB: {}개", TOTAL_PRODUCTS, dbProductCount);

@@ -2,6 +2,7 @@ package com.loopers.domain.product;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -37,8 +38,8 @@ public class ProductMVService {
 
     private final ProductMVRepository mvRepository;
     private final ProductCacheService productCacheService;
-    private ZonedDateTime lastBatchTime = ZonedDateTime.now().minusYears(1); // 초기값
-
+    private final AtomicReference<ZonedDateTime> lastBatchTime =
+                       new AtomicReference<>(ZonedDateTime.now().minusYears(1)); // 초기값
     /**
      * 상품 ID로 MV를 조회합니다.
      *
@@ -155,12 +156,12 @@ public class ProductMVService {
         try {
             log.info("MV 배치 동기화 시작 - 마지막 배치 시간: {}", lastBatchTime);
 
-            List<ProductMVSyncDto> changedProducts = mvRepository.findChangedProductsForSync(lastBatchTime);
+            List<ProductMVSyncDto> changedProducts = mvRepository.findChangedProductsForSync(lastBatchTime.get());
 
             if (changedProducts.isEmpty()) {
                 log.info("변경된 상품이 없습니다.");
                 long duration = System.currentTimeMillis() - startTime;
-                lastBatchTime = ZonedDateTime.now(); // 배치 시간 갱신
+                lastBatchTime.set(ZonedDateTime.now()); // 배치 시간 갱신
                 return BatchUpdateResult.success(0, 0, duration, changedProductIds, affectedBrandIds);
             }
 
@@ -212,7 +213,7 @@ public class ProductMVService {
             }
 
             // 6. 배치 시간 갱신
-            lastBatchTime = ZonedDateTime.now();
+            lastBatchTime.set(ZonedDateTime.now());
 
             long duration = System.currentTimeMillis() - startTime;
             log.info("MV 배치 동기화 완료 - 생성: {}건, 갱신: {}건, 변경된 상품: {}개, 영향받은 브랜드: {}개, 소요: {}ms",
