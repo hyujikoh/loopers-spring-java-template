@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 상품 Materialized View 서비스
- *
+ * <p>
  * MV 테이블 조회 및 배치 동기화를 담당하는 서비스입니다.
  * 상품, 브랜드, 좋아요 정보를 통합하여 조회 성능을 최적화합니다.
  *
@@ -46,8 +46,12 @@ public class ProductMVService {
      * @param productId 상품 ID
      * @return 상품 MV (존재하지 않으면 Optional.empty())
      */
-    public Optional<ProductMaterializedViewEntity> findById(Long productId) {
-        return mvRepository.findById(productId);
+    public ProductMaterializedViewEntity getById(Long productId) {
+        return mvRepository.findById(productId).
+                orElseThrow(() -> new CoreException(
+                        ErrorType.NOT_FOUND_PRODUCT,
+                        String.format("상품을 찾을 수 없습니다. (ID: %d)", productId)
+                ));
     }
 
     /**
@@ -82,10 +86,8 @@ public class ProductMVService {
     }
 
     /**
-     * ✅ DDD: 여러 상품 ID로 MV를 일괄 조회하여 Page로 반환합니다.
-     *
      * @param productIds 상품 ID 목록
-     * @param pageable 페이징 정보
+     * @param pageable   페이징 정보
      * @return 페이징된 상품 MV 목록
      */
     public Page<ProductMaterializedViewEntity> findByIdsAsPage(List<Long> productIds, Pageable pageable) {
@@ -308,4 +310,6 @@ public class ProductMVService {
             log.debug("상품 MV 생성 완료: productId={}", productId);
         }
     }
+
+
 }

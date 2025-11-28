@@ -19,18 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import jakarta.validation.Valid;
 
 /**
- * ✅ DDD: 상품 도메인 서비스
- * 
- * <p>도메인 엔티티만 처리하고 반환합니다.</p>
- * <p>DTO 조합은 Application Layer(Facade)에서 수행합니다.</p>
- * 
- * <p>책임:</p>
- * <ul>
- *   <li>상품 엔티티 CRUD</li>
- *   <li>재고 관리</li>
- *   <li>MV 엔티티 조회 (캐시 전략 포함)</li>
- * </ul>
- *
+ * 상품 도메인 서비스
  * @author hyunjikoh
  * @since 2025. 11. 10.
  */
@@ -156,31 +145,31 @@ public class ProductService {
     // ========== MV 엔티티 조회 (캐시 전략 포함) ==========
 
     /**
-     * ✅ DDD: 캐시 전략에 따라 MV 엔티티 목록을 조회합니다.
-     * 
-     * <p>도메인 엔티티만 반환하며, DTO 변환은 Facade에서 수행합니다.</p>
-     * 
+     * 캐시 전략에 따라 MV 엔티티 목록을 조회합니다.
+     *
+     * 도메인 엔티티만 반환하며, DTO 변환은 Facade에서 수행합니다.
+     *
      * @param filter 검색 조건
      * @param strategy 캐시 전략
      * @return MV 엔티티 페이지
      */
     @Transactional(readOnly = true)
     public Page<ProductMaterializedViewEntity> getMVEntitiesByStrategy(
-            ProductSearchFilter filter, 
+            ProductSearchFilter filter,
             CacheStrategy strategy
     ) {
         return switch (strategy) {
-            case HOT -> getMVEntitiesWithCache(filter, CacheStrategy.HOT);
-            case WARM -> getMVEntitiesWithCache(filter, CacheStrategy.WARM);
+            case HOT -> getProductsWithCache(filter, CacheStrategy.HOT);
+            case WARM -> getProductsWithCache(filter, CacheStrategy.WARM);
             default -> getMVEntitiesWithoutCache(filter);
         };
     }
 
     /**
-     * ✅ DDD: 캐시를 사용하여 MV 엔티티를 조회합니다.
+     * 캐시를 사용하여 MV 엔티티를 조회합니다.
      */
-    private Page<ProductMaterializedViewEntity> getMVEntitiesWithCache(
-            ProductSearchFilter filter, 
+    private Page<ProductMaterializedViewEntity> getProductsWithCache(
+            ProductSearchFilter filter,
             CacheStrategy strategy
     ) {
         Long brandId = filter.brandId();
@@ -214,7 +203,7 @@ public class ProductService {
     }
 
     /**
-     * ✅ DDD: 캐시 없이 MV 엔티티를 조회합니다.
+     * 캐시 없이 MV 엔티티를 조회합니다.
      */
     private Page<ProductMaterializedViewEntity> getMVEntitiesWithoutCache(ProductSearchFilter filter) {
         log.debug("Cold 전략 - 캐시 미사용, MV 테이블 직접 조회");
@@ -231,46 +220,13 @@ public class ProductService {
     }
 
     /**
-     * ✅ DDD: MV ID 리스트로 MV 엔티티 목록을 조회합니다.
-     * 
-     * <p>MV에 없는 상품 ID 목록도 함께 반환합니다.</p>
-     * 
-     * @param productIds 상품 ID 리스트
-     * @return MV 엔티티 목록
-     */
-    @Transactional(readOnly = true)
-    public List<ProductMaterializedViewEntity> getMVEntitiesByIds(List<Long> productIds) {
-        return mvService.findByIds(productIds);
-    }
-
-    /**
-     * ✅ DDD: MV에 없는 상품 ID 목록을 찾습니다.
-     * 
-     * @param requestedIds 요청된 상품 ID 리스트
-     * @param foundMVs 조회된 MV 엔티티 리스트
-     * @return MV에 없는 상품 ID 리스트
-     */
-    public List<Long> findMissingProductIds(
-            List<Long> requestedIds, 
-            List<ProductMaterializedViewEntity> foundMVs
-    ) {
-        List<Long> foundIds = foundMVs.stream()
-                .map(ProductMaterializedViewEntity::getProductId)
-                .toList();
-
-        return requestedIds.stream()
-                .filter(id -> !foundIds.contains(id))
-                .toList();
-    }
-
-    /**
-     * ✅ DDD: 상품 ID로 MV 엔티티를 조회합니다.
-     * 
+     * 상품 ID로 MV 엔티티를 조회합니다.
+     *
      * @param productId 상품 ID
      * @return MV 엔티티 (Optional)
      */
     @Transactional(readOnly = true)
-    public Optional<ProductMaterializedViewEntity> getMVEntityById(Long productId) {
+    public ProductMaterializedViewEntity getMVEntityById(Long productId) {
         return mvService.findById(productId);
     }
 }
