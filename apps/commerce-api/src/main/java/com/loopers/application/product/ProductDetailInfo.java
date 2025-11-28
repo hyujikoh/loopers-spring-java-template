@@ -42,8 +42,7 @@ public record ProductDetailInfo(
                 ),
                 new BrandInfo(
                         mv.getBrandId(),
-                        mv.getBrandName(),
-                        null // MV에는 브랜드 설명이 없으므로 null
+                        mv.getBrandName()
                 ),
                 isLiked
         );
@@ -73,8 +72,7 @@ public record ProductDetailInfo(
                 ),
                 new BrandInfo(
                         brand.getId(),
-                        brand.getName(),
-                        brand.getDescription()
+                        brand.getName()
                 ),
                 isLiked
         );

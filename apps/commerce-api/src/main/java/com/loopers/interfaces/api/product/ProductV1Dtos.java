@@ -87,8 +87,7 @@ public class ProductV1Dtos {
                     ),
                     new BrandDetailResponse(
                             productDetailInfo.brand().id(),
-                            productDetailInfo.brand().name(),
-                            productDetailInfo.brand().description()
+                            productDetailInfo.brand().name()
                     ),
                     productDetailInfo.isLiked()
             );
@@ -121,10 +120,7 @@ public class ProductV1Dtos {
             Long brandId,
 
             @Schema(description = "브랜드명", example = "나이키")
-            String brandName,
-
-            @Schema(description = "브랜드 설명", example = "세계적인 스포츠 브랜드")
-            String brandDescription
+            String brandName
     ) {
     }
 }

@@ -1,6 +1,7 @@
 package com.loopers.domain.product;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
@@ -31,6 +32,7 @@ import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
+import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
 import com.loopers.utils.RedisCleanUp;
@@ -219,6 +221,7 @@ public class ProductIntegrationTest {
         void get_product_detail_success() {
             // given
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
+            productMVService.syncMaterializedView();
 
             // when
             ProductDetailInfo productDetail = productFacade.getProductDetail(1L, null);
@@ -237,8 +240,8 @@ public class ProductIntegrationTest {
             Long nonExistentId = 999L;
 
             // when & then
-            assertThat(org.junit.jupiter.api.Assertions.assertThrows(
-                    com.loopers.support.error.CoreException.class,
+            assertThat(assertThrows(
+                    CoreException.class,
                     () -> productFacade.getProductDetail(nonExistentId, null)
             ).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_PRODUCT);
         }
@@ -254,11 +257,13 @@ public class ProductIntegrationTest {
             brand.delete();
             brandRepository.save(brand);
 
+            productMVService.syncMaterializedView();
+
             // when & then
-            assertThat(org.junit.jupiter.api.Assertions.assertThrows(
-                    com.loopers.support.error.CoreException.class,
+            assertThat(assertThrows(
+                    CoreException.class,
                     () -> productFacade.getProductDetail(product.getId(), null)
-            ).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_BRAND); // 적절한 에러 타입으로 변경
+            ).getErrorType()).isEqualTo(ErrorType.NOT_FOUND_PRODUCT); // 적절한 에러 타입으로 변경
         }
     }
 
@@ -286,6 +291,8 @@ public class ProductIntegrationTest {
 
             // Given: 좋아요 등록
             likeFacade.upsertLike(userInfo.username(), product.getId());
+
+            productMVService.syncMaterializedView();
 
             // When: 상품 상세 조회 (사용자 정보 포함)
             ProductDetailInfo result = productFacade.getProductDetail(
@@ -316,6 +323,8 @@ public class ProductIntegrationTest {
                     100
             );
 
+            productMVService.syncMaterializedView();
+
             // When: 상품 상세 조회 (사용자 정보 포함)
             ProductDetailInfo result = productFacade.getProductDetail(
                     product.getId(),
@@ -340,6 +349,8 @@ public class ProductIntegrationTest {
                     new BigDecimal("10000"),
                     100
             );
+
+            productMVService.syncMaterializedView();
 
             // When: 비로그인 상태로 상품 조회
             ProductDetailInfo result = productFacade.getProductDetail(
@@ -386,6 +397,7 @@ public class ProductIntegrationTest {
             likeFacade.upsertLike(user2.username(), product.getId());
             likeFacade.upsertLike(user3.username(), product.getId());
 
+            productMVService.syncMaterializedView();
             // When: user1이 상품 조회
             ProductDetailInfo result = productFacade.getProductDetail(
                     product.getId(),
@@ -414,6 +426,8 @@ public class ProductIntegrationTest {
                     new BigDecimal("10000"),
                     100
             );
+
+            productMVService.syncMaterializedView();
 
             // Given: 좋아요 등록 후 취소
             likeFacade.upsertLike(userInfo.username(), product.getId());
@@ -447,6 +461,8 @@ public class ProductIntegrationTest {
                     new BigDecimal("10000"),
                     100
             );
+
+            productMVService.syncMaterializedView();
 
             // Given: 삭제된 좋아요 엔티티 직접 생성
             LikeEntity deletedLike = LikeEntity.createEntity(userInfo.id(), product.getId());

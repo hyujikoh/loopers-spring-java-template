@@ -19,6 +19,7 @@ import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.ProductDomainCreateRequest;
 import com.loopers.domain.product.ProductEntity;
+import com.loopers.domain.product.ProductMVService;
 import com.loopers.domain.product.ProductService;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
@@ -44,6 +45,9 @@ class LikeV1ApiE2ETest {
 
     @Autowired
     private UserFacade userFacade;
+
+    @Autowired
+    private ProductMVService productMVService;
 
     @Autowired
     public LikeV1ApiE2ETest(
@@ -124,6 +128,8 @@ class LikeV1ApiE2ETest {
                             .isEqualTo(testProductId)
             );
 
+
+
             // when - 2. 상품 상세 조회 (좋아요 여부 확인)
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =
                     new ParameterizedTypeReference<>() {
@@ -136,6 +142,9 @@ class LikeV1ApiE2ETest {
                             productResponseType,
                             testProductId
                     );
+
+            // MV 동기화
+            productMVService.syncMaterializedView();
 
             // then - 2. 좋아요 여부가 true로 표시되는지 검증
             assertAll(
@@ -201,6 +210,9 @@ class LikeV1ApiE2ETest {
                             testProductId
                     );
 
+            // MV 동기화
+            productMVService.syncMaterializedView();
+
             // then - 3. 좋아요 여부가 false로 표시되는지 검증
             assertAll(
                     () -> assertTrue(productResponse.getStatusCode().is2xxSuccessful()),
@@ -244,6 +256,9 @@ class LikeV1ApiE2ETest {
                             productResponseType,
                             testProductId
                     );
+
+            // MV 동기화
+            productMVService.syncMaterializedView();
 
             // then - 비로그인 사용자는 좋아요 여부가 false
             assertAll(
@@ -295,6 +310,9 @@ class LikeV1ApiE2ETest {
                             productResponseType,
                             testProductId
                     );
+
+            // MV 동기화
+            productMVService.syncMaterializedView();
 
             // then - 좋아요 수는 1개만 카운트
             assertAll(
