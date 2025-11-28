@@ -10,15 +10,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.product.ProductMVRepository;
+import com.loopers.domain.product.ProductMVSyncDto;
 import com.loopers.domain.product.ProductMaterializedViewEntity;
+import com.loopers.domain.product.dto.ProductSearchFilter;
 
 import lombok.RequiredArgsConstructor;
 
 /**
  * 상품 Materialized View 리포지토리 구현체
  *
- * <p>Domain 계층의 ProductMVRepository 인터페이스를 구현합니다.
- * JPA Repository와 QueryDSL을 활용하여 데이터 접근을 처리합니다.</p>
+ * Domain 계층의 ProductMVRepository 인터페이스를 구현합니다.
+ * JPA Repository와 QueryDSL을 활용하여 데이터 접근을 처리합니다.
  *
  * @author hyunjikoh
  * @since 2025. 11. 27.
@@ -36,10 +38,6 @@ public class ProductMVRepositoryImpl implements ProductMVRepository {
         return jpaRepository.findByProductId(productId);
     }
 
-    @Override
-    public Page<ProductMaterializedViewEntity> findAll(Pageable pageable) {
-        return queryRepository.findAll(pageable);
-    }
 
     @Override
     public Page<ProductMaterializedViewEntity> findByBrandId(Long brandId, Pageable pageable) {
@@ -74,7 +72,6 @@ public class ProductMVRepositoryImpl implements ProductMVRepository {
     }
 
     @Override
-    @Transactional
     public void deleteByProductIdIn(List<Long> productIds) {
         jpaRepository.deleteByProductIdIn(productIds);
     }
@@ -87,5 +84,15 @@ public class ProductMVRepositoryImpl implements ProductMVRepository {
     @Override
     public long count() {
         return jpaRepository.count();
+    }
+
+    @Override
+    public Page<ProductMaterializedViewEntity> findBySearchFilter(ProductSearchFilter searchFilter) {
+        return queryRepository.findBySearchFilter(searchFilter);
+    }
+
+    @Override
+    public List<ProductMVSyncDto> findChangedProductsForSync(ZonedDateTime lastBatchTime) {
+        return queryRepository.findChangedProductsForSync(lastBatchTime);
     }
 }

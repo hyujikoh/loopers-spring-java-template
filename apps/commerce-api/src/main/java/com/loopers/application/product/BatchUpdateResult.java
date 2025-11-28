@@ -8,10 +8,8 @@ import lombok.Getter;
 /**
  * 배치 업데이트 결과 DTO
  *
- * <p>MV 배치 동기화 작업의 결과를 담는 불변 객체입니다.</p>
- *
- * @author hyunjikoh
- * @since 2025. 11. 27.
+ * MV 배치 동기화 작업의 결과를 담는 불변 객체
+ * 변경된 상품/브랜드 ID를 포함하여 캐시 무효화에 사용
  */
 @Getter
 public class BatchUpdateResult {
@@ -22,14 +20,10 @@ public class BatchUpdateResult {
     private final long durationMs;
     private final String errorMessage;
 
-    /**
-     * 변경된 상품 ID 목록 (생성 또는 갱신된 상품)
-     */
+    // 변경된 상품 ID 목록 (생성 또는 갱신된 상품)
     private final Set<Long> changedProductIds;
 
-    /**
-     * 변경된 상품들이 속한 브랜드 ID 목록
-     */
+    // 변경된 상품들이 속한 브랜드 ID 목록
     private final Set<Long> affectedBrandIds;
 
     private BatchUpdateResult(
@@ -55,14 +49,7 @@ public class BatchUpdateResult {
     }
 
     /**
-     * 성공 결과를 생성합니다.
-     *
-     * @param createdCount      생성된 레코드 수
-     * @param updatedCount      갱신된 레코드 수
-     * @param durationMs        소요 시간 (밀리초)
-     * @param changedProductIds 변경된 상품 ID 목록
-     * @param affectedBrandIds  영향받은 브랜드 ID 목록
-     * @return 성공 결과
+     * 성공 결과 생성
      */
     public static BatchUpdateResult success(
             int createdCount,
@@ -83,23 +70,14 @@ public class BatchUpdateResult {
     }
 
     /**
-     * 성공 결과를 생성합니다 (변경 추적 없음 - 레거시 호환).
-     *
-     * @param createdCount 생성된 레코드 수
-     * @param updatedCount 갱신된 레코드 수
-     * @param durationMs   소요 시간 (밀리초)
-     * @return 성공 결과
+     * 성공 결과 생성 (변경 추적 없음)
      */
     public static BatchUpdateResult success(int createdCount, int updatedCount, long durationMs) {
         return success(createdCount, updatedCount, durationMs, Collections.emptySet(), Collections.emptySet());
     }
 
     /**
-     * 실패 결과를 생성합니다.
-     *
-     * @param errorMessage 에러 메시지
-     * @param durationMs   소요 시간 (밀리초)
-     * @return 실패 결과
+     * 실패 결과 생성
      */
     public static BatchUpdateResult failure(String errorMessage, long durationMs) {
         return new BatchUpdateResult(
@@ -114,18 +92,14 @@ public class BatchUpdateResult {
     }
 
     /**
-     * 변경 사항이 있는지 확인합니다.
-     *
-     * @return 생성 또는 갱신된 레코드가 있으면 true
+     * 변경 사항 있는지 확인
      */
     public boolean hasChanges() {
         return success && (createdCount > 0 || updatedCount > 0);
     }
 
     /**
-     * 전체 처리 건수를 반환합니다.
-     *
-     * @return 생성 + 갱신 건수
+     * 전체 처리 건수 (생성 + 갱신)
      */
     public int getTotalCount() {
         return createdCount + updatedCount;

@@ -149,7 +149,7 @@ public class ProductEntity extends BaseEntity {
     /**
      * 재고를 원복한다.
      *
-     * <p>주문 취소 시 차감된 재고를 다시 복구합니다.</p>
+     * 주문 취소 시 차감된 재고를 다시 복구합니다.
      *
      * @param quantity 원복할 재고 수량
      */

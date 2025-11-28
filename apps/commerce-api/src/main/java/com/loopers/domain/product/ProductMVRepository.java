@@ -7,11 +7,13 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.loopers.domain.product.dto.ProductSearchFilter;
+
 /**
  * 상품 Materialized View 리포지토리 인터페이스
  *
- * <p>MV 테이블에 대한 데이터 접근 계층을 정의합니다.
- * 실제 구현은 Infrastructure 계층에서 제공됩니다.</p>
+ * MV 테이블에 대한 데이터 접근 계층을 정의합니다.
+ * 실제 구현은 Infrastructure 계층에서 제공됩니다.
  *
  * @author hyunjikoh
  * @since 2025. 11. 27.
@@ -25,15 +27,6 @@ public interface ProductMVRepository {
      * @return 상품 MV (존재하지 않으면 Optional.empty())
      */
     Optional<ProductMaterializedViewEntity> findById(Long productId);
-
-    /**
-     * 전체 상품 MV를 페이징 조회합니다.
-     *
-     * @param pageable 페이징 정보 (페이지 번호, 크기, 정렬 조건)
-     * @return 페이징된 상품 MV 목록
-     */
-    Page<ProductMaterializedViewEntity> findAll(Pageable pageable);
-
     /**
      * 브랜드별 상품 MV를 페이징 조회합니다.
      *
@@ -108,4 +101,15 @@ public interface ProductMVRepository {
      * @return MV 개수
      */
     long count();
+
+    /**
+     * 검색 필터를 기반으로 상품 MV를 페이징 조회합니다.
+     *
+     * @param searchFilter 검색 필터 (브랜드 ID, 상품명, 페이징 정보)
+     * @return 페이징된 상품 MV 목록
+     */
+    Page<ProductMaterializedViewEntity> findBySearchFilter(ProductSearchFilter searchFilter);
+
+
+    List<ProductMVSyncDto> findChangedProductsForSync(ZonedDateTime lastBatchTime);
 }

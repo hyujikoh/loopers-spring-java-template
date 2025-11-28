@@ -15,8 +15,8 @@ import jakarta.persistence.*;
 /**
  * 상품 Materialized View 엔티티
  *
- * <p>상품, 브랜드, 좋아요 정보를 통합하여 조회 성능을 최적화하기 위한 MV 테이블입니다.
- * 실시간 업데이트가 아닌 배치 업데이트(2분 간격)를 통해 데이터를 동기화합니다.</p>
+ * 상품, 브랜드, 좋아요 정보를 통합하여 조회 성능을 최적화하기 위한 MV 테이블입니다.
+ * 실시간 업데이트가 아닌 배치 업데이트(2분 간격)를 통해 데이터를 동기화합니다.
  *
  * @author hyunjikoh
  * @since 2025. 11. 27.
@@ -27,7 +27,10 @@ import jakarta.persistence.*;
         @Index(name = "idx_pmv_like_count", columnList = "like_count"),
         @Index(name = "idx_pmv_brand_like", columnList = "brand_id, like_count"),
         @Index(name = "idx_pmv_name", columnList = "name"),
-        @Index(name = "idx_pmv_updated_at", columnList = "last_updated_at")
+        @Index(name = "idx_pmv_updated_at", columnList = "last_updated_at"),
+        @Index(name = "idx_pmv_product_updated_at", columnList = "product_updated_at"),
+        @Index(name = "idx_pmv_like_updated_at", columnList = "like_updated_at"),
+        @Index(name = "idx_pmv_brand_updated_at", columnList = "brand_updated_at")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -60,7 +63,29 @@ public class ProductMaterializedViewEntity extends BaseEntity {
     @Column(name = "like_count", nullable = false)
     private Long likeCount;
 
-    // 메타 정보
+    /**
+     * 상품명, 가격, 재고 등이 변경된 시간을 추적
+     */
+    @Column(name = "product_updated_at", nullable = false)
+    private ZonedDateTime productUpdatedAt;
+
+    /**
+     * LikeEntity의 마지막 변경 시간
+     * 좋아요 추가/삭제가 발생한 시간을 추적
+     */
+    @Column(name = "like_updated_at", nullable = false)
+    private ZonedDateTime likeUpdatedAt;
+
+    /**
+     * 브랜드명, 설명 등이 변경된 시간을 추적
+     */
+    @Column(name = "brand_updated_at", nullable = false)
+    private ZonedDateTime brandUpdatedAt;
+
+    /**
+     * MV의 마지막 동기화 시간
+     * 배치 작업이 이 엔티티를 마지막으로 업데이트한 시간
+     */
     @Column(name = "last_updated_at", nullable = false)
     private ZonedDateTime lastUpdatedAt;
 
@@ -76,7 +101,11 @@ public class ProductMaterializedViewEntity extends BaseEntity {
             Long brandId,
             String brandName,
             Long likeCount,
+            ZonedDateTime productUpdatedAt,
+            ZonedDateTime brandUpdatedAt,
+            ZonedDateTime likeUpdatedAt,
             ZonedDateTime lastUpdatedAt
+
     ) {
         this.productId = productId;
         this.name = name;
@@ -86,6 +115,9 @@ public class ProductMaterializedViewEntity extends BaseEntity {
         this.brandId = brandId;
         this.brandName = brandName;
         this.likeCount = likeCount;
+        this.productUpdatedAt = productUpdatedAt;
+        this.brandUpdatedAt = brandUpdatedAt;
+        this.likeUpdatedAt = likeUpdatedAt;
         this.lastUpdatedAt = lastUpdatedAt;
     }
 
@@ -95,13 +127,15 @@ public class ProductMaterializedViewEntity extends BaseEntity {
      * @param product   상품 엔티티
      * @param brand     브랜드 엔티티
      * @param likeCount 좋아요 수
+     * @param likeUpdatedAt 좋아요 최신 업데이트 시간
      * @return 생성된 MV 엔티티
      * @throws IllegalArgumentException 필수 파라미터가 null인 경우
      */
     public static ProductMaterializedViewEntity from(
             ProductEntity product,
             BrandEntity brand,
-            Long likeCount
+            Long likeCount,
+            ZonedDateTime likeUpdatedAt
     ) {
         Objects.requireNonNull(product, "상품 엔티티는 필수입니다.");
         Objects.requireNonNull(brand, "브랜드 엔티티는 필수입니다.");
@@ -120,6 +154,42 @@ public class ProductMaterializedViewEntity extends BaseEntity {
                 brand.getId(),
                 brand.getName(),
                 likeCount,
+                product.getUpdatedAt(),
+                brand.getUpdatedAt(),
+                likeUpdatedAt != null ? likeUpdatedAt : ZonedDateTime.now(),
+                ZonedDateTime.now()
+        );
+    }
+
+    /**
+     * ProductMVSyncDto로부터 MV 엔티티를 생성합니다.
+     *
+     * 배치 동기화 시 단일 쿼리 결과로부터 MV를 생성합니다.
+     *
+     * @param dto 동기화용 DTO
+     * @return 생성된 MV 엔티티
+     * @throws IllegalArgumentException 필수 파라미터가 null인 경우
+     */
+    public static ProductMaterializedViewEntity fromDto(ProductMVSyncDto dto) {
+        Objects.requireNonNull(dto, "동기화 DTO는 필수입니다.");
+        
+        Long likeCount = dto.getLikeCount() != null ? dto.getLikeCount() : 0L;
+        if (likeCount < 0) {
+            throw new IllegalArgumentException("좋아요 수는 0 이상이어야 합니다.");
+        }
+
+        return new ProductMaterializedViewEntity(
+                dto.getProductId(),
+                dto.getProductName(),
+                dto.getProductDescription(),
+                Price.of(dto.getOriginPrice(), dto.getDiscountPrice()),
+                dto.getStockQuantity(),
+                dto.getBrandId(),
+                dto.getBrandName(),
+                likeCount,
+                dto.getProductUpdatedAt(),
+                dto.getBrandUpdatedAt(),
+                dto.getLikeUpdatedAt() != null ? dto.getLikeUpdatedAt() : ZonedDateTime.now(),
                 ZonedDateTime.now()
         );
     }
@@ -155,20 +225,9 @@ public class ProductMaterializedViewEntity extends BaseEntity {
         this.brandId = brand.getId();
         this.brandName = brand.getName();
         this.likeCount = likeCount;
+        this.productUpdatedAt = product.getUpdatedAt();
+        this.brandUpdatedAt = brand.getUpdatedAt();
         this.lastUpdatedAt = ZonedDateTime.now();
-    }
-
-    /**
-     * 마지막 배치 시간 이후 업데이트가 필요한지 확인합니다.
-     *
-     * @param lastBatchTime 마지막 배치 실행 시간
-     * @return 업데이트 필요 여부
-     */
-    public boolean needsUpdate(ZonedDateTime lastBatchTime) {
-        if (lastBatchTime == null) {
-            return true;
-        }
-        return this.lastUpdatedAt.isBefore(lastBatchTime);
     }
 
     @Override
@@ -212,5 +271,43 @@ public class ProductMaterializedViewEntity extends BaseEntity {
         if (this.lastUpdatedAt == null) {
             throw new IllegalStateException("마지막 업데이트 시간은 필수입니다.");
         }
+    }
+
+
+    /**
+     * DTO와 기존 MV를 비교하여 실제 변경사항이 있는지 확인합니다.
+     */
+    public static boolean hasActualChangesFromDto(ProductMaterializedViewEntity mv, ProductMVSyncDto dto) {
+        // 상품명 변경
+        if (!mv.getName().equals(dto.getProductName())) {
+            return true;
+        }
+
+        // 가격 변경
+        if (!mv.getPrice().getOriginPrice().equals(dto.getOriginPrice())) {
+            return true;
+        }
+
+        if (dto.getDiscountPrice() != null && !mv.getPrice().getDiscountPrice().equals(dto.getDiscountPrice())) {
+            return true;
+        }
+
+        // 재고 변경
+        if (!mv.getStockQuantity().equals(dto.getStockQuantity())) {
+            return true;
+        }
+
+        // 브랜드명 변경
+        if (!mv.getBrandName().equals(dto.getBrandName())) {
+            return true;
+        }
+
+        // 좋아요 수 변경
+        Long dtoLikeCount = dto.getLikeCount() != null ? dto.getLikeCount() : 0L;
+        if (!mv.getLikeCount().equals(dtoLikeCount)) {
+            return true;
+        }
+
+        return false;
     }
 }

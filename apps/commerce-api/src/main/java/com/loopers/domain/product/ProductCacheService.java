@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.application.product.ProductDetailInfo;
+import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.infrastructure.cache.CacheKeyGenerator;
 import com.loopers.infrastructure.cache.CacheStrategy;
 
@@ -33,13 +34,11 @@ public class ProductCacheService {
     private final ObjectMapper objectMapper;
 
     // TTL 상수 - Hot/Warm/Cold 전략별 차별화
-    private static final long HOT_DATA_TTL = 60; // Hot: 60분 (배치 갱신)
+    private static final long HOT_DATA_TTL = 30; // Hot: 30분 (배치 갱신)
     private static final long WARM_DATA_TTL = 10; // Warm: 10분 (Cache-Aside)
-    private static final long COLD_DATA_TTL = 5; // Cold: 5분 (레거시)
     private static final TimeUnit TTL_UNIT = TimeUnit.MINUTES;
 
     // ========== Hot: 상품 상세 (배치 갱신, TTL 60분) ==========
-
 
     public void cacheProductDetail(Long productId, ProductDetailInfo productDetail) {
         try {
@@ -337,5 +336,41 @@ public class ProductCacheService {
             long duration = System.currentTimeMillis() - startTime;
             log.error("MV 동기화 캐시 무효화 실패 - {}ms", duration, e);
         }
+    }
+
+    /**
+     * 캐시 전략 결정
+     */
+    public CacheStrategy determineCacheStrategy(ProductSearchFilter filter) {
+        if (filter.pageable().getPageNumber() == 0)
+            return CacheStrategy.HOT;
+
+        if (filter.pageable().getPageNumber() > 2)
+            return CacheStrategy.COLD;
+
+        if (filter.productName() != null && !filter.productName().trim().isEmpty()) {
+            log.debug("Cold 전략 선택 - 상품명 검색: {}", filter.productName());
+            return CacheStrategy.COLD;
+        }
+
+        if (filter.brandId() != null) {
+            if (isPopularitySort(filter.pageable())) {
+                log.debug("Hot 전략 선택 - 브랜드: {}, 인기순 정렬", filter.brandId());
+                return CacheStrategy.HOT;
+            }
+            log.debug("Warm 전략 선택 - 브랜드: {}", filter.brandId());
+            return CacheStrategy.WARM;
+        }
+
+        log.debug("Warm 전략 선택 - 전체 목록");
+        return CacheStrategy.WARM;
+    }
+
+    /**
+     * 인기순 정렬 여부 확인
+     */
+    private boolean isPopularitySort(Pageable pageable) {
+        return pageable.getSort().stream()
+                .anyMatch(order -> "likeCount".equals(order.getProperty()) && order.isDescending());
     }
 }
