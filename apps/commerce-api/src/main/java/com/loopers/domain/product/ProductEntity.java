@@ -25,8 +25,6 @@ import jakarta.validation.constraints.NotNull;
 @Table(name = "products", indexes = {
         @Index(name = "idx_productentity_brand_id", columnList = "brand_id"),
         @Index(name = "idx_productentity_name", columnList = "name"),
-        @Index(name = "idx_productentity_like_count", columnList = "like_count"),
-        @Index(name = "idx_productentity_brand_id_like_count", columnList = "brand_id, like_count")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
