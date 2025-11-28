@@ -53,22 +53,6 @@ public class CacheKeyGenerator {
                 .toString();
     }
 
-    /**
-     * 상품 목록 캐시 키: product:page:{brandId}:{productName}:{page}:{size}:{sort}
-     * 레거시 방식 (Cold 전략 또는 특수 검색용)
-     */
-    public String generateProductListKey(Long brandId, String productName, Pageable pageable) {
-        StringJoiner joiner = new StringJoiner(DELIMITER)
-                .add(PRODUCT_PREFIX)
-                .add(PAGE_PREFIX)
-                .add(brandId != null ? String.valueOf(brandId) : NULL_VALUE)
-                .add(productName != null ? sanitizeProductName(productName) : NULL_VALUE)
-                .add(String.valueOf(pageable.getPageNumber()))
-                .add(String.valueOf(pageable.getPageSize()))
-                .add(generateSortString(pageable.getSort()));
-
-        return joiner.toString();
-    }
 
     /**
      * 상품 ID 리스트 패턴: product:ids:{strategy}:*
@@ -82,18 +66,6 @@ public class CacheKeyGenerator {
                 .toString();
     }
 
-    /**
-     * 특정 브랜드의 상품 ID 리스트 패턴: product:ids:{strategy}:{brandId}:*
-     */
-    public String generateProductIdsPatternByBrand(CacheStrategy strategy, Long brandId) {
-        return new StringJoiner(DELIMITER)
-                .add(PRODUCT_PREFIX)
-                .add(IDS_PREFIX)
-                .add(strategy.name().toLowerCase())
-                .add(String.valueOf(brandId))
-                .add("*")
-                .toString();
-    }
 
     /**
      * 특정 브랜드의 모든 목록 패턴 (레거시): product:page:{brandId}:*
@@ -107,16 +79,6 @@ public class CacheKeyGenerator {
                 .toString();
     }
 
-    /**
-     * 모든 상품 목록 패턴 (레거시): product:page:*
-     */
-    public String generateProductListPattern() {
-        return new StringJoiner(DELIMITER)
-                .add(PRODUCT_PREFIX)
-                .add(PAGE_PREFIX)
-                .add("*")
-                .toString();
-    }
 
     /**
      * 상품명을 캐시 키에 안전한 형태로 변환 (공백→언더스코어, 특수문자 제거, 최대 50자)
