@@ -128,7 +128,8 @@ class LikeV1ApiE2ETest {
                             .isEqualTo(testProductId)
             );
 
-
+            // MV 동기화
+            productMVService.syncMaterializedView();
 
             // when - 2. 상품 상세 조회 (좋아요 여부 확인)
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =
@@ -142,9 +143,6 @@ class LikeV1ApiE2ETest {
                             productResponseType,
                             testProductId
                     );
-
-            // MV 동기화
-            productMVService.syncMaterializedView();
 
             // then - 2. 좋아요 여부가 true로 표시되는지 검증
             assertAll(
@@ -197,6 +195,9 @@ class LikeV1ApiE2ETest {
                     () -> assertThat(unlikeResponse.getStatusCode()).isEqualTo(HttpStatus.OK)
             );
 
+            // MV 동기화
+            productMVService.syncMaterializedView();
+
             // when - 3. 상품 상세 조회 (좋아요 여부 확인)
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =
                     new ParameterizedTypeReference<>() {
@@ -209,9 +210,6 @@ class LikeV1ApiE2ETest {
                             productResponseType,
                             testProductId
                     );
-
-            // MV 동기화
-            productMVService.syncMaterializedView();
 
             // then - 3. 좋아요 여부가 false로 표시되는지 검증
             assertAll(
@@ -244,6 +242,9 @@ class LikeV1ApiE2ETest {
                     testProductId
             );
 
+            // MV 동기화
+            productMVService.syncMaterializedView();
+
             // when - 비로그인 사용자가 상품 상세 조회 (헤더 없음)
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =
                     new ParameterizedTypeReference<>() {
@@ -257,8 +258,6 @@ class LikeV1ApiE2ETest {
                             testProductId
                     );
 
-            // MV 동기화
-            productMVService.syncMaterializedView();
 
             // then - 비로그인 사용자는 좋아요 여부가 false
             assertAll(
@@ -298,6 +297,9 @@ class LikeV1ApiE2ETest {
                     testProductId
             );
 
+            // MV 동기화
+            productMVService.syncMaterializedView();
+
             // when - 3. 상품 상세 조회
             ParameterizedTypeReference<ApiResponse<ProductV1Dtos.ProductDetailResponse>> productResponseType =
                     new ParameterizedTypeReference<>() {
@@ -310,9 +312,6 @@ class LikeV1ApiE2ETest {
                             productResponseType,
                             testProductId
                     );
-
-            // MV 동기화
-            productMVService.syncMaterializedView();
 
             // then - 좋아요 수는 1개만 카운트
             assertAll(
