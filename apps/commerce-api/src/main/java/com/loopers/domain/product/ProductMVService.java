@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.application.product.BatchUpdateResult;
 import com.loopers.domain.brand.BrandEntity;
+import com.loopers.domain.product.dto.ProductSearchFilter;
+import com.loopers.infrastructure.cache.CacheStrategy;
 import com.loopers.infrastructure.product.ProductMVQueryRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
@@ -36,6 +38,8 @@ public class ProductMVService {
 
     private final ProductMVRepository mvRepository;
     private final ProductMVQueryRepository mvQueryRepository;
+    private final ProductCacheService productCacheService;
+    private ZonedDateTime lastBatchTime = ZonedDateTime.now().minusYears(1); // 초기값
 
     /**
      * 상품 ID로 MV를 조회합니다.
@@ -93,7 +97,82 @@ public class ProductMVService {
         return mvRepository.findByNameContaining(keyword, pageable);
     }
 
-    private ZonedDateTime lastBatchTime = ZonedDateTime.now().minusYears(1); // 초기값
+    // ========== MV 엔티티 조회 (캐시 전략 포함) ==========
+
+    /**
+     * 캐시 전략에 따라 MV 엔티티 목록을 조회합니다.
+     *
+     * 도메인 엔티티만 반환하며, DTO 변환은 Facade에서 수행합니다.
+     *
+     * @param filter 검색 조건
+     * @param strategy 캐시 전략
+     * @return MV 엔티티 페이지
+     */
+    @Transactional(readOnly = true)
+    public Page<ProductMaterializedViewEntity> getMVEntitiesByStrategy(
+            ProductSearchFilter filter,
+            CacheStrategy strategy
+    ) {
+        return switch (strategy) {
+            case HOT -> getProductsWithCache(filter, CacheStrategy.HOT);
+            case WARM -> getProductsWithCache(filter, CacheStrategy.WARM);
+            default -> getMVEntitiesWithoutCache(filter);
+        };
+    }
+
+    /**
+     * 캐시를 사용하여 MV 엔티티를 조회합니다.
+     */
+    private Page<ProductMaterializedViewEntity> getProductsWithCache(
+            ProductSearchFilter filter,
+            CacheStrategy strategy
+    ) {
+        Long brandId = filter.brandId();
+        Pageable pageable = filter.pageable();
+
+        // 1. 캐시에서 ID 리스트 조회
+        Optional<List<Long>> cachedIds = productCacheService.getProductIdsFromCache(
+                strategy, brandId, pageable
+        );
+
+        if (cachedIds.isPresent()) {
+            log.debug("{} 캐시 히트 - brandId: {}, page: {}", strategy, brandId, pageable.getPageNumber());
+            return findByIdsAsPage(cachedIds.get(), pageable);
+        }
+
+        log.debug("{} 캐시 미스 - brandId: {}, page: {}", strategy, brandId, pageable.getPageNumber());
+
+        // 2. MV에서 조회
+        Page<ProductMaterializedViewEntity> mvProducts = brandId != null
+                ? findByBrandId(brandId, pageable)
+                : findAll(pageable);
+
+        // 3. ID 리스트 캐싱
+        List<Long> productIds = mvProducts.getContent().stream()
+                .map(ProductMaterializedViewEntity::getProductId)
+                .toList();
+
+        productCacheService.cacheProductIds(strategy, brandId, pageable, productIds);
+
+        return mvProducts;
+    }
+
+    /**
+     * 캐시 없이 MV 엔티티를 조회합니다.
+     */
+    private Page<ProductMaterializedViewEntity> getMVEntitiesWithoutCache(ProductSearchFilter filter) {
+        log.debug("Cold 전략 - 캐시 미사용, MV 테이블 직접 조회");
+
+        // 상품명 검색
+        if (filter.productName() != null && !filter.productName().trim().isEmpty()) {
+            return searchByName(filter.productName(), filter.pageable());
+        }
+
+        // 브랜드별 또는 전체 조회
+        return filter.brandId() != null
+                ? findByBrandId(filter.brandId(), filter.pageable())
+                : findAll(filter.pageable());
+    }
 
     /**
      * MV 테이블을 원본 테이블과 동기화합니다.

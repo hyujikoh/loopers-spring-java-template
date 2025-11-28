@@ -45,7 +45,7 @@ public class ProductFacade {
 
         // 2. 도메인 서비스에서 MV 엔티티 조회
         Page<ProductMaterializedViewEntity> mvEntities =
-                productService.getMVEntitiesByStrategy(productSearchFilter, strategy);
+                mvService.getMVEntitiesByStrategy(productSearchFilter, strategy);
 
         // 4. DTO 변환
         return mvEntities.map(ProductInfo::from);
