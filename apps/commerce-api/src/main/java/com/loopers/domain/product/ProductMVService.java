@@ -112,6 +112,7 @@ public class ProductMVService {
             log.info("MV 배치 동기화 시작");
 
             // 1. 모든 활성 상품 조회
+            // TODO : 10만건 이상일 경우에 대비해 페이징 처리
             List<ProductEntity> allProducts = productRepository.getProducts(
                     new ProductSearchFilter(
                             null, null,

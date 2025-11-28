@@ -33,7 +33,7 @@ public class ProductCacheService {
     private final ObjectMapper objectMapper;
 
     // TTL 상수 - Hot/Warm/Cold 전략별 차별화
-    private static final long HOT_DATA_TTL = 60; // Hot: 60분 (배치 갱신)
+    private static final long HOT_DATA_TTL = 30; // Hot: 30분 (배치 갱신)
     private static final long WARM_DATA_TTL = 10; // Warm: 10분 (Cache-Aside)
     private static final TimeUnit TTL_UNIT = TimeUnit.MINUTES;
 

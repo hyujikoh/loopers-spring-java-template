@@ -20,7 +20,7 @@ public enum CacheStrategy {
      * Hot: 배치 갱신, TTL 60분
      * 인기순 정렬, 1페이지 (가장 빈번 조회)
      */
-    HOT(60, TimeUnit.MINUTES, true, CacheUpdateStrategy.BATCH_REFRESH),
+    HOT(30, TimeUnit.MINUTES, true, CacheUpdateStrategy.BATCH_REFRESH),
 
     /**
      * Warm: Cache-Aside, TTL 10분
