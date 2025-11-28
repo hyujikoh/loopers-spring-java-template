@@ -25,8 +25,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * 상품 Materialized View QueryDSL 리포지토리
  *
- * <p>QueryDSL을 활용한 동적 쿼리 및 복잡한 조회 로직을 처리합니다.
- * 페이징, 정렬, 필터링 등의 기능을 제공합니다.</p>
+ * QueryDSL을 활용한 동적 쿼리 및 복잡한 조회 로직을 처리합니다.
+ * 페이징, 정렬, 필터링 등의 기능을 제공합니다.
  *
  * @author hyunjikoh
  * @since 2025. 11. 27.
@@ -180,8 +180,8 @@ public class ProductMVQueryRepository {
     /**
      * 지정된 시간 이후 변경된 상품 MV를 조회합니다.
      *
-     * <p>상품, 좋아요, 브랜드 중 하나라도 변경된 경우를 감지합니다.
-     * 여유 시간(기본 1분)을 추가하여 타이밍 이슈를 방지합니다.</p>
+     * 상품, 좋아요, 브랜드 중 하나라도 변경된 경우를 감지합니다.
+     * 여유 시간(기본 1분)을 추가하여 타이밍 이슈를 방지합니다.
      *
      * @param syncedTime      마지막 배치 실행 시간
      * @param marginMinutes   여유 시간 (분)
@@ -212,7 +212,7 @@ public class ProductMVQueryRepository {
     /**
      * 마지막 배치 시간 이후 변경된 데이터를 Product, Brand, Like 조인으로 조회합니다.
      * 
-     * <p>단일 쿼리로 변경된 상품만 조회하여 성능을 최적화합니다.</p>
+     * 단일 쿼리로 변경된 상품만 조회하여 성능을 최적화합니다.
      * 
      * @param lastBatchTime 마지막 배치 실행 시간
      * @return 변경된 상품 데이터 DTO 목록

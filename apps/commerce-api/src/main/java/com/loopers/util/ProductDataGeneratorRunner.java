@@ -27,11 +27,11 @@ import lombok.extern.slf4j.Slf4j;
  * 상품 및 브랜드 데이터 생성 Runner
  * 애플리케이션 시작 시 자동으로 브랜드 및 상품 데이터를 생성합니다
  *
- * <p>✅ 생성 규칙:</p>
- * <ul>
- *   <li>상품: 정확히 100,000개</li>
- *   <li>브랜드: 유니크 이름으로 필요한 만큼 자동 생성</li>
- * </ul>
+ * ✅ 생성 규칙:
+ *
+ *   상품: 정확히 100,000개
+ *   브랜드: 유니크 이름으로 필요한 만큼 자동 생성
+ *
  *
  * 실행 방법:
  * --args='--spring.profiles.active=local --product.data.generate=true'
@@ -136,7 +136,7 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
     /**
      * 유니크한 브랜드명을 생성합니다.
      *
-     * <p>중복된 이름이 생성되면 재시도합니다.</p>
+     * 중복된 이름이 생성되면 재시도합니다.
      *
      * @return 유니크한 브랜드명 (생성 실패 시 null)
      */

@@ -10,8 +10,8 @@ import org.springframework.data.domain.Pageable;
 /**
  * 상품 Materialized View 리포지토리 인터페이스
  *
- * <p>MV 테이블에 대한 데이터 접근 계층을 정의합니다.
- * 실제 구현은 Infrastructure 계층에서 제공됩니다.</p>
+ * MV 테이블에 대한 데이터 접근 계층을 정의합니다.
+ * 실제 구현은 Infrastructure 계층에서 제공됩니다.
  *
  * @author hyunjikoh
  * @since 2025. 11. 27.

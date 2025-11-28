@@ -9,7 +9,7 @@ import lombok.Getter;
 /**
  * MV 동기화용 DTO
  * 
- * <p>Product, Brand, Like를 조인하여 한 번의 쿼리로 조회한 결과를 담습니다.</p>
+ * Product, Brand, Like를 조인하여 한 번의 쿼리로 조회한 결과를 담습니다.
  * 
  * @author hyunjikoh
  * @since 2025. 11. 28.

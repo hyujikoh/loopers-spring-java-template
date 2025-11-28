@@ -27,7 +27,7 @@ import com.loopers.utils.RedisCleanUp;
 /**
  * 캐싱 전략 통합 테스트
  *
- * <p>Hot/Warm/Cold 데이터 캐싱 전략이 올바르게 작동하는지 검증합니다.</p>
+ * Hot/Warm/Cold 데이터 캐싱 전략이 올바르게 작동하는지 검증합니다.
  *
  * @author hyunjikoh
  * @since 2025. 11. 10.

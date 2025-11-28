@@ -14,7 +14,7 @@ import com.loopers.domain.product.ProductMaterializedViewEntity;
 /**
  * 상품 Materialized View JPA 리포지토리
  *
- * <p>Spring Data JPA를 활용한 기본 CRUD 및 쿼리 메서드를 제공합니다.</p>
+ * Spring Data JPA를 활용한 기본 CRUD 및 쿼리 메서드를 제공합니다.
  *
  * @author hyunjikoh
  * @since 2025. 11. 27.

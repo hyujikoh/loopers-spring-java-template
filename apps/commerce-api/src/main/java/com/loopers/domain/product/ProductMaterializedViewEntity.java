@@ -15,8 +15,8 @@ import jakarta.persistence.*;
 /**
  * 상품 Materialized View 엔티티
  *
- * <p>상품, 브랜드, 좋아요 정보를 통합하여 조회 성능을 최적화하기 위한 MV 테이블입니다.
- * 실시간 업데이트가 아닌 배치 업데이트(2분 간격)를 통해 데이터를 동기화합니다.</p>
+ * 상품, 브랜드, 좋아요 정보를 통합하여 조회 성능을 최적화하기 위한 MV 테이블입니다.
+ * 실시간 업데이트가 아닌 배치 업데이트(2분 간격)를 통해 데이터를 동기화합니다.
  *
  * @author hyunjikoh
  * @since 2025. 11. 27.
@@ -164,7 +164,7 @@ public class ProductMaterializedViewEntity extends BaseEntity {
     /**
      * ProductMVSyncDto로부터 MV 엔티티를 생성합니다.
      *
-     * <p>배치 동기화 시 단일 쿼리 결과로부터 MV를 생성합니다.</p>
+     * 배치 동기화 시 단일 쿼리 결과로부터 MV를 생성합니다.
      *
      * @param dto 동기화용 DTO
      * @return 생성된 MV 엔티티
