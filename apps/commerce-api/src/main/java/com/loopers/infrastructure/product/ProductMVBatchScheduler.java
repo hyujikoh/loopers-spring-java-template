@@ -107,7 +107,6 @@ public class ProductMVBatchScheduler {
         log.debug("인기 상품 상세 갱신");
 
         try {
-            // ✅ ProductMVRepository 직접 사용 (likeCount 정렬 보장)
             Pageable pageable = PageRequest.of(0, TOP_PRODUCTS_COUNT,
                     Sort.by(Sort.Direction.DESC, "likeCount"));
 
@@ -164,7 +163,7 @@ public class ProductMVBatchScheduler {
             try {
                 Pageable pageable = PageRequest.of(page, PAGE_SIZE, sort);
 
-                // ✅ ProductMVRepository 직접 사용 (likeCount 정렬 보장)
+
                 Page<ProductMaterializedViewEntity> products =
                         mvService.findByBrandId(brandId, pageable);
 

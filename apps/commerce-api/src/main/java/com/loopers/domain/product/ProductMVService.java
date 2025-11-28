@@ -82,6 +82,18 @@ public class ProductMVService {
     }
 
     /**
+     * ✅ DDD: 여러 상품 ID로 MV를 일괄 조회하여 Page로 반환합니다.
+     *
+     * @param productIds 상품 ID 목록
+     * @param pageable 페이징 정보
+     * @return 페이징된 상품 MV 목록
+     */
+    public Page<ProductMaterializedViewEntity> findByIdsAsPage(List<Long> productIds, Pageable pageable) {
+        List<ProductMaterializedViewEntity> mvEntities = mvRepository.findByIdIn(productIds);
+        return new org.springframework.data.domain.PageImpl<>(mvEntities, pageable, mvEntities.size());
+    }
+
+    /**
      * 상품명으로 검색하여 MV를 페이징 조회합니다.
      *
      * @param keyword  검색 키워드
@@ -98,13 +110,6 @@ public class ProductMVService {
      * MV 테이블을 원본 테이블과 동기화합니다.
      * 배치 스케줄러에서 주기적으로 호출됩니다.
      *
-     * ✅ 개선된 로직:
-     *
-     *   단일 쿼리로 변경된 데이터만 조회 (Product + Brand + Like 조인)
-     *   불필요한 개별 쿼리 제거
-     *   마지막 배치 시간 이후 변경된 데이터만 처리
-     *
-     *
      * @return 배치 업데이트 결과
      */
     @Transactional
@@ -120,7 +125,6 @@ public class ProductMVService {
         try {
             log.info("MV 배치 동기화 시작 - 마지막 배치 시간: {}", lastBatchTime);
 
-            // ✅ 1. 단일 쿼리로 변경된 데이터만 조회 (Product + Brand + Like 조인)
             List<ProductMVSyncDto> changedProducts = mvQueryRepository.findChangedProductsForSync(lastBatchTime);
 
             if (changedProducts.isEmpty()) {

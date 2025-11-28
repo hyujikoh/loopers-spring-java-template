@@ -1,12 +1,12 @@
 package com.loopers.application.product;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,228 +22,206 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 상품 관련 비즈니스 로직을 처리하는 퍼사드 클래스
+ * ✅ DDD: 상품 관련 유스케이스를 조정하는 Application Facade
+ * 
+ * <p>Application Layer의 역할:</p>
+ * <ul>
+ *   <li>도메인 서비스 호출 및 조정</li>
+ *   <li>도메인 엔티티를 DTO로 변환</li>
+ *   <li>트랜잭션 경계 관리</li>
+ * </ul>
+ * 
+ * <p>도메인 서비스는 도메인 엔티티만 처리하고, Facade에서 DTO 조합을 수행합니다.</p>
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class ProductFacade {
-    private final ProductMVService mvService;
     private final ProductService productService;
-    private final LikeService likeService;
-    private final UserService userService;
+    private final ProductMVService mvService;
     private final ProductCacheService productCacheService;
+    private final LikeService likeService;
     private final BrandService brandService;
+    private final UserService userService;
 
     /**
-     * 상품 목록 조회
+     * ✅ DDD: 상품 목록을 조회합니다.
+     * 
+     * <p>도메인 서비스에서 MV 엔티티를 조회하고, Facade에서 DTO로 변환합니다.</p>
      *
      * @param productSearchFilter 검색 조건
      * @return 상품 목록
      */
     @Transactional(readOnly = true)
     public Page<ProductInfo> getProducts(ProductSearchFilter productSearchFilter) {
+        // 1. 캐시 전략 결정
         CacheStrategy strategy = productCacheService.determineCacheStrategy(productSearchFilter);
 
-        return switch (strategy) {
-            case HOT -> getProductsWithHotCache(productSearchFilter);
-            case WARM -> getProductsWithWarmCache(productSearchFilter);
-            default -> getProductsWithoutCache(productSearchFilter);
-        };
+        // 2. 도메인 서비스에서 MV 엔티티 조회
+        Page<ProductMaterializedViewEntity> mvEntities = 
+                productService.getMVEntitiesByStrategy(productSearchFilter, strategy);
+
+        // 3. MV에 없는 상품 폴백 처리
+        if (strategy != CacheStrategy.COLD && !mvEntities.isEmpty()) {
+            return handleMissingProducts(mvEntities, productSearchFilter);
+        }
+
+        // 4. DTO 변환
+        return mvEntities.map(ProductInfo::from);
     }
 
     /**
-     * Hot 전략: ID 리스트 캐싱 + 배치 갱신
+     * ✅ DDD: MV에 없는 상품을 폴백 조회하여 DTO로 변환합니다.
      */
-    private Page<ProductInfo> getProductsWithHotCache(ProductSearchFilter filter) {
-        Long brandId = filter.brandId();
-        Pageable pageable = filter.pageable();
-
+    private Page<ProductInfo> handleMissingProducts(
+            Page<ProductMaterializedViewEntity> mvPage,
+            ProductSearchFilter filter
+    ) {
+        List<ProductMaterializedViewEntity> mvEntities = mvPage.getContent();
+        
+        // 캐시된 ID 리스트가 있는 경우에만 폴백 처리
         Optional<List<Long>> cachedIds = productCacheService.getProductIdsFromCache(
-                CacheStrategy.HOT, brandId, pageable
+                CacheStrategy.HOT, filter.brandId(), filter.pageable()
         );
 
-        if (cachedIds.isPresent()) {
-            log.debug("Hot 캐시 히트 - brandId: {}, page: {}", brandId, pageable.getPageNumber());
-            return buildPageFromMVIds(cachedIds.get(), pageable);
+        if (cachedIds.isEmpty()) {
+            return mvPage.map(ProductInfo::from);
         }
 
-        log.debug("Hot 캐시 미스 - brandId: {}, page: {}", brandId, pageable.getPageNumber());
+        // MV에 없는 상품 ID 찾기
+        List<Long> missingIds = productService.findMissingProductIds(cachedIds.get(), mvEntities);
 
-        Page<ProductMaterializedViewEntity> mvProducts;
-        if (brandId != null) {
-            mvProducts = mvService.findByBrandId(brandId, pageable);
-        } else {
-            mvProducts = mvService.findAll(pageable);
+        if (missingIds.isEmpty()) {
+            return mvPage.map(ProductInfo::from);
         }
 
-        List<Long> productIds = mvProducts.getContent().stream()
-                .map(ProductMaterializedViewEntity::getProductId)
-                .collect(Collectors.toList());
-
-        productCacheService.cacheProductIds(CacheStrategy.HOT, brandId, pageable, productIds);
-
-        return mvProducts.map(ProductInfo::from);
-    }
-
-    /**
-     * Warm 전략: ID 리스트 캐싱 + Cache-Aside
-     */
-    private Page<ProductInfo> getProductsWithWarmCache(ProductSearchFilter filter) {
-        Long brandId = filter.brandId();
-        Pageable pageable = filter.pageable();
-
-        Optional<List<Long>> cachedIds = productCacheService.getProductIdsFromCache(
-                CacheStrategy.WARM, brandId, pageable
-        );
-
-        if (cachedIds.isPresent()) {
-            log.debug("Warm 캐시 히트 - brandId: {}, page: {}", brandId, pageable.getPageNumber());
-            return buildPageFromMVIds(cachedIds.get(), pageable);
-        }
-
-        log.debug("Warm 캐시 미스 - brandId: {}, page: {}", brandId, pageable.getPageNumber());
-
-        Page<ProductMaterializedViewEntity> mvProducts;
-        if (brandId != null) {
-            mvProducts = mvService.findByBrandId(brandId, pageable);
-        } else {
-            mvProducts = mvService.findAll(pageable);
-        }
-
-        List<Long> productIds = mvProducts.getContent().stream()
-                .map(ProductMaterializedViewEntity::getProductId)
-                .collect(Collectors.toList());
-
-        productCacheService.cacheProductIds(CacheStrategy.WARM, brandId, pageable, productIds);
-
-        return mvProducts.map(ProductInfo::from);
-    }
-
-    /**
-     * Cold 전략: 캐시 미사용
-     */
-    private Page<ProductInfo> getProductsWithoutCache(ProductSearchFilter filter) {
-        log.debug("Cold 전략 - 캐시 미사용, MV 테이블 직접 조회");
-
-        if (filter.productName() != null && !filter.productName().trim().isEmpty()) {
-            Page<ProductMaterializedViewEntity> mvProducts =
-                    mvService.searchByName(filter.productName(), filter.pageable());
-            return mvProducts.map(ProductInfo::from);
-        }
-
-        Page<ProductMaterializedViewEntity> mvProducts;
-        if (filter.brandId() != null) {
-            mvProducts = mvService.findByBrandId(filter.brandId(), filter.pageable());
-        } else {
-            mvProducts = mvService.findAll(filter.pageable());
-        }
-
-        return mvProducts.map(ProductInfo::from);
-    }
-
-    /**
-     * MV ID 리스트로부터 Page 객체 구성
-     */
-    private Page<ProductInfo> buildPageFromMVIds(List<Long> productIds, Pageable pageable) {
-        if (productIds.isEmpty()) {
-            return new PageImpl<>(List.of(), pageable, 0);
-        }
-
-        List<ProductMaterializedViewEntity> mvEntities = mvService.findByIds(productIds);
-
-        List<Long> foundMVIds = mvEntities.stream()
-                .map(ProductMaterializedViewEntity::getProductId)
-                .toList();
-
+        // DTO 변환 + 폴백 조회
         List<ProductInfo> products = mvEntities.stream()
                 .map(ProductInfo::from)
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new));
 
-        List<Long> missingIds = productIds.stream()
-                .filter(id -> !foundMVIds.contains(id))
-                .collect(Collectors.toList());
+        // 폴백 조회 및 DTO 변환
+        log.warn("MV에 없는 상품 발견 (배치 미반영) - productIds: {}", missingIds);
 
-        if (!missingIds.isEmpty()) {
-            log.warn("MV에 없는 상품 발견 (배치 미반영) - productIds: {}", missingIds);
-
-            for (Long productId : missingIds) {
-                try {
-                    ProductEntity product = productService.getActiveProductDetail(productId);
-                    Long likeCount = likeService.countByProduct(product);
-                    products.add(ProductInfo.of(product, likeCount));
-                } catch (Exception e) {
-                    log.error("폴백 조회 실패 - productId: {}, error: {}", productId, e.getMessage());
-                }
+        for (Long productId : missingIds) {
+            try {
+                ProductEntity product = productService.getActiveProductDetail(productId);
+                Long likeCount = likeService.countByProduct(product);
+                products.add(ProductInfo.of(product, likeCount));
+            } catch (Exception e) {
+                log.error("폴백 조회 실패 - productId: {}, error: {}", productId, e.getMessage());
             }
         }
 
-        return new PageImpl<>(products, pageable, products.size());
+        return new PageImpl<>(products, filter.pageable(), products.size());
     }
 
     /**
-     * 상품 상세 정보 조회
+     * ✅ DDD: 상품 상세 정보를 조회합니다.
+     * 
+     * <p>도메인 서비스에서 엔티티를 조회하고, Facade에서 DTO로 변환합니다.</p>
+     * 
+     * @param productId 상품 ID
+     * @param username 사용자명 (nullable)
+     * @return 상품 상세 정보
      */
     @Transactional(readOnly = true)
     public ProductDetailInfo getProductDetail(Long productId, String username) {
+        // 1. 캐시 조회
         Optional<ProductDetailInfo> cachedDetail = productCacheService.getProductDetailFromCache(productId);
-
-        ProductDetailInfo productDetail;
 
         if (cachedDetail.isPresent()) {
             log.debug("상품 상세 캐시 히트 - productId: {}", productId);
-            productDetail = cachedDetail.get();
+            return applyUserLikeStatus(cachedDetail.get(), username);
+        }
+
+        log.debug("상품 상세 캐시 미스 - productId: {}", productId);
+
+        // 2. MV 엔티티 조회
+        Optional<ProductMaterializedViewEntity> mvEntityOpt = productService.getMVEntityById(productId);
+
+        ProductDetailInfo productDetail;
+
+        if (mvEntityOpt.isPresent()) {
+            // MV 엔티티 → DTO 변환
+            productDetail = ProductDetailInfo.from(mvEntityOpt.get(), false);
+            log.debug("MV 조회 성공 - productId: {}", productId);
         } else {
-            log.debug("상품 상세 캐시 미스 - productId: {}", productId);
-
-            Optional<ProductMaterializedViewEntity> mvEntityOpt = mvService.findById(productId);
-
-            if (mvEntityOpt.isPresent()) {
-                productDetail = ProductDetailInfo.from(mvEntityOpt.get(), false);
-            } else {
-                log.warn("MV에 없는 상품 - 폴백 조회 시작 - productId: {}", productId);
-
-                ProductEntity product = productService.getActiveProductDetail(productId);
-                BrandEntity brand = brandService.getBrandById(product.getBrandId());
-                Long likeCount = likeService.countByProduct(product);
-
-                productDetail = ProductDetailInfo.of(product, brand, likeCount, false);
-
-                log.info("폴백 조회 완료 - productId: {} (배치 동기화 대기 중)", productId);
-            }
-
-            productCacheService.cacheProductDetail(productId, productDetail);
+            // 3. 폴백 조회: 도메인 엔티티 → DTO 변환
+            productDetail = getProductDetailWithFallback(productId);
         }
 
-        if (username != null) {
-            Boolean isLiked = likeService.findLike(
-                            userService.getUserByUsername(username).getId(),
-                            productId
-                    )
-                    .map(like -> like.getDeletedAt() == null)
-                    .orElse(false);
+        // 4. 캐시 저장
+        productCacheService.cacheProductDetail(productId, productDetail);
 
-            return new ProductDetailInfo(
-                    productDetail.id(),
-                    productDetail.name(),
-                    productDetail.description(),
-                    productDetail.likeCount(),
-                    productDetail.stockQuantity(),
-                    productDetail.price(),
-                    productDetail.brand(),
-                    isLiked
-            );
-        }
+        // 5. 사용자 좋아요 상태 적용
+        return applyUserLikeStatus(productDetail, username);
+    }
+
+    /**
+     * MV에 없는 상품을 폴백 조회하여 DTO로 변환합니다.
+     */
+    private ProductDetailInfo getProductDetailWithFallback(Long productId) {
+        log.warn("MV에 없는 상품 - 폴백 조회 시작 - productId: {}", productId);
+
+        // 도메인 엔티티 조회
+        ProductEntity product = productService.getActiveProductDetail(productId);
+        BrandEntity brand = brandService.getBrandById(product.getBrandId());
+        Long likeCount = likeService.countByProduct(product);
+
+        // 도메인 엔티티 → DTO 변환
+        ProductDetailInfo productDetail = ProductDetailInfo.of(product, brand, likeCount, false);
+
+        log.info("폴백 조회 완료 - productId: {} (배치 동기화 대기 중)", productId);
 
         return productDetail;
     }
 
+    /**
+     * 사용자 좋아요 상태를 DTO에 적용합니다.
+     */
+    private ProductDetailInfo applyUserLikeStatus(ProductDetailInfo productDetail, String username) {
+        if (username == null) {
+            return productDetail;
+        }
+
+        // 사용자 좋아요 상태 조회
+        Long userId = userService.getUserByUsername(username).getId();
+        Boolean isLiked = likeService.findLike(userId, productDetail.id())
+                .map(like -> like.getDeletedAt() == null)
+                .orElse(false);
+
+        // DTO 재구성
+        return new ProductDetailInfo(
+                productDetail.id(),
+                productDetail.name(),
+                productDetail.description(),
+                productDetail.likeCount(),
+                productDetail.stockQuantity(),
+                productDetail.price(),
+                productDetail.brand(),
+                isLiked
+        );
+    }
+
+    /**
+     * 상품을 삭제합니다.
+     * 
+     * <p>상품 삭제 후 MV 동기화 및 캐시 무효화를 수행합니다.</p>
+     * 
+     * @param productId 상품 ID
+     */
     @Transactional
     public void deletedProduct(Long productId) {
-        ProductEntity productDetail = productService.getActiveProductDetail(productId);
-        productDetail.delete();
+        // 1. 상품 삭제
+        ProductEntity product = productService.getActiveProductDetail(productId);
+        product.delete();
+
+        // 2. MV 동기화
         mvService.syncProduct(productId);
-        Optional<ProductDetailInfo> productDetailFromCache = productCacheService.getProductDetailFromCache(productId);
-        productDetailFromCache.ifPresent(detail -> productCacheService.evictProductDetail(productId));
+
+        // 3. 캐시 무효화
+        productCacheService.getProductDetailFromCache(productId)
+                .ifPresent(detail -> productCacheService.evictProductDetail(productId));
     }
 }

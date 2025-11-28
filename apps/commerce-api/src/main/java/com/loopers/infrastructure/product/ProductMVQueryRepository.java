@@ -198,7 +198,7 @@ public class ProductMVQueryRepository {
         return queryFactory
                 .selectFrom(productMaterializedViewEntity)
                 .where(
-                        // ✅ 상품, 좋아요, 브랜드 중 하나라도 변경된 경우
+                        // 상품, 좋아요, 브랜드 중 하나라도 변경된 경우
                         productMaterializedViewEntity.productUpdatedAt.after(baseTime)
                                 .or(productMaterializedViewEntity.likeUpdatedAt.after(baseTime))
                                 .or(productMaterializedViewEntity.brandUpdatedAt.after(baseTime)),

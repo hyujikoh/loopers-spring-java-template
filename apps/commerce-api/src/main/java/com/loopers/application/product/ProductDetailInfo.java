@@ -50,9 +50,8 @@ public record ProductDetailInfo(
     }
 
     /**
-     * ProductEntity + BrandEntity + 좋아요수로 생성 (레거시, MV 사용 권장)
+     * ProductEntity + BrandEntity + 좋아요수로 생성 (MV 사용 권장)
      */
-    @Deprecated
     public static ProductDetailInfo of(ProductEntity product, BrandEntity brand, Long likeCount, Boolean isLiked) {
         if (product == null) {
             throw new IllegalArgumentException("상품 정보는 필수입니다.");
