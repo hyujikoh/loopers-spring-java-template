@@ -1,10 +1,10 @@
 package com.loopers.domain.product;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +13,6 @@ import com.loopers.application.product.BatchUpdateResult;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.like.LikeRepository;
-import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 
@@ -39,6 +38,7 @@ public class ProductMVService {
     private final ProductRepository productRepository;
     private final BrandRepository brandRepository;
     private final LikeRepository likeRepository;
+    private final com.loopers.infrastructure.product.ProductMVQueryRepository mvQueryRepository;
 
     /**
      * 상품 ID로 MV를 조회합니다.
@@ -92,9 +92,18 @@ public class ProductMVService {
         return mvRepository.findByNameContaining(keyword, pageable);
     }
 
+    private ZonedDateTime lastBatchTime = ZonedDateTime.now().minusYears(1); // 초기값
+
     /**
      * MV 테이블을 원본 테이블과 동기화합니다.
      * 배치 스케줄러에서 주기적으로 호출됩니다.
+     *
+     * <p>✅ 개선된 로직:</p>
+     * <ul>
+     *   <li>단일 쿼리로 변경된 데이터만 조회 (Product + Brand + Like 조인)</li>
+     *   <li>불필요한 개별 쿼리 제거</li>
+     *   <li>마지막 배치 시간 이후 변경된 데이터만 처리</li>
+     * </ul>
      *
      * @return 배치 업데이트 결과
      */
@@ -109,87 +118,67 @@ public class ProductMVService {
         Set<Long> affectedBrandIds = new HashSet<>();
 
         try {
-            log.info("MV 배치 동기화 시작");
+            log.info("MV 배치 동기화 시작 - 마지막 배치 시간: {}", lastBatchTime);
 
-            // 1. 모든 활성 상품 조회
-            // TODO : 10만건 이상일 경우에 대비해 페이징 처리
-            List<ProductEntity> allProducts = productRepository.getProducts(
-                    new ProductSearchFilter(
-                            null, null,
-                            PageRequest.of(0, Integer.MAX_VALUE)
-                    )
-            ).getContent();
+            // ✅ 1. 단일 쿼리로 변경된 데이터만 조회 (Product + Brand + Like 조인)
+            List<ProductMVSyncDto> changedProducts = mvQueryRepository.findChangedProductsForSync(lastBatchTime);
 
-            if (allProducts.isEmpty()) {
-                log.info("동기화할 상품이 없습니다.");
-                return BatchUpdateResult.success(0, 0, System.currentTimeMillis() - startTime);
+            if (changedProducts.isEmpty()) {
+                log.info("변경된 상품이 없습니다.");
+                long duration = System.currentTimeMillis() - startTime;
+                lastBatchTime = ZonedDateTime.now(); // 배치 시간 갱신
+                return BatchUpdateResult.success(0, 0, duration, changedProductIds, affectedBrandIds);
             }
 
-            // 2. 브랜드 정보 일괄 조회
-            Map<Long, BrandEntity> brandMap = brandRepository.findAll().stream()
-                    .collect(Collectors.toMap(BrandEntity::getId, brand -> brand));
+            log.info("변경 감지: {}건", changedProducts.size());
 
-            // 3. 좋아요 수 집계
-            List<Long> productIds = allProducts.stream()
-                    .map(ProductEntity::getId)
+            // 2. 변경된 상품 ID 목록 추출
+            List<Long> productIds = changedProducts.stream()
+                    .map(ProductMVSyncDto::getProductId)
                     .collect(Collectors.toList());
 
-            // 각 상품별 좋아요 수를 집계
-            Map<Long, Long> likeCountMap = productIds.stream()
-                    .collect(Collectors.toMap(
-                            productId -> productId,
-                            likeRepository::countByProductIdAndDeletedAtIsNull
-                    ));
-
-            // 4. 기존 MV 조회
+            // 3. 기존 MV 조회 (변경된 상품만)
             Map<Long, ProductMaterializedViewEntity> existingMVMap = mvRepository.findByIdIn(productIds).stream()
                     .collect(Collectors.toMap(ProductMaterializedViewEntity::getProductId, mv -> mv));
 
-            // 5. MV 생성 또는 업데이트
+            // 4. MV 생성 또는 업데이트
             List<ProductMaterializedViewEntity> toSave = new ArrayList<>();
 
-            for (ProductEntity product : allProducts) {
-                BrandEntity brand = brandMap.get(product.getBrandId());
-                if (brand == null) {
-                    log.warn("브랜드를 찾을 수 없습니다. productId={}, brandId={}",
-                            product.getId(), product.getBrandId());
-                    continue;
-                }
-
-                Long likeCount = likeCountMap.getOrDefault(product.getId(), 0L);
-                ProductMaterializedViewEntity existingMV = existingMVMap.get(product.getId());
+            for (ProductMVSyncDto dto : changedProducts) {
+                ProductMaterializedViewEntity existingMV = existingMVMap.get(dto.getProductId());
 
                 if (existingMV == null) {
                     // 신규 생성
-                    ProductMaterializedViewEntity newMV = ProductMaterializedViewEntity.from(
-                            product, brand, likeCount
-                    );
+                    ProductMaterializedViewEntity newMV = ProductMaterializedViewEntity.fromDto(dto);
                     toSave.add(newMV);
                     createdCount++;
 
                     // 변경 추적
-                    changedProductIds.add(product.getId());
-                    affectedBrandIds.add(brand.getId());
+                    changedProductIds.add(dto.getProductId());
+                    affectedBrandIds.add(dto.getBrandId());
                 } else {
                     // 기존 MV와 비교하여 실제 변경이 있는 경우만 업데이트
-                    boolean hasChanges = hasActualChanges(existingMV, product, brand, likeCount);
+                    boolean hasChanges = hasActualChangesFromDto(existingMV, dto);
 
                     if (hasChanges) {
-                        existingMV.sync(product, brand, likeCount);
+                        syncMVFromDto(existingMV, dto);
                         toSave.add(existingMV);
                         updatedCount++;
 
                         // 변경 추적
-                        changedProductIds.add(product.getId());
-                        affectedBrandIds.add(brand.getId());
+                        changedProductIds.add(dto.getProductId());
+                        affectedBrandIds.add(dto.getBrandId());
                     }
                 }
             }
 
-            // 6. 일괄 저장
+            // 5. 일괄 저장
             if (!toSave.isEmpty()) {
                 mvRepository.saveAll(toSave);
             }
+
+            // 6. 배치 시간 갱신
+            lastBatchTime = ZonedDateTime.now();
 
             long duration = System.currentTimeMillis() - startTime;
             log.info("MV 배치 동기화 완료 - 생성: {}건, 갱신: {}건, 변경된 상품: {}개, 영향받은 브랜드: {}개, 소요: {}ms",
@@ -208,6 +197,62 @@ public class ProductMVService {
             log.error("MV 배치 동기화 실패 - 소요: {}ms", duration, e);
             return BatchUpdateResult.failure(e.getMessage(), duration);
         }
+    }
+
+
+    /**
+     * DTO로부터 기존 MV를 동기화합니다.
+     */
+    private void syncMVFromDto(ProductMaterializedViewEntity mv, ProductMVSyncDto dto) {
+        ProductEntity product = new ProductEntity(
+                dto.getBrandId(),
+                dto.getProductName(),
+                dto.getProductDescription(),
+                dto.getOriginPrice(),
+                dto.getDiscountPrice(),
+                dto.getStockQuantity()
+        );
+
+        BrandEntity brand = new BrandEntity(dto.getBrandName(), null);
+
+        mv.sync(product, brand, dto.getLikeCount() != null ? dto.getLikeCount() : 0L);
+    }
+
+    /**
+     * DTO와 기존 MV를 비교하여 실제 변경사항이 있는지 확인합니다.
+     */
+    private boolean hasActualChangesFromDto(ProductMaterializedViewEntity mv, ProductMVSyncDto dto) {
+        // 상품명 변경
+        if (!mv.getName().equals(dto.getProductName())) {
+            return true;
+        }
+
+        // 가격 변경
+        if (!mv.getPrice().getOriginPrice().equals(dto.getOriginPrice())) {
+            return true;
+        }
+
+        if (dto.getDiscountPrice() != null && !mv.getPrice().getDiscountPrice().equals(dto.getDiscountPrice())) {
+            return true;
+        }
+
+        // 재고 변경
+        if (!mv.getStockQuantity().equals(dto.getStockQuantity())) {
+            return true;
+        }
+
+        // 브랜드명 변경
+        if (!mv.getBrandName().equals(dto.getBrandName())) {
+            return true;
+        }
+
+        // 좋아요 수 변경
+        Long dtoLikeCount = dto.getLikeCount() != null ? dto.getLikeCount() : 0L;
+        if (!mv.getLikeCount().equals(dtoLikeCount)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -232,6 +277,7 @@ public class ProductMVService {
                 ));
 
         Long likeCount = likeRepository.countByProductIdAndDeletedAtIsNull(productId);
+        ZonedDateTime likeUpdatedAt = ZonedDateTime.now(); // TODO: Like 테이블에서 최신 업데이트 시간 조회
 
         if (product.getDeletedAt() != null) {
             // 상품이 삭제된 경우 MV도 삭제
@@ -252,123 +298,10 @@ public class ProductMVService {
         } else {
             // 신규 MV 생성
             ProductMaterializedViewEntity newMV = ProductMaterializedViewEntity.from(
-                    product, brand, likeCount
+                    product, brand, likeCount, likeUpdatedAt
             );
             mvRepository.save(newMV);
             log.debug("상품 MV 생성 완료: productId={}", productId);
         }
-    }
-
-    /**
-     * 특정 브랜드의 모든 상품 MV를 동기화합니다.
-     *
-     * @param brandId 브랜드 ID
-     */
-    @Transactional
-    public void syncBrand(Long brandId) {
-        log.info("브랜드 MV 동기화 시작: brandId={}", brandId);
-
-        BrandEntity brand = brandRepository.getBrandById(brandId)
-                .orElseThrow(() -> new CoreException(
-                        ErrorType.NOT_FOUND,
-                        String.format("브랜드를 찾을 수 없습니다. brandId=%d", brandId)
-                ));
-
-        // 해당 브랜드의 모든 상품 조회
-        Page<ProductEntity> products = productRepository.getProducts(
-                new ProductSearchFilter(
-                        brandId, null,
-                        PageRequest.of(0, Integer.MAX_VALUE)
-                )
-        );
-
-        if (products.isEmpty()) {
-            log.info("동기화할 상품이 없습니다. brandId={}", brandId);
-            return;
-        }
-
-        List<Long> productIds = products.getContent().stream()
-                .map(ProductEntity::getId)
-                .collect(Collectors.toList());
-
-        // 좋아요 수 집계
-        Map<Long, Long> likeCountMap = productIds.stream()
-                .collect(Collectors.toMap(
-                        productId -> productId,
-                        likeRepository::countByProductIdAndDeletedAtIsNull
-                ));
-
-        // 기존 MV 조회
-        Map<Long, ProductMaterializedViewEntity> existingMVMap = mvRepository.findByIdIn(productIds).stream()
-                .collect(Collectors.toMap(ProductMaterializedViewEntity::getProductId, mv -> mv));
-
-        // MV 생성 또는 업데이트
-        List<ProductMaterializedViewEntity> toSave = new ArrayList<>();
-
-        products.getContent().forEach(product -> {
-            Long likeCount = likeCountMap.getOrDefault(product.getId(), 0L);
-            ProductMaterializedViewEntity existingMV = existingMVMap.get(product.getId());
-            if (existingMV == null) {
-                ProductMaterializedViewEntity newMV = ProductMaterializedViewEntity.from(
-                        product, brand, likeCount
-                );
-                toSave.add(newMV);
-            } else {
-                existingMV.sync(product, brand, likeCount);
-                toSave.add(existingMV);
-            }
-        });
-
-        if (!toSave.isEmpty()) {
-            mvRepository.saveAll(toSave);
-        }
-
-        log.info("브랜드 MV 동기화 완료: brandId={}, 처리 건수={}", brandId, toSave.size());
-    }
-
-    /**
-     * MV 엔티티에 실제 변경사항이 있는지 확인합니다.
-     *
-     * <p>상품명, 가격, 재고, 브랜드명, 좋아요 수 중 하나라도 변경되었으면 true를 반환합니다.</p>
-     *
-     * @param mv        기존 MV 엔티티
-     * @param product   최신 상품 정보
-     * @param brand     최신 브랜드 정보
-     * @param likeCount 최신 좋아요 수
-     * @return 변경사항이 있으면 true
-     */
-    private boolean hasActualChanges(
-            ProductMaterializedViewEntity mv,
-            ProductEntity product,
-            BrandEntity brand,
-            Long likeCount
-    ) {
-        // 상품명 변경
-        if (!mv.getName().equals(product.getName())) {
-            return true;
-        }
-
-        // 가격 변경
-        if (!mv.getPrice().getOriginPrice().equals(product.getPrice().getOriginPrice()) ||
-                !mv.getPrice().getDiscountPrice().equals(product.getPrice().getDiscountPrice())) {
-            return true;
-        }
-
-        // 재고 변경
-        if (!mv.getStockQuantity().equals(product.getStockQuantity())) {
-            return true;
-        }
-
-        // 브랜드명 변경
-        if (!mv.getBrandName().equals(brand.getName())) {
-            return true;
-        }
-
-        // 좋아요 수 변경
-        if (!mv.getLikeCount().equals(likeCount)) {
-            return true;
-        }
-
-        return false;
     }
 }

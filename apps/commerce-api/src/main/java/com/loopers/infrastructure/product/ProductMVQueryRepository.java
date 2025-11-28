@@ -1,6 +1,7 @@
 package com.loopers.infrastructure.product;
 
 import static com.loopers.domain.product.QProductMaterializedViewEntity.productMaterializedViewEntity;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,8 +10,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import com.loopers.domain.brand.QBrandEntity;
+import com.loopers.domain.like.QLikeEntity;
+import com.loopers.domain.product.ProductMVSyncDto;
 import com.loopers.domain.product.ProductMaterializedViewEntity;
+import com.loopers.domain.product.QProductEntity;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -169,4 +175,100 @@ public class ProductMVQueryRepository {
         return keyword != null && !keyword.isBlank() ?
                 productMaterializedViewEntity.name.contains(keyword) : null;
     }
+
+
+    /**
+     * 지정된 시간 이후 변경된 상품 MV를 조회합니다.
+     *
+     * <p>상품, 좋아요, 브랜드 중 하나라도 변경된 경우를 감지합니다.
+     * 여유 시간(기본 1분)을 추가하여 타이밍 이슈를 방지합니다.</p>
+     *
+     * @param syncedTime      마지막 배치 실행 시간
+     * @param marginMinutes   여유 시간 (분)
+     * @return 변경된 MV 엔티티 목록
+     */
+    public List<ProductMaterializedViewEntity> findChangedSince(
+            ZonedDateTime syncedTime,
+            int marginMinutes
+    ) {
+        // 여유 시간을 적용한 기준 시간 설정
+        ZonedDateTime baseTime = syncedTime.minusMinutes(marginMinutes);
+
+
+        return queryFactory
+                .selectFrom(productMaterializedViewEntity)
+                .where(
+                        // ✅ 상품, 좋아요, 브랜드 중 하나라도 변경된 경우
+                        productMaterializedViewEntity.productUpdatedAt.after(baseTime)
+                                .or(productMaterializedViewEntity.likeUpdatedAt.after(baseTime))
+                                .or(productMaterializedViewEntity.brandUpdatedAt.after(baseTime)),
+                        // 삭제되지 않은 MV만 조회
+                        productMaterializedViewEntity.deletedAt.isNull()
+                )
+                .orderBy(productMaterializedViewEntity.productUpdatedAt.desc())
+                .fetch();
+    }
+
+    /**
+     * 마지막 배치 시간 이후 변경된 데이터를 Product, Brand, Like 조인으로 조회합니다.
+     * 
+     * <p>단일 쿼리로 변경된 상품만 조회하여 성능을 최적화합니다.</p>
+     * 
+     * @param lastBatchTime 마지막 배치 실행 시간
+     * @return 변경된 상품 데이터 DTO 목록
+     */
+    public List<ProductMVSyncDto> findChangedProductsForSync(ZonedDateTime lastBatchTime) {
+        QProductEntity product = QProductEntity.productEntity;
+        QBrandEntity brand = QBrandEntity.brandEntity;
+        QLikeEntity like = QLikeEntity.likeEntity;
+        
+        return queryFactory
+                .select(Projections.constructor(
+                        ProductMVSyncDto.class,
+                        // 상품 정보
+                        product.id,
+                        product.name,
+                        product.description,
+                        product.price.originPrice,
+                        product.price.discountPrice,
+                        product.stockQuantity,
+                        product.updatedAt,
+                        // 브랜드 정보
+                        brand.id,
+                        brand.name,
+                        brand.updatedAt,
+                        // 좋아요 정보
+                        like.id.count().coalesce(0L),
+                        like.updatedAt.max()
+                ))
+                .from(product)
+                .leftJoin(brand)
+                    .on(product.brandId.eq(brand.id))
+                .leftJoin(like)
+                    .on(like.productId.eq(product.id)
+                        .and(like.deletedAt.isNull()))
+                .where(
+                        // 상품, 브랜드, 좋아요 중 하나라도 변경된 경우
+                        product.updatedAt.after(lastBatchTime)
+                                .or(brand.updatedAt.after(lastBatchTime))
+                                .or(like.updatedAt.after(lastBatchTime)),
+                        // 삭제되지 않은 상품만
+                        product.deletedAt.isNull(),
+                        brand.deletedAt.isNull()
+                )
+                .groupBy(
+                        product.id,
+                        product.name,
+                        product.description,
+                        product.price.originPrice,
+                        product.price.discountPrice,
+                        product.stockQuantity,
+                        product.updatedAt,
+                        brand.id,
+                        brand.name,
+                        brand.updatedAt
+                )
+                .fetch();
+    }
+
 }
