@@ -22,21 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 상품 데이터 생성 Runner
- *
- * <p>애플리케이션 시작 시 자동으로 상품 데이터를 생성합니다.</p>
- *
- * <p>실행 방법:</p>
- * <pre>
+ * 애플리케이션 시작 시 자동으로 상품 데이터를 생성합니다
+ * 실행 방법:
  * --args='--spring.profiles.active=local --product.data.generate=true'
- * </pre>
  *
- * <p>또는 application-local.yml에 다음 설정 추가:</p>
- * <pre>
- * product:
- *   data:
- *     generate: true
- *     count: 100000
- * </pre>
  */
 @Slf4j
 @Component
@@ -79,7 +68,6 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
         log.info("총 생성 개수: {}개", productRepository.count());
     }
 
-    @Transactional
     public void generateProducts(int totalCount) {
         int batchCount = totalCount / BATCH_SIZE;
 
