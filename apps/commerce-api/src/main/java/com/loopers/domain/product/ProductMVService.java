@@ -14,7 +14,6 @@ import com.loopers.application.product.BatchUpdateResult;
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.infrastructure.cache.CacheStrategy;
-import com.loopers.infrastructure.product.ProductMVQueryRepository;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 
@@ -37,7 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 public class ProductMVService {
 
     private final ProductMVRepository mvRepository;
-    private final ProductMVQueryRepository mvQueryRepository;
     private final ProductCacheService productCacheService;
     private ZonedDateTime lastBatchTime = ZonedDateTime.now().minusYears(1); // 초기값
 
@@ -53,16 +51,6 @@ public class ProductMVService {
                         ErrorType.NOT_FOUND_PRODUCT,
                         String.format("상품을 찾을 수 없습니다. (ID: %d)", productId)
                 ));
-    }
-
-    /**
-     * 전체 상품 MV를 페이징 조회합니다.
-     *
-     * @param pageable 페이징 정보
-     * @return 페이징된 상품 MV 목록
-     */
-    public Page<ProductMaterializedViewEntity> findAll(Pageable pageable) {
-        return mvRepository.findAll(pageable);
     }
 
     /**
@@ -86,25 +74,14 @@ public class ProductMVService {
         return new PageImpl<>(mvEntities, pageable, mvEntities.size());
     }
 
-    /**
-     * 상품명으로 검색하여 MV를 페이징 조회합니다.
-     *
-     * @param keyword  검색 키워드
-     * @param pageable 페이징 정보
-     * @return 페이징된 상품 MV 목록
-     */
-    public Page<ProductMaterializedViewEntity> searchByName(String keyword, Pageable pageable) {
-        return mvRepository.findByNameContaining(keyword, pageable);
-    }
-
     // ========== MV 엔티티 조회 (캐시 전략 포함) ==========
 
     /**
      * 캐시 전략에 따라 MV 엔티티 목록을 조회합니다.
-     *
+     * <p>
      * 도메인 엔티티만 반환하며, DTO 변환은 Facade에서 수행합니다.
      *
-     * @param filter 검색 조건
+     * @param filter   검색 조건
      * @param strategy 캐시 전략
      * @return MV 엔티티 페이지
      */
@@ -116,8 +93,12 @@ public class ProductMVService {
         return switch (strategy) {
             case HOT -> getProductsWithCache(filter, CacheStrategy.HOT);
             case WARM -> getProductsWithCache(filter, CacheStrategy.WARM);
-            default -> getMVEntitiesWithoutCache(filter);
+            default -> findBySearchFilter(filter);
         };
+    }
+
+    public Page<ProductMaterializedViewEntity> findBySearchFilter(ProductSearchFilter filter) {
+        return mvRepository.findBySearchFilter(filter);
     }
 
     /**
@@ -142,10 +123,8 @@ public class ProductMVService {
 
         log.debug("{} 캐시 미스 - brandId: {}, page: {}", strategy, brandId, pageable.getPageNumber());
 
-        // 2. MV에서 조회
-        Page<ProductMaterializedViewEntity> mvProducts = brandId != null
-                ? findByBrandId(brandId, pageable)
-                : findAll(pageable);
+        // 2. 통합된 searchFilter 기반 조회로 변경
+        Page<ProductMaterializedViewEntity> mvProducts = mvRepository.findBySearchFilter(filter);
 
         // 3. ID 리스트 캐싱
         List<Long> productIds = mvProducts.getContent().stream()
@@ -155,23 +134,6 @@ public class ProductMVService {
         productCacheService.cacheProductIds(strategy, brandId, pageable, productIds);
 
         return mvProducts;
-    }
-
-    /**
-     * 캐시 없이 MV 엔티티를 조회합니다.
-     */
-    private Page<ProductMaterializedViewEntity> getMVEntitiesWithoutCache(ProductSearchFilter filter) {
-        log.debug("Cold 전략 - 캐시 미사용, MV 테이블 직접 조회");
-
-        // 상품명 검색
-        if (filter.productName() != null && !filter.productName().trim().isEmpty()) {
-            return searchByName(filter.productName(), filter.pageable());
-        }
-
-        // 브랜드별 또는 전체 조회
-        return filter.brandId() != null
-                ? findByBrandId(filter.brandId(), filter.pageable())
-                : findAll(filter.pageable());
     }
 
     /**
@@ -193,7 +155,7 @@ public class ProductMVService {
         try {
             log.info("MV 배치 동기화 시작 - 마지막 배치 시간: {}", lastBatchTime);
 
-            List<ProductMVSyncDto> changedProducts = mvQueryRepository.findChangedProductsForSync(lastBatchTime);
+            List<ProductMVSyncDto> changedProducts = mvRepository.findChangedProductsForSync(lastBatchTime);
 
             if (changedProducts.isEmpty()) {
                 log.info("변경된 상품이 없습니다.");
@@ -230,7 +192,7 @@ public class ProductMVService {
                     affectedBrandIds.add(dto.getBrandId());
                 } else {
                     // 기존 MV와 비교하여 실제 변경이 있는 경우만 업데이트
-                    boolean hasChanges = hasActualChangesFromDto(existingMV, dto);
+                    boolean hasChanges = ProductMaterializedViewEntity.hasActualChangesFromDto(existingMV, dto);
 
                     if (hasChanges) {
                         syncMVFromDto(existingMV, dto);
@@ -290,42 +252,6 @@ public class ProductMVService {
         mv.sync(product, brand, dto.getLikeCount() != null ? dto.getLikeCount() : 0L);
     }
 
-    /**
-     * DTO와 기존 MV를 비교하여 실제 변경사항이 있는지 확인합니다.
-     */
-    private boolean hasActualChangesFromDto(ProductMaterializedViewEntity mv, ProductMVSyncDto dto) {
-        // 상품명 변경
-        if (!mv.getName().equals(dto.getProductName())) {
-            return true;
-        }
-
-        // 가격 변경
-        if (!mv.getPrice().getOriginPrice().equals(dto.getOriginPrice())) {
-            return true;
-        }
-
-        if (dto.getDiscountPrice() != null && !mv.getPrice().getDiscountPrice().equals(dto.getDiscountPrice())) {
-            return true;
-        }
-
-        // 재고 변경
-        if (!mv.getStockQuantity().equals(dto.getStockQuantity())) {
-            return true;
-        }
-
-        // 브랜드명 변경
-        if (!mv.getBrandName().equals(dto.getBrandName())) {
-            return true;
-        }
-
-        // 좋아요 수 변경
-        Long dtoLikeCount = dto.getLikeCount() != null ? dto.getLikeCount() : 0L;
-        if (!mv.getLikeCount().equals(dtoLikeCount)) {
-            return true;
-        }
-
-        return false;
-    }
 
     @Transactional
     public void deleteById(Long productId) {

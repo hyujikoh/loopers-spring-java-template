@@ -15,6 +15,7 @@ import com.loopers.domain.like.QLikeEntity;
 import com.loopers.domain.product.ProductMVSyncDto;
 import com.loopers.domain.product.ProductMaterializedViewEntity;
 import com.loopers.domain.product.QProductEntity;
+import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -36,30 +37,6 @@ import lombok.RequiredArgsConstructor;
 public class ProductMVQueryRepository {
 
     private final JPAQueryFactory queryFactory;
-
-    /**
-     * 전체 상품 MV를 페이징 조회합니다.
-     *
-     * @param pageable 페이징 정보
-     * @return 페이징된 상품 MV 목록
-     */
-    public Page<ProductMaterializedViewEntity> findAll(Pageable pageable) {
-        List<OrderSpecifier<?>> orderSpecifiers = buildOrderSpecifiers(pageable);
-
-        List<ProductMaterializedViewEntity> content = queryFactory
-                .selectFrom(productMaterializedViewEntity)
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
-                .fetch();
-
-        Long total = queryFactory
-                .select(productMaterializedViewEntity.count())
-                .from(productMaterializedViewEntity)
-                .fetchOne();
-
-        return new PageImpl<>(content, pageable, total != null ? total : 0);
-    }
 
     /**
      * 브랜드별 상품 MV를 페이징 조회합니다.
@@ -115,6 +92,56 @@ public class ProductMVQueryRepository {
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0);
+    }
+
+    /**
+     * 검색 필터를 기반으로 상품 MV를 페이징 조회합니다.
+     *
+     * @param searchFilter 검색 필터 (브랜드 ID, 상품명, 페이징 정보)
+     * @return 페이징된 상품 MV 목록
+     */
+    public Page<ProductMaterializedViewEntity> findBySearchFilter(ProductSearchFilter searchFilter) {
+        BooleanExpression whereCondition = buildWhereCondition(searchFilter);
+        List<OrderSpecifier<?>> orderSpecifiers = buildOrderSpecifiers(searchFilter.pageable());
+
+        List<ProductMaterializedViewEntity> content = queryFactory
+                .selectFrom(productMaterializedViewEntity)
+                .where(whereCondition)
+                .offset(searchFilter.pageable().getOffset())
+                .limit(searchFilter.pageable().getPageSize())
+                .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
+                .fetch();
+
+        Long total = queryFactory
+                .select(productMaterializedViewEntity.count())
+                .from(productMaterializedViewEntity)
+                .where(whereCondition)
+                .fetchOne();
+
+        return new PageImpl<>(content, searchFilter.pageable(), total != null ? total : 0);
+    }
+
+    /**
+     * 검색 필터 기반 where 조건을 빌드합니다.
+     *
+     * @param searchFilter 검색 필터
+     * @return where 조건식
+     */
+    private BooleanExpression buildWhereCondition(ProductSearchFilter searchFilter) {
+        BooleanExpression whereCondition = null;
+
+        // 브랜드 ID 조건
+        if (searchFilter.brandId() != null) {
+            whereCondition = brandIdEq(searchFilter.brandId());
+        }
+
+        // 상품명 검색 조건
+        if (searchFilter.productName() != null && !searchFilter.productName().trim().isEmpty()) {
+            BooleanExpression nameCondition = nameContains(searchFilter.productName());
+            whereCondition = whereCondition != null ? whereCondition.and(nameCondition) : nameCondition;
+        }
+
+        return whereCondition;
     }
 
     /**

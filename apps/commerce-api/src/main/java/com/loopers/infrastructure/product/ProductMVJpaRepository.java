@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 
 import com.loopers.domain.product.ProductMaterializedViewEntity;
@@ -30,24 +31,6 @@ public interface ProductMVJpaRepository extends JpaRepository<ProductMaterialize
     Optional<ProductMaterializedViewEntity> findByProductId(Long productId);
 
     /**
-     * 브랜드 ID로 MV를 페이징 조회합니다.
-     *
-     * @param brandId  브랜드 ID
-     * @param pageable 페이징 정보
-     * @return 페이징된 상품 MV 목록
-     */
-    Page<ProductMaterializedViewEntity> findByBrandId(Long brandId, Pageable pageable);
-
-    /**
-     * 상품명으로 검색하여 MV를 페이징 조회합니다.
-     *
-     * @param keyword  검색 키워드
-     * @param pageable 페이징 정보
-     * @return 페이징된 상품 MV 목록
-     */
-    Page<ProductMaterializedViewEntity> findByNameContaining(String keyword, Pageable pageable);
-
-    /**
      * 여러 상품 ID로 MV를 일괄 조회합니다.
      *
      * @param productIds 상품 ID 목록
@@ -68,6 +51,7 @@ public interface ProductMVJpaRepository extends JpaRepository<ProductMaterialize
      *
      * @param productIds 삭제할 상품 ID 목록
      */
+    @Modifying
     void deleteByProductIdIn(List<Long> productIds);
 
     /**

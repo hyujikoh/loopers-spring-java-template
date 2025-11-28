@@ -272,4 +272,42 @@ public class ProductMaterializedViewEntity extends BaseEntity {
             throw new IllegalStateException("마지막 업데이트 시간은 필수입니다.");
         }
     }
+
+
+    /**
+     * DTO와 기존 MV를 비교하여 실제 변경사항이 있는지 확인합니다.
+     */
+    public static boolean hasActualChangesFromDto(ProductMaterializedViewEntity mv, ProductMVSyncDto dto) {
+        // 상품명 변경
+        if (!mv.getName().equals(dto.getProductName())) {
+            return true;
+        }
+
+        // 가격 변경
+        if (!mv.getPrice().getOriginPrice().equals(dto.getOriginPrice())) {
+            return true;
+        }
+
+        if (dto.getDiscountPrice() != null && !mv.getPrice().getDiscountPrice().equals(dto.getDiscountPrice())) {
+            return true;
+        }
+
+        // 재고 변경
+        if (!mv.getStockQuantity().equals(dto.getStockQuantity())) {
+            return true;
+        }
+
+        // 브랜드명 변경
+        if (!mv.getBrandName().equals(dto.getBrandName())) {
+            return true;
+        }
+
+        // 좋아요 수 변경
+        Long dtoLikeCount = dto.getLikeCount() != null ? dto.getLikeCount() : 0L;
+        if (!mv.getLikeCount().equals(dtoLikeCount)) {
+            return true;
+        }
+
+        return false;
+    }
 }

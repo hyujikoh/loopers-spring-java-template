@@ -16,6 +16,7 @@ import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.ProductCacheService;
 import com.loopers.domain.product.ProductMaterializedViewEntity;
 import com.loopers.domain.product.ProductMVService;
+import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.infrastructure.cache.CacheStrategy;
 
 import lombok.RequiredArgsConstructor;
@@ -110,7 +111,7 @@ public class ProductMVBatchScheduler {
             Pageable pageable = PageRequest.of(0, TOP_PRODUCTS_COUNT,
                     Sort.by(Sort.Direction.DESC, "likeCount"));
 
-            Page<ProductMaterializedViewEntity> popularProducts = mvService.findAll(pageable);
+            Page<ProductMaterializedViewEntity> popularProducts = mvService.findBySearchFilter(new ProductSearchFilter( null, null , pageable));
 
             List<Long> productIds = popularProducts.getContent().stream()
                     .map(ProductMaterializedViewEntity::getProductId)

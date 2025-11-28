@@ -10,7 +10,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.product.ProductMVRepository;
+import com.loopers.domain.product.ProductMVSyncDto;
 import com.loopers.domain.product.ProductMaterializedViewEntity;
+import com.loopers.domain.product.dto.ProductSearchFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,10 +38,6 @@ public class ProductMVRepositoryImpl implements ProductMVRepository {
         return jpaRepository.findByProductId(productId);
     }
 
-    @Override
-    public Page<ProductMaterializedViewEntity> findAll(Pageable pageable) {
-        return queryRepository.findAll(pageable);
-    }
 
     @Override
     public Page<ProductMaterializedViewEntity> findByBrandId(Long brandId, Pageable pageable) {
@@ -74,7 +72,6 @@ public class ProductMVRepositoryImpl implements ProductMVRepository {
     }
 
     @Override
-    @Transactional
     public void deleteByProductIdIn(List<Long> productIds) {
         jpaRepository.deleteByProductIdIn(productIds);
     }
@@ -87,5 +84,15 @@ public class ProductMVRepositoryImpl implements ProductMVRepository {
     @Override
     public long count() {
         return jpaRepository.count();
+    }
+
+    @Override
+    public Page<ProductMaterializedViewEntity> findBySearchFilter(ProductSearchFilter searchFilter) {
+        return queryRepository.findBySearchFilter(searchFilter);
+    }
+
+    @Override
+    public List<ProductMVSyncDto> findChangedProductsForSync(ZonedDateTime lastBatchTime) {
+        return queryRepository.findChangedProductsForSync(lastBatchTime);
     }
 }
