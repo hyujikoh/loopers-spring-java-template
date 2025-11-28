@@ -68,7 +68,7 @@ public class ProductCacheStrategyIntegrationTest {
     class HotDataCachingTest {
 
         @Test
-        @DisplayName("전체 상품 목록 첫 2페이지는 WARM 전략으로 캐시된다")
+        @DisplayName("전체 상품 목록 첫 페이지는 HOT 전략으로 캐시된다")
         void should_cache_first_2_pages_as_hot_data() {
             // Given: 충분한 상품 데이터 생성 (3페이지 이상)
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 1, 50);
@@ -77,7 +77,7 @@ public class ProductCacheStrategyIntegrationTest {
             // When: 첫 번째 페이지 조회
             Pageable page0 = PageRequest.of(0, 20);
             ProductSearchFilter filter0 = new ProductSearchFilter(null, null, page0);
-            Page<ProductInfo> result0 = productFacade.getProducts(filter0);
+            productFacade.getProducts(filter0);
 
             // Then: 캐시에 저장됨 (Hot 전략)
             Optional<List<Long>> cachedIds0 = cacheService.getProductIdsFromCache(
@@ -91,7 +91,7 @@ public class ProductCacheStrategyIntegrationTest {
             ProductSearchFilter filter1 = new ProductSearchFilter(null, null, page1);
             Page<ProductInfo> result1 = productFacade.getProducts(filter1);
 
-            // Then: 캐시에 저장됨 (Hot 전략)
+            // Then: 캐시에 저장됨 (WARM 전략)
             Optional<List<Long>> cachedIds1 = cacheService.getProductIdsFromCache(
                     CacheStrategy.WARM, null, page1
             );
@@ -100,7 +100,7 @@ public class ProductCacheStrategyIntegrationTest {
         }
 
         @Test
-        @DisplayName("브랜드별 상품 목록 첫 2페이지는 WARM 전략으로 캐시된다")
+        @DisplayName("브랜드별 상품 목록 첫 2페이지는 HOT 전략으로 캐시된다")
         void should_cache_brand_first_2_pages_as_hot_data() {
             // Given: 특정 브랜드의 상품 충분히 생성
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 1, 50);
@@ -154,17 +154,17 @@ public class ProductCacheStrategyIntegrationTest {
     }
 
     @Nested
-    @DisplayName("Warm 데이터 캐싱 (3~5페이지)")
+    @DisplayName("Warm 데이터 캐싱 (2~3페이지)")
     class WarmDataCachingTest {
 
         @Test
-        @DisplayName("전체 상품 목록 2~3페이지는 Warm 전략으로 캐시된다")
-        void should_cache_pages_3_to_5_as_warm_data() {
-            // Given: 충분한 상품 데이터 생성 (6페이지 이상)
+        @DisplayName("전체 상품 목록 2~3페이지(page index 1~2)는 Warm 전략으로 캐시된다")
+        void should_cache_pages_2_to_3_as_warm_data() {
+            // Given: 충분한 상품 데이터 생성 (4페이지 이상)
             ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 1, 120);
             mvService.syncMaterializedView();
 
-            // When: 2페이지 조회
+            // When: 2페이지 조회 (page index 1)
             Pageable page2 = PageRequest.of(1, 20);
             ProductSearchFilter filter2 = new ProductSearchFilter(null, null, page2);
             productFacade.getProducts(filter2);
@@ -175,7 +175,7 @@ public class ProductCacheStrategyIntegrationTest {
             );
             assertThat(cachedIds2).isPresent();
 
-            // When: 3페이지 조회
+            // When: 3페이지 조회 (page index 2)
             Pageable page3 = PageRequest.of(2, 20);
             ProductSearchFilter filter3 = new ProductSearchFilter(null, null, page3);
             productFacade.getProducts(filter3);
@@ -186,7 +186,7 @@ public class ProductCacheStrategyIntegrationTest {
             );
             assertThat(cachedIds3).isPresent();
 
-            // When: 4페이지 조회
+            // When: 4페이지 조회 (page index 3)
             Pageable page4 = PageRequest.of(3, 20);
             ProductSearchFilter filter4 = new ProductSearchFilter(null, null, page4);
             productFacade.getProducts(filter4);
@@ -237,7 +237,7 @@ public class ProductCacheStrategyIntegrationTest {
             ProductSearchFilter filter5 = new ProductSearchFilter(null, null, page5);
             productFacade.getProducts(filter5);
 
-            // Then: Cold 전략으로 캐시됨
+            // Then: Cold 전략은 캐시하지 않음 (캐시 미스 확인)
             Optional<List<Long>> cachedIds5 = cacheService.getProductIdsFromCache(
                     CacheStrategy.COLD, null, page5
             );
@@ -248,7 +248,7 @@ public class ProductCacheStrategyIntegrationTest {
             ProductSearchFilter filter6 = new ProductSearchFilter(null, null, page6);
             productFacade.getProducts(filter6);
 
-            // Then: Cold 전략으로 캐시됨
+            // Then: Cold 전략은 캐시하지 않음 (캐시 미스 확인)
             Optional<List<Long>> cachedIds6 = cacheService.getProductIdsFromCache(
                     CacheStrategy.COLD, null, page6
             );

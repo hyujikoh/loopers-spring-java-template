@@ -35,7 +35,6 @@ public class ProductCacheService {
     // TTL 상수 - Hot/Warm/Cold 전략별 차별화
     private static final long HOT_DATA_TTL = 60; // Hot: 60분 (배치 갱신)
     private static final long WARM_DATA_TTL = 10; // Warm: 10분 (Cache-Aside)
-    private static final long COLD_DATA_TTL = 5; // Cold: 5분 (레거시)
     private static final TimeUnit TTL_UNIT = TimeUnit.MINUTES;
 
     // ========== Hot: 상품 상세 (배치 갱신, TTL 60분) ==========
