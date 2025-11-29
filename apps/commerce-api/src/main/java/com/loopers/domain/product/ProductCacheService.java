@@ -1,12 +1,15 @@
 package com.loopers.domain.product;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -231,16 +234,22 @@ public class ProductCacheService {
 
     public void deleteByPattern(String pattern) {
         try {
-            Set<String> keys = redisTemplate.keys(pattern);
+            ScanOptions options = ScanOptions.scanOptions()
+                    .match(pattern)
+                    .count(100)
+                    .build();
 
-            if (keys != null && !keys.isEmpty()) {
+            Set<String> keys = new HashSet<>();
+            try (Cursor<String> cursor = redisTemplate.scan(options)) {
+                cursor.forEachRemaining(keys::add);
+            }
+
+            if (!keys.isEmpty()) {
                 redisTemplate.delete(keys);
                 log.debug("패턴 캐시 삭제 - pattern: {}, count: {}", pattern, keys.size());
-            } else {
-                log.debug("삭제 대상 없음 - pattern: {}", pattern);
             }
         } catch (Exception e) {
-            log.warn("패턴 캐시 삭제 실패 - pattern: {}", pattern);
+            log.warn("패턴 캐시 삭제 실패 - pattern: {}", pattern, e);
         }
     }
 
@@ -284,16 +293,22 @@ public class ProductCacheService {
             try {
                 // Hot 캐시 삭제
                 String hotPattern = String.format("product:ids:hot:brand:%d:*", brandId);
-                Set<String> hotKeys = redisTemplate.keys(hotPattern);
-                if (hotKeys != null && !hotKeys.isEmpty()) {
+                Set<String> hotKeys = new HashSet<>();
+                try (Cursor<String> cursor = redisTemplate.scan(ScanOptions.scanOptions().match(hotPattern).count(100).build())) {
+                    cursor.forEachRemaining(hotKeys::add);
+                }
+                if (!hotKeys.isEmpty()) {
                     redisTemplate.delete(hotKeys);
                     deletedKeyCount += hotKeys.size();
                 }
 
                 // Warm 캐시 삭제
                 String warmPattern = String.format("product:ids:warm:brand:%d:*", brandId);
-                Set<String> warmKeys = redisTemplate.keys(warmPattern);
-                if (warmKeys != null && !warmKeys.isEmpty()) {
+                Set<String> warmKeys = new HashSet<>();
+                try (Cursor<String> cursor = redisTemplate.scan(ScanOptions.scanOptions().match(warmPattern).count(100).build())) {
+                    cursor.forEachRemaining(warmKeys::add);
+                }
+                if (!warmKeys.isEmpty()) {
                     redisTemplate.delete(warmKeys);
                     deletedKeyCount += warmKeys.size();
                 }

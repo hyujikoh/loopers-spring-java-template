@@ -117,7 +117,7 @@ public class ProductMVService {
                 strategy, brandId, pageable
         );
 
-        if (cachedIds.isPresent()) {
+        if (cachedIds.isPresent() && ! cachedIds.get().isEmpty()) {
             log.debug("{} 캐시 히트 - brandId: {}, page: {}", strategy, brandId, pageable.getPageNumber());
             return findByIdsAsPage(cachedIds.get(), pageable);
         }
