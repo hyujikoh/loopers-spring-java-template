@@ -44,6 +44,8 @@ public class ProductMVBatchScheduler {
     private static final int CACHE_PAGES_PER_BRAND = 3;
     private static final int PAGE_SIZE = 20;
 
+    private boolean isFirstExecution = true; // 초기 실행 여부 플래그
+
     /**
      * MV 테이블 동기화 배치 작업 (2분마다)
      */
@@ -60,6 +62,12 @@ public class ProductMVBatchScheduler {
             }
 
             if (result.hasChanges()) {
+                if (isFirstExecution) {
+                    log.info("초기 실행 - 불필요한 작업 생략");
+                    isFirstExecution = false;
+                    return;
+                }
+
                 log.info("변경사항 감지 - 선택적 캐시 무효화");
                 cacheService.evictCachesAfterMVSync(
                         result.getChangedProductIds(),
