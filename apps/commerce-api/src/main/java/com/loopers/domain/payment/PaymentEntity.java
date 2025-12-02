@@ -6,14 +6,20 @@ import java.time.ZonedDateTime;
 
 import com.loopers.domain.BaseEntity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import jakarta.persistence.*;
 
 /**
  * @author hyunjikoh
  * @since 2025. 12. 2.
  */
+@Entity
+@Table(name = "payments")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PaymentEntity extends BaseEntity {
 
     @Column(nullable = false, unique = true, length = 50)
@@ -38,7 +44,8 @@ public class PaymentEntity extends BaseEntity {
     @Column(nullable = false, length = 255)
     private String callbackUrl;
 
-    @Column(nullable = false, length = 20)
+    // TODO : TransactionStatus 로 변경 필요
+    @Column(nullable = true, length = 20)
     private String transactionStatus;
 
     @Column(length = 20)
@@ -47,6 +54,8 @@ public class PaymentEntity extends BaseEntity {
     @Column(name = "completed_at")
     private ZonedDateTime completedAt;
 
-
+    // → PG에 실제 결제 요청을 보낸 시각
+    @Column(name = "requested_at", nullable = false)
+    private ZonedDateTime requestedAt;
 
 }
