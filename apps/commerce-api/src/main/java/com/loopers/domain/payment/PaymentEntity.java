@@ -1,6 +1,8 @@
 package com.loopers.domain.payment;
 
+import io.micrometer.core.annotation.Counted;
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 
 import com.loopers.domain.BaseEntity;
 
@@ -13,22 +15,38 @@ import jakarta.persistence.Enumerated;
  * @since 2025. 12. 2.
  */
 public class PaymentEntity extends BaseEntity {
+
+    @Column(nullable = false, unique = true, length = 50)
     private String  transactionKey;
 
+    @Column(nullable = false, length = 50)
     private String orderNumber;
 
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
-    // TODO : 아직 카드를 enum 으로 할지 정하지 못함
     @Column(nullable = false, length = 20)
     private String cardType;
 
-    // TODO : 마스킹된 카드 번호 에 대한 로직 필요
     @Column(nullable = false, length = 20)
-    private String maskedCardNo;
-
+    private String cardNo;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PaymentStatus paymentStatus;
+
+    @Column(nullable = false, length = 255)
+    private String callbackUrl;
+
+    @Column(nullable = false, length = 20)
+    private String transactionStatus;
+
+    @Column(length = 20)
+    private String failureReason;
+
+    @Column(name = "completed_at")
+    private ZonedDateTime completedAt;
+
+
+
 }
