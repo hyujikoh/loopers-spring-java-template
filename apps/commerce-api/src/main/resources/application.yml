@@ -23,6 +23,16 @@ spring:
       - redis.yml
       - logging.yml
       - monitoring.yml
+  cloud:
+    openfeign:
+      client:
+        config:
+          pgClient:
+            loggerLevel: full
+
+pg:
+  simulator:
+    url: http://localhost:8082
 
 springdoc:
   use-fqn: true

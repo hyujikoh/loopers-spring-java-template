@@ -26,7 +26,7 @@ public class PaymentEntity extends BaseEntity {
     private String  transactionKey;
 
     @Column(nullable = false, length = 50)
-    private String orderNumber;
+    private String orderId;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
