@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import feign.Logger;
 import feign.Request;
 import feign.Retryer;
 
@@ -22,6 +23,11 @@ public class PgClientConfig {
                 1, TimeUnit.SECONDS,
                 3, TimeUnit.SECONDS,
                 true);
+    }
+
+    @Bean
+    public Logger.Level logLevel() {
+        return Logger.Level.FULL;
     }
 
     /**
