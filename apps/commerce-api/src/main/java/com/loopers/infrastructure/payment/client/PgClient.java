@@ -25,21 +25,15 @@ public interface PgClient {
     /**
      * 결제 요청
      */
-    @CircuitBreaker(name = "pgClient", fallbackMethod = "requestPaymentFallback")
-    @Retry(name = "pgClient")
-    @TimeLimiter(name = "pgClient")
     @PostMapping("/api/v1/payments")
     PgPaymentResponse requestPayment(
-            @RequestHeader("X-USER-ID") String userId,
+            @RequestHeader("X-USER-ID") String userName,
             @RequestBody PgPaymentRequest request
     );
 
     /**
      * 결제 정보 확인 (by transactionKey)
      */
-    @CircuitBreaker(name = "pgClient", fallbackMethod = "getPaymentFallback")
-    @Retry(name = "pgClient")
-    @TimeLimiter(name = "pgClient")
     @GetMapping("/api/v1/payments/{transactionKey}")
     PgPaymentResponse getPayment(
             @RequestHeader("X-USER-ID") String userId,
@@ -49,9 +43,6 @@ public interface PgClient {
     /**
      * 결제 정보 목록 조회 (by orderId)
      */
-    @CircuitBreaker(name = "pgClient", fallbackMethod = "getPaymentsByOrderIdFallback")
-    @Retry(name = "pgClient")
-    @TimeLimiter(name = "pgClient")
     @GetMapping("/api/v1/payments")
     List<PgPaymentResponse> getPaymentsByOrderId(
             @RequestHeader("X-USER-ID") String userId,

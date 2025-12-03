@@ -1,8 +1,14 @@
 package com.loopers.domain.payment;
 
-import org.springframework.stereotype.Component;
+import java.util.List;
 
-import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.loopers.application.payment.PaymentCommand;
+import com.loopers.domain.user.UserEntity;
+import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -15,8 +21,29 @@ import lombok.RequiredArgsConstructor;
 public class PaymentService {
     private final PaymentRepository paymentRepository;
 
-    // 단일 도메인 비즈니스 로직만 처리
-    public PaymentEntity createPayment() {
-        return null;
+    @Transactional
+    public PaymentEntity createPayment(UserEntity user, PaymentCommand command, PgPaymentResponse pgResponse) {
+        PaymentDomainCreateRequest request = PaymentDomainCreateRequest.from(user, command, pgResponse);
+
+        PaymentEntity payment = PaymentEntity.createOrder(request);
+        return paymentRepository.save(payment);
+    }
+
+
+    @Transactional
+    public PaymentEntity createPending(PaymentCommand command) {
+        PaymentEntity pending = PaymentEntity.createPending(
+                command.orderId(),
+                command.cardType(),
+                command.cardNo(),
+                command.amount(),
+                command.callbackUrl()
+        );
+        return paymentRepository.save(pending);
+    }
+
+    public PaymentEntity getByTransactionKey(String transactionKey) {
+        return paymentRepository.findByTransactionKey(transactionKey)
+                .orElseThrow(() -> new IllegalArgumentException("결제 정보를 찾을 수 없습니다"));
     }
 }
