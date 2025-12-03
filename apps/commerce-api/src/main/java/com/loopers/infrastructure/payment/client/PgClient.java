@@ -1,4 +1,4 @@
-package com.loopers.interfaces.api.payment.client;
+package com.loopers.infrastructure.payment.client;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -8,6 +8,8 @@ import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
+import com.loopers.interfaces.api.payment.client.PgClientConfig;
+import com.loopers.interfaces.api.payment.client.PgClientFallbackFactory;
 import com.loopers.interfaces.api.payment.client.dto.PgPaymentRequest;
 import com.loopers.interfaces.api.payment.client.dto.PgPaymentResponse;
 
@@ -17,7 +19,8 @@ import com.loopers.interfaces.api.payment.client.dto.PgPaymentResponse;
 @FeignClient(
         name = "pgClient",
         url = "${pg.simulator.url}",
-        configuration = PgClientConfig.class
+        configuration = PgClientConfig.class,
+        fallbackFactory =  PgClientFallbackFactory.class
 )
 public interface PgClient {
 
