@@ -2,6 +2,7 @@ package com.loopers.domain.payment;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
  * @author hyunjikoh

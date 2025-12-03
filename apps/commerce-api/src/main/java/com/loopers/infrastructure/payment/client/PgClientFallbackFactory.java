@@ -1,13 +1,12 @@
-package com.loopers.interfaces.api.payment.client;
+package com.loopers.infrastructure.payment.client;
 
 import java.util.List;
 
 import org.springframework.cloud.openfeign.FallbackFactory;
 import org.springframework.stereotype.Component;
 
-import com.loopers.infrastructure.payment.client.PgClient;
-import com.loopers.interfaces.api.payment.client.dto.PgPaymentRequest;
-import com.loopers.interfaces.api.payment.client.dto.PgPaymentResponse;
+import com.loopers.infrastructure.payment.client.dto.PgPaymentRequest;
+import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
 
 import lombok.extern.slf4j.Slf4j;
 

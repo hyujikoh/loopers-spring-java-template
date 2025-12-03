@@ -1,4 +1,4 @@
-package com.loopers.interfaces.api.payment.client;
+package com.loopers.infrastructure.payment.client;
 
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;

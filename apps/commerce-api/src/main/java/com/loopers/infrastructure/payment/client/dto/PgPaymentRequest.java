@@ -1,4 +1,4 @@
-package com.loopers.interfaces.api.payment.client.dto;
+package com.loopers.infrastructure.payment.client.dto;
 
 import java.math.BigDecimal;
 

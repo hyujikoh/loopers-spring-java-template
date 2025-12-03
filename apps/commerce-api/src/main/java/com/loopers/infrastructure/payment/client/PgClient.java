@@ -8,10 +8,8 @@ import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-import com.loopers.interfaces.api.payment.client.PgClientConfig;
-import com.loopers.interfaces.api.payment.client.PgClientFallbackFactory;
-import com.loopers.interfaces.api.payment.client.dto.PgPaymentRequest;
-import com.loopers.interfaces.api.payment.client.dto.PgPaymentResponse;
+import com.loopers.infrastructure.payment.client.dto.PgPaymentRequest;
+import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
 
 /**
  * PG Simulator Feign Client
@@ -20,7 +18,7 @@ import com.loopers.interfaces.api.payment.client.dto.PgPaymentResponse;
         name = "pgClient",
         url = "${pg.simulator.url}",
         configuration = PgClientConfig.class,
-        fallbackFactory =  PgClientFallbackFactory.class
+        fallbackFactory = PgClientFallbackFactory.class
 )
 public interface PgClient {
 
@@ -39,7 +37,7 @@ public interface PgClient {
     /**
      * 결제 정보 확인 (by transactionKey)
      */
-    @CircuitBreaker(name = "pgClient" , fallbackMethod = "getPaymentFallback")
+    @CircuitBreaker(name = "pgClient", fallbackMethod = "getPaymentFallback")
     @Retry(name = "pgClient")
     @TimeLimiter(name = "pgClient")
     @GetMapping("/api/v1/payments/{transactionKey}")

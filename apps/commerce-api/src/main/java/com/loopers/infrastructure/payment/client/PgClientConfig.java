@@ -1,4 +1,4 @@
-package com.loopers.interfaces.api.payment.client;
+package com.loopers.infrastructure.payment.client;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
