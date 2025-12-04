@@ -31,7 +31,19 @@ public class OrderV1Controller implements OrderV1ApiSpec {
             @RequestBody OrderV1Dtos.OrderCreateRequest request
     ) {
         OrderCreateCommand command = request.toCommand(username);
-        OrderInfo orderInfo = orderFacade.createOrderByPoint(command);
+
+        // 결제 타입에 따라 분기
+        OrderInfo orderInfo;
+        if ("POINT".equals(command.paymentType())) {
+            // 포인트 결제: 즉시 결제 및 주문 확정
+            orderInfo = orderFacade.createOrderByPoint(command);
+        } else if ("CARD".equals(command.paymentType())) {
+            // 카드 결제: 주문만 생성 (결제는 별도 API로 처리)
+            orderInfo = orderFacade.createOrderForCardPayment(command);
+        } else {
+            throw new IllegalArgumentException("지원하지 않는 결제 타입입니다: " + command.paymentType());
+        }
+
         OrderV1Dtos.OrderCreateResponse response = OrderV1Dtos.OrderCreateResponse.from(orderInfo);
         return ApiResponse.success(response);
     }

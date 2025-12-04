@@ -13,6 +13,7 @@ import lombok.Builder;
 @Builder
 public record OrderCreateCommand(
         String username,
-        List<OrderItemCommand> orderItems
+        List<OrderItemCommand> orderItems,
+        String paymentType  // "POINT" or "CARD"
 ) {
 }

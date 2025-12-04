@@ -116,6 +116,78 @@ public class OrderFacade {
     }
 
     /**
+     * 카드 결제용 주문 생성
+     *
+     * 포인트 차감 없이 주문만 생성합니다.
+     * 재고 차감, 쿠폰 사용은 주문 생성 시 처리하고, 결제는 별도 API로 진행합니다.
+     *
+     * @param command 주문 생성 명령
+     * @return 생성된 주문 정보 (PENDING 상태)
+     * @throws IllegalArgumentException 재고 부족 또는 주문 불가능한 경우
+     */
+    @Transactional
+    public OrderInfo createOrderForCardPayment(OrderCreateCommand command) {
+        // 1. 주문자 정보 조회 (락 적용)
+        UserEntity user = userService.findByUsernameWithLock(command.username());
+
+        // 2. 주문 항목을 상품 ID 기준으로 정렬 (교착 상태 방지)
+        List<OrderItemCommand> sortedItems = command.orderItems().stream()
+                .sorted(Comparator.comparing(OrderItemCommand::productId))
+                .toList();
+
+        // 3. 상품 검증 및 준비 (재고 확인, 락 적용)
+        List<ProductEntity> orderableProducts = new ArrayList<>();
+        List<CouponEntity> coupons = new ArrayList<>();
+        List<Integer> quantities = new ArrayList<>();
+
+        for (OrderItemCommand itemCommand : sortedItems) {
+            // 상품 정보 조회 및 재고 잠금
+            ProductEntity product = productService.getProductDetailLock(itemCommand.productId());
+
+            // 재고 확인
+            if (!product.canOrder(itemCommand.quantity())) {
+                throw new IllegalArgumentException(
+                        String.format("주문할 수 없는 상품입니다. 상품 ID: %d, 요청 수량: %d, 현재 재고: %d",
+                                product.getId(), itemCommand.quantity(), product.getStockQuantity())
+                );
+            }
+
+            // 쿠폰 검증 및 준비
+            CouponEntity coupon = itemCommand.couponId() != null
+                    ? couponService.getCouponByIdAndUserId(itemCommand.couponId(), user.getId())
+                    : null;
+            if (coupon != null && coupon.isUsed()) {
+                throw new IllegalArgumentException("이미 사용된 쿠폰입니다.");
+            }
+
+            orderableProducts.add(product);
+            coupons.add(coupon);
+            quantities.add(itemCommand.quantity());
+        }
+
+        // 4. 도메인 서비스: 주문 및 주문 항목 생성 (도메인 로직)
+        OrderCreationResult creationResult = orderService.createOrderWithItems(
+                user.getId(),
+                orderableProducts,
+                coupons,
+                quantities
+        );
+
+        // 5. 포인트 차감 안 함 (카드 결제이므로) ✅
+        // pointService.use(user, creationResult.order().getFinalTotalAmount());  // 제거
+
+        // 6. 쿠폰 사용 처리
+        coupons.stream().filter(Objects::nonNull).forEach(couponService::consumeCoupon);
+
+        // 7. 재고 차감
+        IntStream.range(0, orderableProducts.size())
+                .forEach(i -> productService.deductStock(orderableProducts.get(i), quantities.get(i)));
+
+        // 8. 주문 정보 반환 (PENDING 상태)
+        return OrderInfo.from(creationResult.order(), creationResult.orderItems());
+    }
+
+    /**
      * 주문 확정
      *
      * 주문을 확정합니다. (재고는 이미 주문 생성 시 차감되었음)

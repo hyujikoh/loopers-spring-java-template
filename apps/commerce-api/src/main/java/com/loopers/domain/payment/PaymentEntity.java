@@ -45,7 +45,7 @@ public class PaymentEntity extends BaseEntity {
     private String cardType;
 
     @Column(nullable = false, length = 20)
-    private String cardNo;
+    private String cardNoMasked;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -97,7 +97,7 @@ public class PaymentEntity extends BaseEntity {
         this.orderId = request.orderId();
         this.amount = request.amount();
         this.cardType = MaskingUtil.maskCardNumber(request.cardType());
-        this.cardNo = request.cardNo();
+        this.cardNoMasked = request.cardNo();
         this.paymentStatus = request.paymentStatus();
         this.callbackUrl = request.callbackUrl();
         this.userId = request.userId();

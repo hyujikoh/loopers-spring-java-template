@@ -22,6 +22,7 @@ public class PaymentV1Controller implements PaymentV1ApiSpec {
     private final PaymentFacade paymentFacade;
 
     @Override
+    @PostMapping()
     public ApiResponse<PaymentV1Dtos.PaymentResponse> processPayment(
             @RequestHeader("X-USER-ID") String username,
             @RequestBody PaymentV1Dtos.PaymentRequest request

@@ -15,7 +15,10 @@ public class OrderV1Dtos {
     @Schema(description = "주문 등록 요청")
     public record OrderCreateRequest(
             @Schema(description = "주문 상품 목록", requiredMode = Schema.RequiredMode.REQUIRED)
-            List<OrderItemRequest> items
+            List<OrderItemRequest> items,
+
+            @Schema(description = "결제 타입 (POINT: 포인트 결제, CARD: 카드 결제)", example = "POINT", requiredMode = Schema.RequiredMode.REQUIRED)
+            String paymentType
     ) {
         public OrderCreateCommand toCommand(String username) {
             List<OrderItemCommand> orderItems = items.stream()
@@ -25,7 +28,7 @@ public class OrderV1Dtos {
                             item.couponId()
                     ))
                     .toList();
-            return new OrderCreateCommand(username, orderItems);
+            return new OrderCreateCommand(username, orderItems, paymentType);
         }
     }
 
