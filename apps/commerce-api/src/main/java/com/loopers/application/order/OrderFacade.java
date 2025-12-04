@@ -139,6 +139,66 @@ public class OrderFacade {
     }
 
     /**
+     * 결제 성공 시 주문 확정 처리
+     *
+     * PG 결제 성공 콜백을 받았을 때 호출됩니다.
+     * 포인트 차감 없이 주문만 확정합니다. (이미 카드 결제로 처리됨)
+     *
+     * @param orderId 주문 ID
+     * @return 확정된 주문 정보
+     */
+    @Transactional
+    public OrderInfo confirmOrderByPayment(Long orderId, Long userId) {
+        // 1. 주문 확정
+        OrderEntity order = orderService.getOrderByIdAndUserId(orderId, userId);
+        order.confirmOrder();
+
+        // 2. 주문 항목 조회
+        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
+
+        return OrderInfo.from(order, orderItems);
+    }
+
+    /**
+     * 결제 실패 시 주문 취소 및 보상 처리
+     *
+     * PG 결제 실패 콜백을 받았을 때 호출됩니다.
+     * 재고 복원, 쿠폰 복원 등의 보상 트랜잭션을 수행합니다.
+     *
+     * @param orderId 주문 ID
+     * @return 취소된 주문 정보
+     */
+    @Transactional
+    public OrderInfo cancelOrderByPaymentFailure(Long orderId, Long userId) {
+        // 1. 주문 조회 및 취소
+        OrderEntity order = orderService.getOrderByIdAndUserId(orderId, userId);
+        List<OrderItemEntity> orderItems = orderService.cancelOrderDomain(order);
+
+        // 2. 재고 원복
+        for (OrderItemEntity orderItem : orderItems) {
+            productService.restoreStock(orderItem.getProductId(), orderItem.getQuantity());
+        }
+
+        // 3. 쿠폰 원복
+        orderItems.stream()
+                .filter(orderItem -> orderItem.getCouponId() != null)
+                .forEach(orderItem -> {
+                    CouponEntity coupon = couponService.getCouponByIdAndUserId(
+                            orderItem.getCouponId(),
+                            order.getUserId()
+                    );
+                    if (!coupon.isUsed()) {
+                        throw new IllegalStateException("취소하려는 주문의 쿠폰이 사용된 상태가 아닙니다.");
+                    }
+                    couponService.revertCoupon(coupon);
+                });
+
+        // 4. 포인트는 차감하지 않았으므로 환불하지 않음
+
+        return OrderInfo.from(order, orderItems);
+    }
+
+    /**
      * 주문 취소
      *
      * 여러 도메인 서비스를 조정하여 주문 취소 유스케이스를 완성합니다.

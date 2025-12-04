@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.payment.PaymentEntity;
 import com.loopers.domain.payment.PaymentService;
+import com.loopers.domain.payment.PaymentStatus;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserService;
 import com.loopers.infrastructure.payment.client.PgClient;
@@ -30,6 +31,7 @@ public class PaymentFacade {
     private final PaymentService paymentService;
     private final UserService userService;
     private final PgClient pgClient;
+    // private final OrderFacade orderFacade;  // TODO: 순환 참조 방지를 위해 이벤트 기반으로 변경 권장
 
     // 여러 도메인 비즈니스 로직 조합 처리
     @CircuitBreaker(name = "pgClient", fallbackMethod = "processPaymentFallback")
@@ -52,11 +54,12 @@ public class PaymentFacade {
 
             log.info("PG 결제 요청 완료 - transactionKey: {}, 콜백 대기 중",
                     pgResponse.transactionKey());
-            return PaymentInfo.from(pendingPayment);
+
         } catch (Exception e) {
             log.error("PG 결제 요청 실패, PENDING 처리", e);
-            return PaymentInfo.pending(pendingPayment);
         }
+
+        return PaymentInfo.from(pendingPayment);
 
     }
 
@@ -74,10 +77,18 @@ public class PaymentFacade {
         return PaymentInfo.from(failed);
     }
 
+    @Transactional
     public void handlePaymentCallback(PaymentV1Dtos.PgCallbackRequest request) {
         log.info("결제 콜백 처리 시작 - transactionKey: {}", request.transactionKey());
 
         PaymentEntity payment = paymentService.getByTransactionKey(request.transactionKey());
+
+        // 멱등성 체크: 이미 처리된 결제는 무시
+        if (payment.getPaymentStatus() != PaymentStatus.PENDING) {
+            log.warn("이미 처리된 결제 - transactionKey: {}, currentStatus: {}",
+                    request.transactionKey(), payment.getPaymentStatus());
+            return;
+        }
 
         // 결제 결과에 따라 상태 업데이트
         switch (request.status()) {
@@ -85,16 +96,18 @@ public class PaymentFacade {
                 payment.complete();
                 log.info("결제 성공 처리 완료 - transactionKey: {}", request.transactionKey());
 
-                // 주문 상태 업데이트 등 후속 처리
-                // orderService.confirmPayment(payment.getOrderId());
+                // TODO: 주문 상태 업데이트 등 후속 처리
+                // 주문 확정, 포인트 차감, 알림 발송 등
+                // orderFacade.confirmOrderByPayment(payment.getOrderId());
             }
             case "FAILED", "LIMIT_EXCEEDED", "INVALID_CARD" -> {
                 payment.fail(request.reason());
                 log.warn("결제 실패 처리 - transactionKey: {}, reason: {}",
                         request.transactionKey(), request.reason());
 
-                // 주문 취소 등 후속 처리
-                // orderService.cancelOrder(payment.getOrderId());
+                // TODO: 주문 취소 등 후속 처리
+                // 재고 복원, 쿠폰 복원, 알림 발송 등
+                // orderFacade.cancelOrderByPaymentFailure(payment.getOrderId());
             }
             default -> {
                 log.error("알 수 없는 결제 상태 - transactionKey: {}, status: {}",

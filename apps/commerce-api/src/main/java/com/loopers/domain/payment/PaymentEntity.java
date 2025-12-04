@@ -115,7 +115,7 @@ public class PaymentEntity extends BaseEntity {
 
     }
 
-    public static PaymentEntity crateFailed(UserEntity user, PaymentCommand command, String reason) {
+    public static PaymentEntity createFailed(UserEntity user, PaymentCommand command, String reason) {
         PaymentDomainCreateRequest request = new PaymentDomainCreateRequest(
                 user.getId(),
                 command.orderId(),
@@ -135,14 +135,76 @@ public class PaymentEntity extends BaseEntity {
         this.transactionKey = transactionKey;
     }
 
-    // 결제 실패 처리
+    /**
+     * 결제 완료 처리
+     */
+    public void complete() {
+        if (this.paymentStatus != PaymentStatus.PENDING) {
+            throw new IllegalStateException(
+                String.format("PENDING 상태의 결제만 완료 처리할 수 있습니다. (현재 상태: %s)", this.paymentStatus)
+            );
+        }
+        this.paymentStatus = PaymentStatus.COMPLETED;
+        this.completedAt = ZonedDateTime.now();
+    }
+
+    /**
+     * 결제 실패 처리
+     */
     public void fail(String reason) {
+        if (this.paymentStatus != PaymentStatus.PENDING) {
+            throw new IllegalStateException(
+                String.format("PENDING 상태의 결제만 실패 처리할 수 있습니다. (현재 상태: %s)", this.paymentStatus)
+            );
+        }
         this.failureReason = reason;
         this.paymentStatus = PaymentStatus.FAILED;
     }
 
-    public void complete() {
-        this.paymentStatus = PaymentStatus.COMPLETED;
-        this.completedAt = ZonedDateTime.now();
+    /**
+     * 결제 타임아웃 처리
+     */
+    public void timeout() {
+        if (this.paymentStatus != PaymentStatus.PENDING) {
+            throw new IllegalStateException(
+                String.format("PENDING 상태의 결제만 타임아웃 처리할 수 있습니다. (현재 상태: %s)", this.paymentStatus)
+            );
+        }
+        this.failureReason = "결제 콜백 타임아웃 (10분 초과)";
+        this.paymentStatus = PaymentStatus.TIMEOUT;
+    }
+
+    /**
+     * 결제 취소 처리
+     */
+    public void cancel() {
+        if (this.paymentStatus != PaymentStatus.COMPLETED) {
+            throw new IllegalStateException(
+                String.format("완료된 결제만 취소할 수 있습니다. (현재 상태: %s)", this.paymentStatus)
+            );
+        }
+        this.paymentStatus = PaymentStatus.CANCEL;
+    }
+
+    /**
+     * 결제 환불 처리
+     */
+    public void refund() {
+        if (this.paymentStatus != PaymentStatus.COMPLETED && this.paymentStatus != PaymentStatus.CANCEL) {
+            throw new IllegalStateException(
+                String.format("완료 또는 취소된 결제만 환불할 수 있습니다. (현재 상태: %s)", this.paymentStatus)
+            );
+        }
+        this.paymentStatus = PaymentStatus.REFUNDED;
+    }
+
+    @Override
+    protected void guard() {
+        if (this.amount != null && this.amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalStateException("결제 금액은 0보다 커야 합니다.");
+        }
+        if (this.paymentStatus == null) {
+            throw new IllegalStateException("결제 상태는 필수입니다.");
+        }
     }
 }
