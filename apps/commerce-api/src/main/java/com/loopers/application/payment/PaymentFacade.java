@@ -112,8 +112,6 @@ public class PaymentFacade {
         log.debug("주문 정합성 검증 완료 - orderId: {}, amount: {}", orderId, paymentAmount);
     }
 
-    // ...existing code...
-
     // Fallback 메서드
     @SuppressWarnings("unused")
     private PaymentInfo processPaymentFallback(PaymentCommand command, Throwable t) {

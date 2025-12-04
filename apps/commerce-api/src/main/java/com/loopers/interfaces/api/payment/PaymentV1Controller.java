@@ -20,19 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PaymentV1Controller implements PaymentV1ApiSpec {
     private final PaymentFacade paymentFacade;
-
-    @Override
-    @PostMapping()
-    public ApiResponse<PaymentV1Dtos.PaymentResponse> processPayment(
-            @RequestHeader("X-USER-ID") String username,
-            @RequestBody PaymentV1Dtos.PaymentRequest request
-    ) {
-        PaymentCommand command = PaymentCommand.of(username, request);
-        PaymentInfo info = paymentFacade.processPayment(command);
-        return ApiResponse.success(PaymentV1Dtos.PaymentResponse.from(info));
-    }
-
-
     /**
      * PG로부터 결제 결과 콜백 수신
      */

@@ -11,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.loopers.application.payment.PaymentCommand;
+import com.loopers.application.payment.PaymentInfo;
 import com.loopers.domain.coupon.CouponEntity;
 import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.OrderEntity;
@@ -199,8 +201,8 @@ public class OrderFacade {
         OrderInfo orderInfo = createOrderForCardPayment(command);
 
         // 2. 결제 요청 (주문 ID 사용)
-        com.loopers.application.payment.PaymentCommand paymentCommand =
-            com.loopers.application.payment.PaymentCommand.builder()
+        PaymentCommand paymentCommand =
+            PaymentCommand.builder()
                 .username(command.username())
                 .orderId(orderInfo.id())
                 .cardType(command.cardInfo().cardType())
@@ -209,7 +211,7 @@ public class OrderFacade {
                 .callbackUrl(command.cardInfo().callbackUrl())
                 .build();
 
-        com.loopers.application.payment.PaymentInfo paymentInfo = paymentFacade.processPayment(paymentCommand);
+        PaymentInfo paymentInfo = paymentFacade.processPayment(paymentCommand);
 
         // 3. 주문 + 결제 정보 반환
         return new OrderWithPaymentInfo(orderInfo, paymentInfo);
@@ -220,7 +222,7 @@ public class OrderFacade {
      */
     public record OrderWithPaymentInfo(
         OrderInfo order,
-        com.loopers.application.payment.PaymentInfo payment
+        PaymentInfo payment
     ) {}
 
     /**

@@ -102,6 +102,7 @@ public class PaymentEntity extends BaseEntity {
         this.callbackUrl = request.callbackUrl();
         this.userId = request.userId();
         this.requestedAt = request.requestedAt();
+        this.failureReason = request.failureReason();
     }
 
     public static PaymentEntity createPending(UserEntity user, PaymentCommand command) {
