@@ -7,6 +7,7 @@ import java.util.Objects;
 import com.loopers.application.payment.PaymentCommand;
 import com.loopers.domain.BaseEntity;
 import com.loopers.domain.user.UserEntity;
+import com.loopers.util.MaskingUtil;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -76,6 +77,8 @@ public class PaymentEntity extends BaseEntity {
 
 
     private PaymentEntity(PaymentDomainCreateRequest request) {
+
+        // transactionKey는 PENDING 상태에서 null 허용 (명시적 주석)
         Objects.requireNonNull(request, "결제 생성 요청은 필수입니다.");
         Objects.requireNonNull(request.orderId(), "주문 ID는 필수입니다.");
         Objects.requireNonNull(request.amount(), "결제 금액은 필수입니다.");
@@ -89,10 +92,11 @@ public class PaymentEntity extends BaseEntity {
             throw new IllegalArgumentException("결제 금액은 0보다 커야 합니다.");
         }
 
+        // transactionKey는 null 가능 (PENDING 생성 시)
         this.transactionKey = request.transactionKey();
         this.orderId = request.orderId();
         this.amount = request.amount();
-        this.cardType = request.cardType();
+        this.cardType = MaskingUtil.maskCardNumber(request.cardType());
         this.cardNo = request.cardNo();
         this.paymentStatus = request.paymentStatus();
         this.callbackUrl = request.callbackUrl();

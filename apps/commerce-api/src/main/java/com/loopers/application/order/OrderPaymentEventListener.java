@@ -7,6 +7,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.loopers.domain.payment.event.PaymentCompletedEvent;
 import com.loopers.domain.payment.event.PaymentFailedEvent;
+import com.loopers.domain.payment.event.PaymentTimeoutEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,17 @@ public class OrderPaymentEventListener {
             log.info("주문 취소 완료 - orderId: {}", orderId);
         } catch (Exception e) {
             log.error("주문 취소 실패 - orderId: {}", event.orderId(), e);
+        }
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handlePaymentTimeout(PaymentTimeoutEvent event) {
+        try {
+            orderFacade.cancelOrderByPaymentFailure(event.orderId(), event.userId());
+            log.info("타임아웃으로 주문 취소 - orderId: {}", event.orderId());
+        } catch (Exception e) {
+            log.error("타임아웃 주문 취소 실패 - orderId: {}", event.orderId(), e);
         }
     }
 }

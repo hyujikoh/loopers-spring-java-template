@@ -55,7 +55,7 @@ public class OrderFacade {
      * @throws IllegalArgumentException 재고 부족 또는 주문 불가능한 경우
      */
     @Transactional
-    public OrderInfo createOrder(OrderCreateCommand command) {
+    public OrderInfo createOrderByPoint(OrderCreateCommand command) {
         // 1. 주문자 정보 조회 (락 적용)
         UserEntity user = userService.findByUsernameWithLock(command.username());
 
@@ -125,7 +125,7 @@ public class OrderFacade {
      * @return 확정된 주문 정보
      */
     @Transactional
-    public OrderInfo confirmOrder(Long orderId, String username) {
+    public OrderInfo confirmOrderByPoint(Long orderId, String username) {
         UserEntity user = userService.getUserByUsername(username);
 
         // 1. 주문 확정
@@ -209,7 +209,7 @@ public class OrderFacade {
      * @return 취소된 주문 정보
      */
     @Transactional
-    public OrderInfo cancelOrder(Long orderId, String username) {
+    public OrderInfo cancelOrderByPoint(Long orderId, String username) {
         // 1. 사용자 조회
         UserEntity user = userService.getUserByUsername(username);
 

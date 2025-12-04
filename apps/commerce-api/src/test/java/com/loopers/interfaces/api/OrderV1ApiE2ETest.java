@@ -363,7 +363,7 @@ class OrderV1ApiE2ETest {
                 username,
                 List.of(new OrderItemCommand(testProductId, quantity, null))
         );
-        OrderInfo orderInfo = orderFacade.createOrder(command);
+        OrderInfo orderInfo = orderFacade.createOrderByPoint(command);
         return orderInfo.id();
     }
 }

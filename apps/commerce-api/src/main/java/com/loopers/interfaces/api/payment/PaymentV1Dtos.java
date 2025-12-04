@@ -36,10 +36,6 @@ public class PaymentV1Dtos {
 
     public record PgCallbackRequest(
             String transactionKey,
-            String orderId,
-            String cardType,
-            String cardNo,
-            BigDecimal amount,
             String status,
             String reason
     ) {

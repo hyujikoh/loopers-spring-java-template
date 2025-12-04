@@ -14,7 +14,7 @@ import com.loopers.domain.payment.PaymentStatus;
  * @since 2025. 12. 3.
  */
 public interface PaymentJpaRepository extends JpaRepository<PaymentEntity, Long> {
-    Optional<PaymentEntity> findByOrderId(String orderId);
+    Optional<PaymentEntity> findByOrderId(Long orderId);
 
     Optional<PaymentEntity> findByTransactionKey(String id);
 

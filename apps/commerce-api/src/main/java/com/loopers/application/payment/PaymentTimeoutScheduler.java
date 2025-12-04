@@ -3,12 +3,14 @@ package com.loopers.application.payment;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.payment.PaymentEntity;
 import com.loopers.domain.payment.PaymentService;
+import com.loopers.domain.payment.event.PaymentTimeoutEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentTimeoutScheduler {
 
     private final PaymentService paymentService;
-    // private final OrderFacade orderFacade;  // TODO: 필요시 추가
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 5분마다 PENDING 상태로 10분 이상 대기 중인 결제 건을 TIMEOUT 처리
@@ -55,9 +57,12 @@ public class PaymentTimeoutScheduler {
 
                 payment.timeout();
 
-                // TODO: 주문 취소 등 후속 처리
-                // orderFacade.cancelOrderByPaymentFailure(Long.parseLong(payment.getOrderId()));
-
+                // 이벤트 발행 (OrderFacade 직접 의존 X)
+                eventPublisher.publishEvent(new PaymentTimeoutEvent(
+                        payment.getTransactionKey(),
+                        payment.getOrderId(),
+                        payment.getUserId()
+                ));
             } catch (Exception e) {
                 log.error("결제 타임아웃 처리 실패 - transactionKey: {}, orderId: {}",
                          payment.getTransactionKey(), payment.getOrderId(), e);

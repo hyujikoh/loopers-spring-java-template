@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface PaymentRepository {
     PaymentEntity save(PaymentEntity payment);
 
-    Optional<PaymentEntity> findByOrderId(String orderId);
+    Optional<PaymentEntity> findByOrderId(Long orderId);
 
     Optional<PaymentEntity> findByTransactionKey(String transactionKey);
 

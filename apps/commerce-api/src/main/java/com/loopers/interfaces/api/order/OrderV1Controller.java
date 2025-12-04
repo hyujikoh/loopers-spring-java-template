@@ -31,7 +31,7 @@ public class OrderV1Controller implements OrderV1ApiSpec {
             @RequestBody OrderV1Dtos.OrderCreateRequest request
     ) {
         OrderCreateCommand command = request.toCommand(username);
-        OrderInfo orderInfo = orderFacade.createOrder(command);
+        OrderInfo orderInfo = orderFacade.createOrderByPoint(command);
         OrderV1Dtos.OrderCreateResponse response = OrderV1Dtos.OrderCreateResponse.from(orderInfo);
         return ApiResponse.success(response);
     }
