@@ -128,9 +128,20 @@ public class PaymentFacade {
         return PaymentInfo.from(failed);
     }
 
+    /**
+     * PG 콜백 처리
+     *
+     * PG-Simulator가 보내는 콜백 데이터를 받아서 결제 상태를 업데이트합니다.
+     * - SUCCESS: 결제 성공
+     * - FAILED: 결제 실패
+     * - PENDING: 처리 중 (무시)
+     *
+     * 멱등성 보장: PENDING 상태가 아니면 처리하지 않음
+     */
     @Transactional
     public void handlePaymentCallback(PaymentV1Dtos.PgCallbackRequest request) {
-        log.info("결제 콜백 처리 시작 - transactionKey: {}", request.transactionKey());
+        log.info("결제 콜백 처리 시작 - transactionKey: {}, status: {}, orderId: {}",
+                request.transactionKey(), request.status(), request.orderId());
 
         PaymentEntity payment = paymentService.getByTransactionKey(request.transactionKey());
 
@@ -141,11 +152,12 @@ public class PaymentFacade {
             return;
         }
 
-        // 결제 결과에 따라 상태 업데이트
+        // 결제 결과에 따라 상태 업데이트 (PG-Simulator 기준: SUCCESS, FAILED, PENDING)
         switch (request.status()) {
-            case "SUCCESS", "COMPLETED", "APPROVED" -> {
+            case "SUCCESS" -> {
                 payment.complete();
-                log.info("결제 성공 처리 완료 - transactionKey: {}", request.transactionKey());
+                log.info("결제 성공 처리 완료 - transactionKey: {}, orderId: {}",
+                        request.transactionKey(), request.orderId());
 
                 // 이벤트 발행 (OrderFacade 직접 의존 X)
                 eventPublisher.publishEvent(new PaymentCompletedEvent(
@@ -155,10 +167,10 @@ public class PaymentFacade {
                         payment.getAmount()
                 ));
             }
-            case "FAILED", "LIMIT_EXCEEDED", "INVALID_CARD" -> {
+            case "FAILED" -> {
                 payment.fail(request.reason());
-                log.warn("결제 실패 처리 - transactionKey: {}, reason: {}",
-                        request.transactionKey(), request.reason());
+                log.warn("결제 실패 처리 - transactionKey: {}, orderId: {}, reason: {}",
+                        request.transactionKey(), request.orderId(), request.reason());
 
                 eventPublisher.publishEvent(new PaymentFailedEvent(
                         payment.getTransactionKey(),
@@ -167,9 +179,14 @@ public class PaymentFacade {
                         request.reason()
                 ));
             }
+            case "PENDING" -> {
+                log.debug("결제 처리 중 상태 콜백 수신 - transactionKey: {}, 처리 대기 중",
+                        request.transactionKey());
+                // PENDING 상태는 무시 (아직 처리 중)
+            }
             default -> {
-                log.error("알 수 없는 결제 상태 - transactionKey: {}, status: {}",
-                        request.transactionKey(), request.status());
+                log.error("알 수 없는 결제 상태 - transactionKey: {}, status: {}, orderId: {}",
+                        request.transactionKey(), request.status(), request.orderId());
             }
         }
     }
