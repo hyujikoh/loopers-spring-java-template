@@ -2,7 +2,6 @@ package com.loopers.application.payment;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -40,37 +39,41 @@ public class PaymentFacade {
     private final PgClient pgClient;
     private final ApplicationEventPublisher eventPublisher;
 
-    // 여러 도메인 비즈니스 로직 조합 처리
+    /**
+     * 카드 결제 처리
+     *
+     * Resilience4j 적용:
+     * - Circuit Breaker: PG 장애 시 빠른 실패 (Fallback 실행)
+     * - Retry: 일시적 오류 시 재시도 (최대 3회)
+     *
+     * 타임아웃은 Feign Client 설정으로 처리:
+     * - connect-timeout: 5s
+     * - read-timeout: 10s
+     */
     @CircuitBreaker(name = "pgClient", fallbackMethod = "processPaymentFallback")
     @Retry(name = "pgClient")
-    @TimeLimiter(name = "pgClient")
     @Transactional
     public PaymentInfo processPayment(PaymentCommand command) {
         UserEntity user = userService.getUserByUsername(command.username());
 
-        // 1. 주문 정합성 검증 ✅
+        // 1. 주문 정합성 검증
         validateOrderForPayment(command.orderId(), user.getId(), command.amount());
 
         // 2. PaymentEntity 생성 및 저장
         PaymentEntity pendingPayment = paymentService.createPending(user, command);
 
-        try {
-            log.info("결제 요청 시작 - orderId: {}, username: {}, amount: {}",
-                    command.orderId(), command.username(), command.amount());
+        // PG 결제 요청 (Circuit Breaker가 예외를 감지할 수 있도록 try-catch 제거)
+        log.info("결제 요청 시작 - orderId: {}, username: {}, amount: {}",
+                command.orderId(), command.username(), command.amount());
 
-            PgPaymentResponse pgResponse = pgClient.requestPayment(
-                    user.getUsername(),
-                    PgPaymentRequest.of(command)
-            );
-            pendingPayment.updateTransactionKey(pgResponse.transactionKey());
+        PgPaymentResponse pgResponse = pgClient.requestPayment(
+                user.getUsername(),
+                PgPaymentRequest.of(command)
+        );
+        pendingPayment.updateTransactionKey(pgResponse.transactionKey());
 
-            log.info("PG 결제 요청 완료 - orderId: {}, transactionKey: {}, 콜백 대기 중",
-                    command.orderId(), pgResponse.transactionKey());
-
-        } catch (Exception e) {
-            log.error("PG 결제 요청 실패 - orderId: {}, username: {}",
-                    command.orderId(), command.username(), e);
-        }
+        log.info("PG 결제 요청 완료 - orderId: {}, transactionKey: {}, 콜백 대기 중",
+                command.orderId(), pgResponse.transactionKey());
 
         return PaymentInfo.from(pendingPayment);
 
@@ -78,15 +81,15 @@ public class PaymentFacade {
 
     /**
      * 주문 정합성 검증
-     *
+     * <p>
      * 결제 요청 시 주문과 동일한 검증 로직:
      * - 주문 존재 여부
      * - 주문 소유자 확인
      * - 주문 상태 확인 (PENDING만 결제 가능)
      * - 결제 금액 일치 여부
      *
-     * @param orderId 주문 ID
-     * @param userId 사용자 ID
+     * @param orderId       주문 ID
+     * @param userId        사용자 ID
      * @param paymentAmount 결제 금액
      * @throws IllegalArgumentException 정합성 검증 실패 시
      */
@@ -97,15 +100,15 @@ public class PaymentFacade {
         // 주문 상태 확인 (PENDING 상태만 결제 가능)
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalArgumentException(
-                String.format("결제 가능한 주문 상태가 아닙니다. (현재 상태: %s)", order.getStatus())
+                    String.format("결제 가능한 주문 상태가 아닙니다. (현재 상태: %s)", order.getStatus())
             );
         }
 
         // 결제 금액 정합성 검증
         if (order.getFinalTotalAmount().compareTo(paymentAmount) != 0) {
             throw new IllegalArgumentException(
-                String.format("결제 금액이 주문 금액과 일치하지 않습니다. (주문 금액: %s, 결제 금액: %s)",
-                    order.getFinalTotalAmount(), paymentAmount)
+                    String.format("결제 금액이 주문 금액과 일치하지 않습니다. (주문 금액: %s, 결제 금액: %s)",
+                            order.getFinalTotalAmount(), paymentAmount)
             );
         }
 
@@ -130,12 +133,12 @@ public class PaymentFacade {
 
     /**
      * PG 콜백 처리
-     *
+     * <p>
      * PG-Simulator가 보내는 콜백 데이터를 받아서 결제 상태를 업데이트합니다.
      * - SUCCESS: 결제 성공
      * - FAILED: 결제 실패
      * - PENDING: 처리 중 (무시)
-     *
+     * <p>
      * 멱등성 보장: PENDING 상태가 아니면 처리하지 않음
      */
     @Transactional

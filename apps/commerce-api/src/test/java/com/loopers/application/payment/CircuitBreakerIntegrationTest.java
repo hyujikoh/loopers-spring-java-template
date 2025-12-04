@@ -122,27 +122,29 @@ class CircuitBreakerIntegrationTest {
                 .willThrow(createPgException());
 
             // When: 4회 연속 실패 (minimumNumberOfCalls = 5 미만)
+            // Retry가 각 3회씩 재시도하므로 실제 PG 호출은 12회
             for (int i = 0; i < 4; i++) {
-                UserInfo user =  createAndSaveUser();
+                UserInfo user = createAndSaveUser();
                 OrderEntity order = createAndSaveOrder(user.id());
-                PaymentCommand command = createPaymentCommand(order);
+                PaymentCommand command = createPaymentCommand(order, user);
 
-                try {
-                    paymentFacade.processPayment(command);
-                } catch (Exception e) {
-                    // Fallback 실행됨 - 예외 무시
-                }
+                // Fallback이 실행되어 예외 없이 정상 반환
+                PaymentInfo result = paymentFacade.processPayment(command);
+
+                // Fallback 결과 검증: FAILED 상태, transactionKey 없음
+                assertThat(result.status()).isEqualTo(PaymentStatus.FAILED);
+                assertThat(result.transactionKey()).isNull();
             }
 
             // Then: Circuit 상태 = CLOSED (아직 최소 호출 수 미만)
             assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
 
             // Metrics 확인
+            // Fallback이 성공적으로 실행되었으므로 Circuit Breaker는 성공으로 기록
             CircuitBreaker.Metrics metrics = circuitBreaker.getMetrics();
+            assertThat(metrics.getNumberOfSuccessfulCalls()).isEqualTo(0);  // Fallback 성공 4번
             assertThat(metrics.getNumberOfFailedCalls()).isEqualTo(4);
-            assertThat(metrics.getNumberOfSuccessfulCalls()).isEqualTo(0);
-            assertThat(metrics.getFailureRate()).isEqualTo(100.0f); // 실패율 100%이지만
-            // minimumNumberOfCalls 미만이므로 CLOSED 유지
+            assertThat(metrics.getFailureRate()).isEqualTo(-1.0f);  // minimumNumberOfCalls 미만이므로 -1
         }
 
         @Test
@@ -160,7 +162,7 @@ class CircuitBreakerIntegrationTest {
             for (int i = 0; i < 5; i++) {
                 UserInfo user = createAndSaveUser();
                 OrderEntity order = createAndSaveOrder(user.id());
-                PaymentCommand command = createPaymentCommand(order);
+                PaymentCommand command = createPaymentCommand(order, user);
 
                 try {
                     paymentFacade.processPayment(command);
@@ -198,7 +200,7 @@ class CircuitBreakerIntegrationTest {
             for (int i = 0; i < 5; i++) {
                 UserInfo user = createAndSaveUser();
                 OrderEntity order = createAndSaveOrder(user.id());
-                PaymentCommand command = createPaymentCommand(order);
+                PaymentCommand command = createPaymentCommand(order, user);
 
                 try {
                     paymentFacade.processPayment(command);
@@ -219,7 +221,7 @@ class CircuitBreakerIntegrationTest {
         }
 
         @Test
-        @DisplayName("10회 호출 중 6회 실패 시 실패율 60%로 Circuit이 OPEN으로 전환")
+        @DisplayName("10회 호출 과정에서 8번째 호출에서 50% 를 도달했기 떄문에 서킷 이 열린다." )
         void slidingWindow_10개_중_6개_실패_시_Circuit이_OPEN_전환() {
             // Given
             given(pgClient.requestPayment(anyString(), any()))
@@ -238,7 +240,7 @@ class CircuitBreakerIntegrationTest {
             for (int i = 0; i < 10; i++) {
                 UserInfo user = createAndSaveUser();
                 OrderEntity order = createAndSaveOrder(user.id());
-                PaymentCommand command = createPaymentCommand(order);
+                PaymentCommand command = createPaymentCommand(order, user);
 
                 try {
                     paymentFacade.processPayment(command);
@@ -251,7 +253,7 @@ class CircuitBreakerIntegrationTest {
             assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
 
             CircuitBreaker.Metrics metrics = circuitBreaker.getMetrics();
-            assertThat(metrics.getFailureRate()).isEqualTo(60.0f);
+            assertThat(metrics.getFailureRate()).isEqualTo(50.0f);
         }
     }
 
@@ -268,7 +270,7 @@ class CircuitBreakerIntegrationTest {
 
             UserInfo user = createAndSaveUser();
             OrderEntity order = createAndSaveOrder(user.id());
-            PaymentCommand command = createPaymentCommand(order);
+            PaymentCommand command = createPaymentCommand(order, user);
 
             // When: 결제 시도
             PaymentInfo result = paymentFacade.processPayment(command);
@@ -295,7 +297,7 @@ class CircuitBreakerIntegrationTest {
 
             UserInfo user = createAndSaveUser();
             OrderEntity order = createAndSaveOrder(user.id());
-            PaymentCommand command = createPaymentCommand(order);
+            PaymentCommand command = createPaymentCommand(order, user);
 
             // When & Then: 예외가 발생하지 않음 (Fallback으로 처리됨)
             assertThatCode(() -> paymentFacade.processPayment(command))
@@ -316,7 +318,7 @@ class CircuitBreakerIntegrationTest {
 
             UserInfo user = createAndSaveUser();
             OrderEntity order = createAndSaveOrder(user.id());
-            PaymentCommand command = createPaymentCommand(order);
+            PaymentCommand command = createPaymentCommand(order, user);
 
             // When: 결제 처리
             PaymentInfo result = paymentFacade.processPayment(command);
@@ -342,7 +344,7 @@ class CircuitBreakerIntegrationTest {
 
             UserInfo user = createAndSaveUser();
             OrderEntity order = createAndSaveOrder(user.id());
-            PaymentCommand command = createPaymentCommand(order);
+            PaymentCommand command = createPaymentCommand(order, user);
 
             // When
             PaymentInfo result = paymentFacade.processPayment(command);
@@ -356,7 +358,7 @@ class CircuitBreakerIntegrationTest {
     }
 
     @Nested
-    @DisplayName("5. Circuit Breaker 메트릭 검증")
+    @DisplayName("Circuit Breaker 메트릭 검증")
     class Circuit_Breaker_메트릭_검증 {
 
         @Test
@@ -374,7 +376,7 @@ class CircuitBreakerIntegrationTest {
             for (int i = 0; i < 5; i++) {
                 UserInfo user = createAndSaveUser();
                 OrderEntity order = createAndSaveOrder(user.id());
-                PaymentCommand command = createPaymentCommand(order);
+                PaymentCommand command = createPaymentCommand(order, user);
 
                 try {
                     paymentFacade.processPayment(command);
@@ -402,7 +404,7 @@ class CircuitBreakerIntegrationTest {
             for (int i = 0; i < 3; i++) {
                 UserInfo user = createAndSaveUser();
                 OrderEntity order = createAndSaveOrder(user.id());
-                PaymentCommand command = createPaymentCommand(order);
+                PaymentCommand command = createPaymentCommand(order, user);
 
                 paymentFacade.processPayment(command); // Fallback 실행
             }
@@ -448,9 +450,9 @@ class CircuitBreakerIntegrationTest {
         return orderRepository.save(order);
     }
 
-    private PaymentCommand createPaymentCommand(OrderEntity order) {
+    private PaymentCommand createPaymentCommand(OrderEntity order, UserInfo user) {
         return PaymentCommand.builder()
-            .username("testuser")
+            .username(user.username())
             .orderId(order.getId())
             .cardType("CREDIT")
             .cardNo("1234-5678-9012-3456")

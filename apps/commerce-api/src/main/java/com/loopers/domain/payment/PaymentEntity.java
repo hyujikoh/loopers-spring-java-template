@@ -54,7 +54,7 @@ public class PaymentEntity extends BaseEntity {
     @Column(nullable = false, length = 255)
     private String callbackUrl;
 
-    @Column(length = 20)
+    @Column(columnDefinition = "TEXT")
     private String failureReason;
 
     @Column(name = "completed_at")

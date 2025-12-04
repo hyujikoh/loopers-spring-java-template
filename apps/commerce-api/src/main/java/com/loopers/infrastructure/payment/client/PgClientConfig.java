@@ -1,8 +1,11 @@
 package com.loopers.infrastructure.payment.client;
 
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import feign.Request;
 import feign.Retryer;
 
 /**
@@ -18,6 +21,15 @@ public class PgClientConfig {
     @Bean
     public Retryer retryer() {
         return Retryer.NEVER_RETRY;
+    }
+
+    @Bean
+    public Request.Options options() {
+        return new Request.Options(
+                5, TimeUnit.SECONDS,   // connectTimeout: 5초
+                10, TimeUnit.SECONDS,  // readTimeout: 10초
+                true                   // followRedirects
+        );
     }
 
 }
