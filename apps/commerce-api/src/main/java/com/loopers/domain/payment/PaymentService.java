@@ -23,7 +23,7 @@ public class PaymentService {
     public PaymentEntity createPayment(UserEntity user, PaymentCommand command, PgPaymentResponse pgResponse) {
         PaymentDomainCreateRequest request = PaymentDomainCreateRequest.from(user, command, pgResponse);
 
-        PaymentEntity payment = PaymentEntity.createOrder(request);
+        PaymentEntity payment = PaymentEntity.createPayment(request);
         return paymentRepository.save(payment);
     }
 

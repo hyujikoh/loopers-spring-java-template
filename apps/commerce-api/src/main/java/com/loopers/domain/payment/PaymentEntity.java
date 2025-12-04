@@ -61,7 +61,8 @@ public class PaymentEntity extends BaseEntity {
     private ZonedDateTime requestedAt;
 
     /**
-     *  결제 생성 팩토리 메서드
+     * 결제 생성 팩토리 메서드
+     *
      * @param request
      * @return
      */
@@ -100,7 +101,7 @@ public class PaymentEntity extends BaseEntity {
         PaymentDomainCreateRequest request = new PaymentDomainCreateRequest(
                 user.getId(),
                 command.orderId(),
-                null ,
+                null,
                 command.cardType(),
                 command.cardNo(),
                 command.callbackUrl(),
@@ -118,7 +119,7 @@ public class PaymentEntity extends BaseEntity {
         PaymentDomainCreateRequest request = new PaymentDomainCreateRequest(
                 user.getId(),
                 command.orderId(),
-                null ,
+                null,
                 command.cardType(),
                 command.cardNo(),
                 command.callbackUrl(),
@@ -138,5 +139,10 @@ public class PaymentEntity extends BaseEntity {
     public void fail(String reason) {
         this.failureReason = reason;
         this.paymentStatus = PaymentStatus.FAILED;
+    }
+
+    public void complete() {
+        this.paymentStatus = PaymentStatus.COMPLETED;
+        this.completedAt = ZonedDateTime.now();
     }
 }

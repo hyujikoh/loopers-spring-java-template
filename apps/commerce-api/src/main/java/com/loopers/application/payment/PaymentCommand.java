@@ -16,7 +16,7 @@ public record PaymentCommand(
         BigDecimal amount,
         String callbackUrl
 ) {
-    public static PaymentCommand of( String username, PaymentV1Dtos.PaymentRequest request) {
+    public static PaymentCommand of(String username, PaymentV1Dtos.PaymentRequest request) {
         return new PaymentCommand(
                 username,
                 request.orderId(),

@@ -43,7 +43,7 @@ public class PaymentFacade {
         // 2. PaymentEntity 생성 및 저장
         PaymentEntity pendingPayment = paymentService.createPending(user, command);
 
-        try{
+        try {
             PgPaymentResponse pgResponse = pgClient.requestPayment(
                     user.getUsername(),
                     PgPaymentRequest.of(command)
@@ -53,8 +53,7 @@ public class PaymentFacade {
             log.info("PG 결제 요청 완료 - transactionKey: {}, 콜백 대기 중",
                     pgResponse.transactionKey());
             return PaymentInfo.from(pendingPayment);
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             log.error("PG 결제 요청 실패, PENDING 처리", e);
             return PaymentInfo.pending(pendingPayment);
         }

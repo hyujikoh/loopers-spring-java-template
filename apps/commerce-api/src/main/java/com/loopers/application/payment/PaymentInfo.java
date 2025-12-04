@@ -25,6 +25,7 @@ public record PaymentInfo(
                 entity.getPaymentStatus()
         );
     }
+
     public static PaymentInfo pending(PaymentEntity entity) {
         return new PaymentInfo(
                 entity.getId(),
