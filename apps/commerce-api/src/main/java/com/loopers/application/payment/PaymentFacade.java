@@ -4,6 +4,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,8 +32,7 @@ public class PaymentFacade {
     private final PaymentService paymentService;
     private final UserService userService;
     private final PgClient pgClient;
-    // private final OrderFacade orderFacade;  // TODO: 순환 참조 방지를 위해 이벤트 기반으로 변경 권장
-
+    private final ApplicationEventPublisher eventPublisher;
     // 여러 도메인 비즈니스 로직 조합 처리
     @CircuitBreaker(name = "pgClient", fallbackMethod = "processPaymentFallback")
     @Retry(name = "pgClient")
@@ -46,17 +46,21 @@ public class PaymentFacade {
         PaymentEntity pendingPayment = paymentService.createPending(user, command);
 
         try {
+            log.info("결제 요청 시작 - orderId: {}, username: {}, amount: {}",
+                    command.orderId(), command.username(), command.amount());
+
             PgPaymentResponse pgResponse = pgClient.requestPayment(
                     user.getUsername(),
                     PgPaymentRequest.of(command)
             );
             pendingPayment.updateTransactionKey(pgResponse.transactionKey());
 
-            log.info("PG 결제 요청 완료 - transactionKey: {}, 콜백 대기 중",
-                    pgResponse.transactionKey());
+            log.info("PG 결제 요청 완료 - orderId: {}, transactionKey: {}, 콜백 대기 중",
+                    command.orderId(), pgResponse.transactionKey());
 
         } catch (Exception e) {
-            log.error("PG 결제 요청 실패, PENDING 처리", e);
+            log.error("PG 결제 요청 실패 - orderId: {}, username: {}",
+                    command.orderId(), command.username(), e);
         }
 
         return PaymentInfo.from(pendingPayment);
@@ -68,6 +72,7 @@ public class PaymentFacade {
         log.error("PG 서비스 장애, 결제 요청 실패 처리", t);
 
         UserEntity userByUsername = userService.getUserByUsername(command.username());
+
         // PG 호출 자체가 실패한 경우
         PaymentEntity failed = paymentService.createFailedPayment(userByUsername,
                 command,
@@ -96,18 +101,25 @@ public class PaymentFacade {
                 payment.complete();
                 log.info("결제 성공 처리 완료 - transactionKey: {}", request.transactionKey());
 
-                // TODO: 주문 상태 업데이트 등 후속 처리
-                // 주문 확정, 포인트 차감, 알림 발송 등
-                // orderFacade.confirmOrderByPayment(payment.getOrderId());
+                // 이벤트 발행 (OrderFacade 직접 의존 X)
+                eventPublisher.publishEvent(new PaymentCompletedEvent(
+                        payment.getTransactionKey(),
+                        payment.getOrderId(),
+                        payment.getUserId(),
+                        payment.getAmount()
+                ));
             }
             case "FAILED", "LIMIT_EXCEEDED", "INVALID_CARD" -> {
                 payment.fail(request.reason());
                 log.warn("결제 실패 처리 - transactionKey: {}, reason: {}",
                         request.transactionKey(), request.reason());
 
-                // TODO: 주문 취소 등 후속 처리
-                // 재고 복원, 쿠폰 복원, 알림 발송 등
-                // orderFacade.cancelOrderByPaymentFailure(payment.getOrderId());
+                eventPublisher.publishEvent(new PaymentFailedEvent(
+                        payment.getTransactionKey(),
+                        payment.getOrderId(),
+                        payment.getUserId(),
+                        request.reason()
+                ));
             }
             default -> {
                 log.error("알 수 없는 결제 상태 - transactionKey: {}, status: {}",

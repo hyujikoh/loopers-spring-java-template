@@ -18,10 +18,14 @@ import jakarta.persistence.*;
  * @author hyunjikoh
  * @since 2025. 12. 2.
  */
-@Entity
-@Table(name = "payments")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
+@Table(name = "payments", indexes = {
+        @Index(name = "idx_payment_user_id", columnList = "user_id"),
+        @Index(name = "idx_payment_transaction_key", columnList = "transactionKey"),
+        @Index(name = "idx_payment_order_id", columnList = "orderId")
+})
 public class PaymentEntity extends BaseEntity {
 
     @Column(nullable = true, unique = true, length = 50)
@@ -29,6 +33,9 @@ public class PaymentEntity extends BaseEntity {
 
     @Column(nullable = false, length = 50)
     private String orderId;
+
+    @Column(nullable = false, length = 50)
+    private Long userId;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
@@ -94,6 +101,7 @@ public class PaymentEntity extends BaseEntity {
         this.cardNo = request.cardNo();
         this.paymentStatus = request.paymentStatus();
         this.callbackUrl = request.callbackUrl();
+        this.userId = request.userId();
         this.requestedAt = request.requestedAt();
     }
 

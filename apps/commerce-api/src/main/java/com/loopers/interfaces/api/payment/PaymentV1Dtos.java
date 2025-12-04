@@ -39,7 +39,7 @@ public class PaymentV1Dtos {
             String orderId,
             String cardType,
             String cardNo,
-            String amount,
+            BigDecimal amount,
             String status,
             String reason
     ) {
