@@ -39,12 +39,10 @@ public class PaymentFacade {
     @Transactional
     public PaymentInfo processPayment(PaymentCommand command) {
         UserEntity user = userService.getUserByUsername(command.username());
-        // 1. PG 호출
-        PgPaymentRequest pgRequest = PgPaymentRequest.of(command.orderId(),
-                command.cardType(), command.cardNo(), command.amount(), command.callbackUrl());
+
         PgPaymentResponse pgResponse = pgClient.requestPayment(
                 user.getUsername(),
-                pgRequest
+                PgPaymentRequest.of(command)
         );
 
         // 2. PaymentEntity 생성 및 저장

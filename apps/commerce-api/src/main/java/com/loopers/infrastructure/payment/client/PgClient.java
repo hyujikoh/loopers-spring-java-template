@@ -17,8 +17,7 @@ import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
 @FeignClient(
         name = "pgClient",
         url = "${pg.simulator.url}",
-        configuration = PgClientConfig.class,
-        fallbackFactory = PgClientFallbackFactory.class
+        configuration = PgClientConfig.class
 )
 public interface PgClient {
 
