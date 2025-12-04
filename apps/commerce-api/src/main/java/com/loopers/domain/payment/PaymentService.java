@@ -1,7 +1,5 @@
 package com.loopers.domain.payment;
 
-import java.util.List;
-
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,13 +29,9 @@ public class PaymentService {
 
 
     @Transactional
-    public PaymentEntity createPending(PaymentCommand command) {
+    public PaymentEntity createPending(UserEntity user, PaymentCommand command) {
         PaymentEntity pending = PaymentEntity.createPending(
-                command.orderId(),
-                command.cardType(),
-                command.cardNo(),
-                command.amount(),
-                command.callbackUrl()
+                user, command
         );
         return paymentRepository.save(pending);
     }
@@ -45,5 +39,12 @@ public class PaymentService {
     public PaymentEntity getByTransactionKey(String transactionKey) {
         return paymentRepository.findByTransactionKey(transactionKey)
                 .orElseThrow(() -> new IllegalArgumentException("결제 정보를 찾을 수 없습니다"));
+    }
+
+    public PaymentEntity createFailedPayment(UserEntity user, PaymentCommand command, String reason) {
+        PaymentEntity pending = PaymentEntity.crateFailed(
+                user, command, reason
+        );
+        return paymentRepository.save(pending);
     }
 }

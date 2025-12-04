@@ -20,7 +20,8 @@ public record PaymentDomainCreateRequest(
         String callbackUrl,
         BigDecimal amount,
         PaymentStatus paymentStatus,
-        ZonedDateTime requestedAt
+        ZonedDateTime requestedAt,
+        String failureReason
 ) {
     public static PaymentDomainCreateRequest from(UserEntity user, PaymentCommand command, PgPaymentResponse pgResponse) {
         return new PaymentDomainCreateRequest(
@@ -32,7 +33,8 @@ public record PaymentDomainCreateRequest(
                 command.callbackUrl(),
                 command.amount(),
                 PaymentStatus.valueOf(pgResponse.status()),
-                ZonedDateTime.now()
+                ZonedDateTime.now(),
+                pgResponse.message()
         );
     }
 }

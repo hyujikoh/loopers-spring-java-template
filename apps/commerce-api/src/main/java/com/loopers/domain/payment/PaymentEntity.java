@@ -4,9 +4,9 @@ import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
+import com.loopers.application.payment.PaymentCommand;
 import com.loopers.domain.BaseEntity;
-import com.loopers.domain.order.OrderEntity;
-import com.loopers.domain.order.dto.OrderDomainCreateRequest;
+import com.loopers.domain.user.UserEntity;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -24,7 +24,7 @@ import jakarta.persistence.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PaymentEntity extends BaseEntity {
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(nullable = true, unique = true, length = 50)
     private String transactionKey;
 
     @Column(nullable = false, length = 50)
@@ -65,7 +65,7 @@ public class PaymentEntity extends BaseEntity {
      * @param request
      * @return
      */
-    public static PaymentEntity createOrder(PaymentDomainCreateRequest request) {
+    public static PaymentEntity createPayment(PaymentDomainCreateRequest request) {
         Objects.requireNonNull(request, "결제 생성 요청은 null일 수 없습니다.");
         return new PaymentEntity(request);
     }
@@ -96,21 +96,47 @@ public class PaymentEntity extends BaseEntity {
         this.requestedAt = request.requestedAt();
     }
 
-    public static PaymentEntity createPending(String orderId, String cardType, String cardNo, BigDecimal amount,
-                                              String callbackUrl) {
+    public static PaymentEntity createPending(UserEntity user, PaymentCommand command) {
         PaymentDomainCreateRequest request = new PaymentDomainCreateRequest(
-                null,
-                orderId,
-                null,
-                cardType,
-                cardNo,
-                callbackUrl,
-                amount,
+                user.getId(),
+                command.orderId(),
+                null ,
+                command.cardType(),
+                command.cardNo(),
+                command.callbackUrl(),
+                command.amount(),
                 PaymentStatus.PENDING,
-                ZonedDateTime.now()
+                ZonedDateTime.now(),
+                null
         );
 
-        return new PaymentEntity(request);
+        return createPayment(request);
 
+    }
+
+    public static PaymentEntity crateFailed(UserEntity user, PaymentCommand command, String reason) {
+        PaymentDomainCreateRequest request = new PaymentDomainCreateRequest(
+                user.getId(),
+                command.orderId(),
+                null ,
+                command.cardType(),
+                command.cardNo(),
+                command.callbackUrl(),
+                command.amount(),
+                PaymentStatus.FAILED,
+                ZonedDateTime.now(),
+                reason
+        );
+        return createPayment(request);
+    }
+
+    public void updateTransactionKey(String transactionKey) {
+        this.transactionKey = transactionKey;
+    }
+
+    // 결제 실패 처리
+    public void fail(String reason) {
+        this.failureReason = reason;
+        this.paymentStatus = PaymentStatus.FAILED;
     }
 }

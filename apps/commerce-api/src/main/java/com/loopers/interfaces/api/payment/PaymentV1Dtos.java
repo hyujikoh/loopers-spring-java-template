@@ -33,5 +33,16 @@ public class PaymentV1Dtos {
             );
         }
     }
+
+    public record PgCallbackRequest(
+            String transactionKey,
+            String orderId,
+            String cardType,
+            String cardNo,
+            String amount,
+            String status,
+            String reason
+    ) {
+    }
 }
 
