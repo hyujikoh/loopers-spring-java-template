@@ -44,6 +44,7 @@ public class OrderFacade {
     private final ProductService productService;
     private final PointService pointService;
     private final CouponService couponService;
+    private final com.loopers.application.payment.PaymentFacade paymentFacade;
 
     /**
      * 주문 생성
@@ -173,9 +174,6 @@ public class OrderFacade {
                 quantities
         );
 
-        // 5. 포인트 차감 안 함 (카드 결제이므로) ✅
-        // pointService.use(user, creationResult.order().getFinalTotalAmount());  // 제거
-
         // 6. 쿠폰 사용 처리
         coupons.stream().filter(Objects::nonNull).forEach(couponService::consumeCoupon);
 
@@ -186,6 +184,44 @@ public class OrderFacade {
         // 8. 주문 정보 반환 (PENDING 상태)
         return OrderInfo.from(creationResult.order(), creationResult.orderItems());
     }
+
+    /**
+     * 카드 결제와 함께 주문 생성 (통합 처리)
+     *
+     * 주문 생성 + PG 결제 요청을 한 번에 처리합니다.
+     *
+     * @param command 주문 생성 명령 (카드 정보 포함)
+     * @return 주문 정보 + 결제 정보
+     */
+    @Transactional
+    public OrderWithPaymentInfo createOrderWithCardPayment(OrderCreateCommand command) {
+        // 1. 주문 생성 (재고 차감, 쿠폰 사용, 포인트 차감 안 함)
+        OrderInfo orderInfo = createOrderForCardPayment(command);
+
+        // 2. 결제 요청 (주문 ID 사용)
+        com.loopers.application.payment.PaymentCommand paymentCommand =
+            com.loopers.application.payment.PaymentCommand.builder()
+                .username(command.username())
+                .orderId(orderInfo.id())
+                .cardType(command.cardInfo().cardType())
+                .cardNo(command.cardInfo().cardNo())
+                .amount(orderInfo.finalTotalAmount())
+                .callbackUrl(command.cardInfo().callbackUrl())
+                .build();
+
+        com.loopers.application.payment.PaymentInfo paymentInfo = paymentFacade.processPayment(paymentCommand);
+
+        // 3. 주문 + 결제 정보 반환
+        return new OrderWithPaymentInfo(orderInfo, paymentInfo);
+    }
+
+    /**
+     * 주문 + 결제 정보 래퍼
+     */
+    public record OrderWithPaymentInfo(
+        OrderInfo order,
+        com.loopers.application.payment.PaymentInfo payment
+    ) {}
 
     /**
      * 주문 확정

@@ -11,6 +11,7 @@ import com.loopers.application.order.OrderInfo;
 import com.loopers.application.order.OrderSummary;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
+import com.loopers.domain.payment.PaymentType;
 import com.loopers.interfaces.api.ApiResponse;
 import com.loopers.interfaces.api.common.PageResponse;
 import com.loopers.support.Uris;
@@ -24,27 +25,64 @@ public class OrderV1Controller implements OrderV1ApiSpec {
     private final OrderFacade orderFacade;
     private final UserFacade userFacade;
 
-    @PostMapping(Uris.Order.CREATE)
-    @Override
-    public ApiResponse<OrderV1Dtos.OrderCreateResponse> createOrder(
+//    @PostMapping(Uris.Order.CREATE)
+//    @Deprecated
+//    @Override
+//    public ApiResponse<OrderV1Dtos.OrderCreateResponse> createOrder(
+//            @RequestHeader("X-USER-ID") String username,
+//            @RequestBody OrderV1Dtos.OrderCreateRequest request
+//    ) {
+//        OrderCreateCommand command = request.toCommand(username);
+//
+//        // 결제 타입에 따라 분기
+//        OrderInfo orderInfo;
+//        if (PaymentType.POINT.equals(command.paymentType())) {
+//            // 포인트 결제: 즉시 결제 및 주문 확정
+//            orderInfo = orderFacade.createOrderByPoint(command);
+//        } else if (PaymentType.CARD.equals(command.paymentType())) {
+//            // 카드 결제: 주문만 생성 (결제는 별도 API로 처리)
+//            orderInfo = orderFacade.createOrderForCardPayment(command);
+//        } else {
+//            throw new IllegalArgumentException("지원하지 않는 결제 타입입니다: " + command.paymentType());
+//        }
+//
+//        OrderV1Dtos.OrderCreateResponse response = OrderV1Dtos.OrderCreateResponse.from(orderInfo);
+//        return ApiResponse.success(response);
+//    }
+
+    /**
+     * 포인트 결제 주문 생성
+     *
+     * 포인트로 즉시 결제하고 주문을 확정합니다.
+     */
+    @PostMapping("/api/v1/orders/point")
+    public ApiResponse<OrderV1Dtos.OrderCreateResponse> createOrderWithPoint(
             @RequestHeader("X-USER-ID") String username,
-            @RequestBody OrderV1Dtos.OrderCreateRequest request
+            @RequestBody OrderV1Dtos.PointOrderCreateRequest request
     ) {
         OrderCreateCommand command = request.toCommand(username);
-
-        // 결제 타입에 따라 분기
-        OrderInfo orderInfo;
-        if ("POINT".equals(command.paymentType())) {
-            // 포인트 결제: 즉시 결제 및 주문 확정
-            orderInfo = orderFacade.createOrderByPoint(command);
-        } else if ("CARD".equals(command.paymentType())) {
-            // 카드 결제: 주문만 생성 (결제는 별도 API로 처리)
-            orderInfo = orderFacade.createOrderForCardPayment(command);
-        } else {
-            throw new IllegalArgumentException("지원하지 않는 결제 타입입니다: " + command.paymentType());
-        }
-
+        OrderInfo orderInfo = orderFacade.createOrderByPoint(command);
         OrderV1Dtos.OrderCreateResponse response = OrderV1Dtos.OrderCreateResponse.from(orderInfo);
+        return ApiResponse.success(response);
+    }
+
+    /**
+     * 카드 결제 주문 생성
+     *
+     * 주문 생성과 동시에 PG 결제를 요청합니다.
+     * 결제는 비동기로 처리되며, 콜백을 통해 최종 결과를 받습니다.
+     */
+    @PostMapping("/api/v1/orders/card")
+    public ApiResponse<OrderV1Dtos.OrderCreateResponse> createOrderWithCard(
+            @RequestHeader("X-USER-ID") String username,
+            @RequestBody OrderV1Dtos.CardOrderCreateRequest request
+    ) {
+        OrderCreateCommand command = request.toCommand(username);
+        OrderFacade.OrderWithPaymentInfo result = orderFacade.createOrderWithCardPayment(command);
+        OrderV1Dtos.OrderCreateResponse response = OrderV1Dtos.OrderCreateResponse.from(
+                result.order(),
+                result.payment()
+        );
         return ApiResponse.success(response);
     }
 

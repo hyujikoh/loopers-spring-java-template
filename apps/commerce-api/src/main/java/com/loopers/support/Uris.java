@@ -60,7 +60,9 @@ public class Uris {
         }
 
         public static final String BASE = API_V1 + "/orders";
-        public static final String CREATE = BASE;
+        public static final String CREATE_POINT = BASE + "/point";
+        public static final String CREATE_CARD = BASE + "/card";
+
         public static final String GET_LIST = BASE;
         public static final String GET_DETAIL = BASE + "/{orderId}";
     }

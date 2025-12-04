@@ -4,10 +4,13 @@ import java.math.BigDecimal;
 
 import com.loopers.interfaces.api.payment.PaymentV1Dtos;
 
+import lombok.Builder;
+
 /**
  * @author hyunjikoh
  * @since 2025. 12. 4.
  */
+@Builder
 public record PaymentCommand(
         String username,
         Long orderId,
