@@ -10,7 +10,7 @@ import com.loopers.interfaces.api.payment.PaymentV1Dtos;
  */
 public record PaymentCommand(
         String username,
-        String orderId,
+        Long orderId,
         String cardType,
         String cardNo,
         BigDecimal amount,

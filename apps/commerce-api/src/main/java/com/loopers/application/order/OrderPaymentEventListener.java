@@ -5,8 +5,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import com.loopers.application.payment.PaymentCompletedEvent;
-import com.loopers.application.payment.PaymentFailedEvent;
+import com.loopers.domain.payment.event.PaymentCompletedEvent;
+import com.loopers.domain.payment.event.PaymentFailedEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ public class OrderPaymentEventListener {
     @TransactionalEventListener(phase =  TransactionPhase.AFTER_COMMIT)
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
         try {
-            Long orderId = Long.parseLong(event.orderId());
+            Long orderId = event.orderId();
             orderFacade.confirmOrderByPayment(orderId, event.userId());
             log.info("주문 확정 완료 - orderId: {}", orderId);
         } catch (Exception e) {
@@ -37,7 +37,7 @@ public class OrderPaymentEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePaymentFailed(PaymentFailedEvent event) {
         try {
-            Long orderId = Long.parseLong(event.orderId());
+            Long orderId = event.orderId();
             orderFacade.cancelOrderByPaymentFailure(orderId, event.userId());
             log.info("주문 취소 완료 - orderId: {}", orderId);
         } catch (Exception e) {

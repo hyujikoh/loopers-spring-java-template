@@ -11,7 +11,7 @@ import com.loopers.domain.payment.PaymentStatus;
  */
 public class PaymentV1Dtos {
     public record PaymentRequest(
-            String orderId,
+            Long orderId,
             String cardType,
             String cardNo,
             BigDecimal amount,
@@ -20,7 +20,7 @@ public class PaymentV1Dtos {
 
     public record PaymentResponse(
             String transactionKey,
-            String orderId,
+            Long orderId,
             BigDecimal amount,
             PaymentStatus status
     ) {

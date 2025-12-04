@@ -13,7 +13,7 @@ import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
  */
 public record PaymentDomainCreateRequest(
         Long userId,
-        String orderId,
+        Long orderId,
         String transactionKey,
         String cardType,
         String cardNo,

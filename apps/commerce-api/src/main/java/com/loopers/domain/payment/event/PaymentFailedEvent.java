@@ -1,4 +1,4 @@
-package com.loopers.application.payment;
+package com.loopers.domain.payment.event;
 
 /**
  * @author hyunjikoh
@@ -6,7 +6,7 @@ package com.loopers.application.payment;
  */
 public record PaymentFailedEvent(
         String transactionKey,
-        String orderId,
+        Long orderId,
         Long userId,
         String reason
 ) {}

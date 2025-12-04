@@ -12,7 +12,7 @@ import com.loopers.domain.payment.PaymentStatus;
 public record PaymentInfo(
         Long id,
         String transactionKey,
-        String orderId,
+        Long orderId,
         BigDecimal amount,
         PaymentStatus status
 ) {

@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.loopers.domain.payment.PaymentEntity;
 import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.payment.PaymentStatus;
+import com.loopers.domain.payment.event.PaymentCompletedEvent;
+import com.loopers.domain.payment.event.PaymentFailedEvent;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserService;
 import com.loopers.infrastructure.payment.client.PgClient;

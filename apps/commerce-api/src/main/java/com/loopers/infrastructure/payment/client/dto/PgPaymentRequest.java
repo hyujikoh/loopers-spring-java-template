@@ -10,7 +10,7 @@ import com.loopers.application.payment.PaymentCommand;
  * @since 2025. 12. 2.
  */
 public record PgPaymentRequest(
-        String orderNumber,
+        Long orderNumber,
         String cardType,
         String cardNo,
         BigDecimal amount,

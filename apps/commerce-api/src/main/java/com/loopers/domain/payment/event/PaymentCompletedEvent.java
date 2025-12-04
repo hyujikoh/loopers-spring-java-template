@@ -1,4 +1,4 @@
-package com.loopers.application.payment;
+package com.loopers.domain.payment.event;
 
 import java.math.BigDecimal;
 
@@ -8,7 +8,7 @@ import java.math.BigDecimal;
  */
 public record PaymentCompletedEvent(
         String transactionKey,
-        String orderId,
+        Long orderId,
         Long userId,
         BigDecimal amount
 ) {}

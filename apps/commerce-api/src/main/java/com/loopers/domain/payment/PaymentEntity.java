@@ -31,10 +31,10 @@ public class PaymentEntity extends BaseEntity {
     @Column(nullable = true, unique = true, length = 50)
     private String transactionKey;
 
-    @Column(nullable = false, length = 50)
-    private String orderId;
+    @Column(nullable = false, name = "order_id")
+    private Long orderId;
 
-    @Column(nullable = false, length = 50)
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     @Column(nullable = false, precision = 10, scale = 2)
@@ -52,10 +52,6 @@ public class PaymentEntity extends BaseEntity {
 
     @Column(nullable = false, length = 255)
     private String callbackUrl;
-
-    // TODO : TransactionStatus 로 변경 필요
-    @Column(nullable = true, length = 20)
-    private String transactionStatus;
 
     @Column(length = 20)
     private String failureReason;
@@ -81,7 +77,6 @@ public class PaymentEntity extends BaseEntity {
 
     private PaymentEntity(PaymentDomainCreateRequest request) {
         Objects.requireNonNull(request, "결제 생성 요청은 필수입니다.");
-        Objects.requireNonNull(request.transactionKey(), "거래 키는 필수입니다.");
         Objects.requireNonNull(request.orderId(), "주문 ID는 필수입니다.");
         Objects.requireNonNull(request.amount(), "결제 금액은 필수입니다.");
         Objects.requireNonNull(request.cardType(), "카드 타입은 필수입니다.");
