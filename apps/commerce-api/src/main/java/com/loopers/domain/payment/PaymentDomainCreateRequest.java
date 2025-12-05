@@ -32,7 +32,7 @@ public record PaymentDomainCreateRequest(
                 command.cardNo(),
                 command.callbackUrl(),
                 command.amount(),
-                PaymentStatus.valueOf(pgResponse.status()),
+                PaymentStatus.fromString(pgResponse.status()),
                 ZonedDateTime.now(),
                 pgResponse.reason()
         );

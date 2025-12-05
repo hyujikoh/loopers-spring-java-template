@@ -96,8 +96,8 @@ public class PaymentEntity extends BaseEntity {
         this.transactionKey = request.transactionKey();
         this.orderId = request.orderId();
         this.amount = request.amount();
-        this.cardType = MaskingUtil.maskCardNumber(request.cardType());
-        this.cardNoMasked = request.cardNo();
+        this.cardType = request.cardType();
+        this.cardNoMasked = MaskingUtil.maskCardNumber(request.cardNo());
         this.paymentStatus = request.paymentStatus();
         this.callbackUrl = request.callbackUrl();
         this.userId = request.userId();
