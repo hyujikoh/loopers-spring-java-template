@@ -14,15 +14,16 @@ public record PaymentInfo(
         String transactionKey,
         Long orderId,
         BigDecimal amount,
-        PaymentStatus status
-) {
+        PaymentStatus status,
+        String reason) {
     public static PaymentInfo from(PaymentEntity entity) {
         return new PaymentInfo(
                 entity.getId(),
                 entity.getTransactionKey(),
                 entity.getOrderId(),
                 entity.getAmount(),
-                entity.getPaymentStatus()
+                entity.getPaymentStatus(),
+                entity.getFailureReason()
         );
     }
 
@@ -32,7 +33,8 @@ public record PaymentInfo(
                 entity.getTransactionKey(),
                 entity.getOrderId(),
                 entity.getAmount(),
-                PaymentStatus.PENDING
+                PaymentStatus.PENDING,
+                null
         );
     }
 }

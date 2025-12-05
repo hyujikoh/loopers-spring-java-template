@@ -58,7 +58,7 @@ import feign.RequestTemplate;
  */
 @SpringBootTest
 @DisplayName("Level 3: Circuit Breaker 동작 검증 테스트")
-class CircuitBreakerIntegrationTest {
+class PaymentCircuitIntegrationTest {
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;

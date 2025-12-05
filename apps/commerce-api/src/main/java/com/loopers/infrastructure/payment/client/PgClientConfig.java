@@ -1,17 +1,19 @@
 package com.loopers.infrastructure.payment.client;
 
-import java.util.concurrent.TimeUnit;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import feign.Request;
 import feign.Retryer;
 
 /**
+ * PG Feign Client 설정
+ *
+ * 타임아웃 설정은 application.yml에서 관리:
+ * - connect-timeout: 300ms
+ * - read-timeout: 300ms
+ *
  * @author hyunjikoh
  * @since 2025. 12. 3.
- * PG Feign Client 설정
  */
 @Configuration
 public class PgClientConfig {
@@ -21,15 +23,6 @@ public class PgClientConfig {
     @Bean
     public Retryer retryer() {
         return Retryer.NEVER_RETRY;
-    }
-
-    @Bean
-    public Request.Options options() {
-        return new Request.Options(
-                5, TimeUnit.SECONDS,   // connectTimeout: 5초
-                10, TimeUnit.SECONDS,  // readTimeout: 10초
-                true                   // followRedirects
-        );
     }
 
 }

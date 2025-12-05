@@ -28,7 +28,9 @@ spring:
       client:
         config:
           pgClient:
-            loggerLevel: full
+            connect-timeout: 300    # 연결 타임아웃 300ms
+            read-timeout: 300       # 읽기 타임아웃 300ms
+            logger-level: full
 
 pg:
   simulator:
@@ -54,27 +56,18 @@ resilience4j:
         permitted-number-of-calls-in-half-open-state: 3
         automatic-transition-from-open-to-half-open-enabled: true
 
-        # 실패로 간주할 예외 단 변경 가능함.
+        # 실패로 간주할 예외 (타임아웃 포함)
         record-exceptions:
           - feign.FeignException.ServiceUnavailable
           - feign.FeignException.InternalServerError
           - java.util.concurrent.TimeoutException
+          - feign.RetryableException  # Feign 타임아웃 예외
 
   retry:
     instances:
       pgClient:
-        # 재시도 설정
-        max-attempts: 3
-        wait-duration: 1s
-        retry-exceptions:
-          - feign.FeignException.ServiceUnavailable
-          - java.net.ConnectException
-
-  timelimiter:
-    instances:
-      pgClient:
-        # 타임아웃 설정
-        timeout-duration: 10s
+        # 타임아웃 시 재시도 비활성화
+        max-attempts: 1
 
 ---
 spring:

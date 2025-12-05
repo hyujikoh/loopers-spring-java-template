@@ -1,7 +1,6 @@
 package com.loopers.application.payment;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -58,24 +57,24 @@ public class PaymentFacade {
      *
      * Resilience4j 적용:
      * - Circuit Breaker: PG 장애 시 빠른 실패 (Fallback 실행)
-     * - Retry: 일시적 오류 시 재시도 (최대 3회)
      *
      * 타임아웃은 Feign Client 설정으로 처리:
-     * - connect-timeout: 5s
-     * - read-timeout: 10s
+     * - connect-timeout: 300ms
+     * - read-timeout: 300ms
+     *
+     * 타임아웃 발생 시 Fallback 실행, 결과는 콜백으로 확인
      */
     @CircuitBreaker(name = "pgClient", fallbackMethod = "processPaymentFallback")
-    @Retry(name = "pgClient")
     @Transactional
     public PaymentInfo processPayment(PaymentCommand command) {
         // 1. 사용자 조회
         UserEntity user = userService.getUserByUsername(command.username());
 
-        // 2. 주문 조회 및 검증 (도메인 서비스에 위임)
+        // 2. 주문 조회 및 검증
         OrderEntity order = orderService.getOrderByIdAndUserId(command.orderId(), user.getId());
         paymentValidator.validateOrderForPayment(order, command.amount());
 
-        // 3. PG 결제 처리 (도메인 서비스에 위임)
+        // 3. PG 결제 처리
         PaymentEntity payment = paymentProcessor.processPgPayment(user, command);
 
         // 4. DTO 변환 후 반환
@@ -85,18 +84,19 @@ public class PaymentFacade {
     /**
      * Fallback 메서드
      *
-     * PG 서비스 장애 시 실패 결제 생성
+     * PG 서비스 장애 또는 타임아웃(300ms) 시 실패 결제 생성
      */
     @SuppressWarnings("unused")
     private PaymentInfo processPaymentFallback(PaymentCommand command, Throwable t) {
-        log.error("PG 서비스 장애, 결제 요청 실패 처리", t);
+        log.error("PG 서비스 장애 또는 타임아웃, 결제 요청 실패 처리 - exception: {}, message: {}",
+                  t.getClass().getSimpleName(), t.getMessage(), t);
 
         UserEntity user = userService.getUserByUsername(command.username());
 
         // PG 호출 실패 시 FAILED 상태 결제 생성
         PaymentEntity failed = paymentService.createFailedPayment(user,
                 command,
-                "결제 시스템이 일시적으로 사용 불가능합니다."
+                "결제 시스템 응답 지연으로 처리되지 않았습니다. 다시 시도해 주세요."
         );
 
         return PaymentInfo.from(failed);
