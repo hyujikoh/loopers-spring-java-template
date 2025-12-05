@@ -8,6 +8,8 @@ import com.loopers.domain.order.OrderEntity;
 import com.loopers.domain.order.OrderStatus;
 import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
 import com.loopers.interfaces.api.payment.PaymentV1Dtos;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -114,7 +116,7 @@ public class PaymentValidator {
      * PG API 응답 검증
      *
      * @param pgResponse PG 응답
-     * @throws RuntimeException API 실패 시
+     * @throws CoreException API 실패 시
      */
     public void validatePgResponse(PgPaymentResponse pgResponse) {
         if (pgResponse.isApiFail()) {
@@ -122,17 +124,11 @@ public class PaymentValidator {
                     pgResponse.meta().errorCode(),
                     pgResponse.meta().message());
             log.error(errorMessage);
-            throw new PgApiFailureException(
-                    pgResponse.meta().errorCode(),
-                    errorMessage
-            );
+            throw new CoreException(ErrorType.PG_API_FAIL, errorMessage);
         }
 
         if (pgResponse.data() == null || pgResponse.transactionKey() == null) {
-            throw new PgApiFailureException(
-                    "INVALID_RESPONSE",
-                    "PG 응답에 transactionKey가 없습니다."
-            );
+            throw new CoreException(ErrorType.INVALID_PG_RESPONSE, "PG 응답에 transactionKey가 없습니다.");
         }
     }
 }

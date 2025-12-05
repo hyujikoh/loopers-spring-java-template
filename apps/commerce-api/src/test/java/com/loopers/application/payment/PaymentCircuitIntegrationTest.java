@@ -39,18 +39,19 @@ import feign.RequestTemplate;
 
 /**
  * Resilience4j Circuit Breaker 동작 검증 테스트
+ * 
  * 검증 항목:
- * 1. minimumNumberOfCalls 로직 정확성
- * 2. failureRateThreshold 계산 정확성
- * 3. Circuit Breaker 상태 전환 (CLOSED → OPEN → HALF_OPEN → CLOSED)
- * 4. OPEN 상태에서 호출 차단
- * 5. Fallback 로직 실
+ * - minimumNumberOfCalls 로직 정확성
+ * - failureRateThreshold 계산 정확성
+ * - Circuit Breaker 상태 전환 (CLOSED → OPEN → HALF_OPEN → CLOSED)
+ * - OPEN 상태에서 호출 차단
+ * - Fallback 로직 실행
  *
  * @author hyunjikoh
  * @since 2025. 12. 05.
  */
 @SpringBootTest
-@DisplayName("Level 3: Circuit Breaker 동작 검증 테스트")
+@DisplayName("Circuit Breaker 통합 테스트")
 class PaymentCircuitIntegrationTest {
 
     @Autowired
@@ -98,8 +99,8 @@ class PaymentCircuitIntegrationTest {
     }
 
     @Nested
-    @DisplayName("minimumNumberOfCalls 검증")
-    class MinimumNumberOfCalls_검증 {
+    @DisplayName("최소 호출 횟수(minimumNumberOfCalls) 검증")
+    class 최소_호출_횟수_검증 {
 
         @Test
         @DisplayName("minimumNumberOfCalls(5) 미만에서는 실패율과 관계없이 Circuit이 CLOSED 유지")
@@ -167,8 +168,8 @@ class PaymentCircuitIntegrationTest {
     }
 
     @Nested
-    @DisplayName("failureRateThreshold 검증")
-    class FailureRateThreshold_검증 {
+    @DisplayName("실패율 임계값(failureRateThreshold) 검증")
+    class 실패율_임계값_검증 {
 
         @Test
         @DisplayName("5회 호출 중 3회 실패 시 실패율 60%로 Circuit이 OPEN으로 전환")
@@ -233,8 +234,8 @@ class PaymentCircuitIntegrationTest {
     }
 
     @Nested
-    @DisplayName("OPEN 상태에서 호출 차단")
-    class OPEN_상태에서_호출_차단 {
+    @DisplayName("Circuit OPEN 상태에서 호출 차단 검증")
+    class Circuit_OPEN_상태_호출_차단_검증 {
 
         @Test
         @DisplayName("Circuit이 OPEN 상태일 때 추가 호출은 차단되고 Fallback 실행")
@@ -279,8 +280,8 @@ class PaymentCircuitIntegrationTest {
     }
 
     @Nested
-    @DisplayName("4. HALF_OPEN 상태 전환 및 복구 테스트")
-    class HALF_OPEN_상태_전환_및_복구 {
+    @DisplayName("Circuit HALF_OPEN 상태 전환 및 복구 검증")
+    class Circuit_HALF_OPEN_상태_전환_및_복구_검증 {
 
         @Test
         @DisplayName("실패율 초과로 OPEN → 대기 시간 후 HALF_OPEN → 성공 시 CLOSED로 복구")
@@ -526,7 +527,7 @@ class PaymentCircuitIntegrationTest {
     }
 
     @Nested
-    @DisplayName("5. Fallback 메서드 실행 검증")
+    @DisplayName("Fallback 메서드 실행 검증")
     class Fallback_메서드_실행_검증 {
 
         @Test
@@ -574,7 +575,7 @@ class PaymentCircuitIntegrationTest {
     }
 
     @Nested
-    @DisplayName("6. Circuit Breaker 메트릭 검증")
+    @DisplayName("Circuit Breaker 메트릭(Metrics) 검증")
     class Circuit_Breaker_메트릭_검증 {
 
         @Test
