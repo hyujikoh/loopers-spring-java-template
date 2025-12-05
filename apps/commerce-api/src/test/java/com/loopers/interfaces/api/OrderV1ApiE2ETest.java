@@ -362,7 +362,7 @@ class OrderV1ApiE2ETest {
     private Long createTestOrderWithPoint(String username, int quantity) {
         OrderCreateCommand command = new OrderCreateCommand(
                 username,
-                List.of(new OrderItemCommand(testProductId, quantity, null)) , PaymentType.POINT, null
+                List.of(new OrderItemCommand(testProductId, quantity, null)), PaymentType.POINT, null
         );
         OrderInfo orderInfo = orderFacade.createOrderByPoint(command);
         return orderInfo.id();

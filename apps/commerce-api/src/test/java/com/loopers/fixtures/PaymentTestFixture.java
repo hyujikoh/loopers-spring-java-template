@@ -41,16 +41,16 @@ public class PaymentTestFixture {
      */
     public static PaymentDomainCreateRequest createDefaultDomainRequest() {
         return new PaymentDomainCreateRequest(
-            DEFAULT_USER_ID,
-            DEFAULT_ORDER_ID,
-            DEFAULT_TRANSACTION_KEY,
-            DEFAULT_CARD_TYPE,
-            DEFAULT_CARD_NO,
-            DEFAULT_CALLBACK_URL,
-            DEFAULT_AMOUNT,
-            DEFAULT_STATUS,
-            ZonedDateTime.now(),
-            null
+                DEFAULT_USER_ID,
+                DEFAULT_ORDER_ID,
+                DEFAULT_TRANSACTION_KEY,
+                DEFAULT_CARD_TYPE,
+                DEFAULT_CARD_NO,
+                DEFAULT_CALLBACK_URL,
+                DEFAULT_AMOUNT,
+                DEFAULT_STATUS,
+                ZonedDateTime.now(),
+                null
         );
     }
 
@@ -59,16 +59,16 @@ public class PaymentTestFixture {
      */
     public static PaymentDomainCreateRequest createPendingDomainRequest() {
         return new PaymentDomainCreateRequest(
-            DEFAULT_USER_ID,
-            DEFAULT_ORDER_ID,
-            null, // PENDING 상태에서는 transactionKey가 null
-            DEFAULT_CARD_TYPE,
-            DEFAULT_CARD_NO,
-            DEFAULT_CALLBACK_URL,
-            DEFAULT_AMOUNT,
-            PaymentStatus.PENDING,
-            ZonedDateTime.now(),
-            null
+                DEFAULT_USER_ID,
+                DEFAULT_ORDER_ID,
+                null, // PENDING 상태에서는 transactionKey가 null
+                DEFAULT_CARD_TYPE,
+                DEFAULT_CARD_NO,
+                DEFAULT_CALLBACK_URL,
+                DEFAULT_AMOUNT,
+                PaymentStatus.PENDING,
+                ZonedDateTime.now(),
+                null
         );
     }
 
@@ -76,23 +76,23 @@ public class PaymentTestFixture {
      * 커스텀 PaymentDomainCreateRequest 생성
      */
     public static PaymentDomainCreateRequest createDomainRequest(
-        Long userId,
-        Long orderId,
-        String transactionKey,
-        BigDecimal amount,
-        PaymentStatus status
+            Long userId,
+            Long orderId,
+            String transactionKey,
+            BigDecimal amount,
+            PaymentStatus status
     ) {
         return new PaymentDomainCreateRequest(
-            userId,
-            orderId,
-            transactionKey,
-            DEFAULT_CARD_TYPE,
-            DEFAULT_CARD_NO,
-            DEFAULT_CALLBACK_URL,
-            amount,
-            status,
-            ZonedDateTime.now(),
-            null
+                userId,
+                orderId,
+                transactionKey,
+                DEFAULT_CARD_TYPE,
+                DEFAULT_CARD_NO,
+                DEFAULT_CALLBACK_URL,
+                amount,
+                status,
+                ZonedDateTime.now(),
+                null
         );
     }
 
@@ -122,8 +122,8 @@ public class PaymentTestFixture {
     public static PaymentCommand createDefaultCommand() {
         return new PaymentCommand(
                 "testuser",
-            DEFAULT_ORDER_ID,
-            DEFAULT_CARD_TYPE,
+                DEFAULT_ORDER_ID,
+                DEFAULT_CARD_TYPE,
                 DEFAULT_CARD_NO,
                 DEFAULT_AMOUNT,
                 DEFAULT_CALLBACK_URL
@@ -136,11 +136,11 @@ public class PaymentTestFixture {
     public static PaymentCommand createCommandWithAmount(BigDecimal amount) {
         return new PaymentCommand(
                 "testuser",
-            DEFAULT_ORDER_ID,
-            DEFAULT_CARD_TYPE,
-            DEFAULT_CARD_NO,
-            amount,
-            DEFAULT_CALLBACK_URL
+                DEFAULT_ORDER_ID,
+                DEFAULT_CARD_TYPE,
+                DEFAULT_CARD_NO,
+                amount,
+                DEFAULT_CALLBACK_URL
         );
     }
 
@@ -150,11 +150,11 @@ public class PaymentTestFixture {
     public static PaymentCommand createCommandWithOrderId(Long orderId) {
         return new PaymentCommand(
                 "testuser",
-            orderId,
-            DEFAULT_CARD_TYPE,
-            DEFAULT_CARD_NO,
-            DEFAULT_AMOUNT,
-            DEFAULT_CALLBACK_URL
+                orderId,
+                DEFAULT_CARD_TYPE,
+                DEFAULT_CARD_NO,
+                DEFAULT_AMOUNT,
+                DEFAULT_CALLBACK_URL
         );
     }
 
@@ -304,16 +304,16 @@ public class PaymentTestFixture {
 
         public PaymentEntity build() {
             PaymentDomainCreateRequest request = new PaymentDomainCreateRequest(
-                userId,
-                orderId,
-                transactionKey,
-                cardType,
-                cardNo,
-                callbackUrl,
-                amount,
-                status,
-                ZonedDateTime.now(),
-                failureReason
+                    userId,
+                    orderId,
+                    transactionKey,
+                    cardType,
+                    cardNo,
+                    callbackUrl,
+                    amount,
+                    status,
+                    ZonedDateTime.now(),
+                    failureReason
             );
             return PaymentEntity.createPayment(request);
         }

@@ -26,7 +26,7 @@ public class PgClientFallbackFactory implements FallbackFactory<PgClient> {
             @Override
             public PgPaymentResponse requestPayment(String userId, PgPaymentRequest request) {
                 log.error("PG 결제 요청 실패 - userId: {}, orderId: {}",
-                        userId, request.orderNumber(), cause);
+                        userId, request.orderId(), cause);
 
                 // 장애 상황에 대한 처리
                 throw new PgServiceUnavailableException(

@@ -1,7 +1,6 @@
 package com.loopers.domain.payment;
 
 import static org.assertj.core.api.Assertions.*;
-
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 
@@ -16,7 +15,7 @@ import com.loopers.fixtures.UserTestFixture;
 
 /**
  * PaymentEntity 단위 테스트
- *
+ * <p>
  * Level 1: 단위 테스트 (P0 우선순위)
  * - PaymentEntity의 도메인 로직 검증
  * - 상태 전이 검증
@@ -100,8 +99,8 @@ class PaymentEntityTest {
             void 결제_요청이_null이면_예외가_발생한다() {
                 // When & Then
                 assertThatThrownBy(() -> PaymentEntity.createPayment(null))
-                    .isInstanceOf(NullPointerException.class)
-                    .hasMessageContaining("결제 생성 요청은 null일 수 없습니다");
+                        .isInstanceOf(NullPointerException.class)
+                        .hasMessageContaining("결제 생성 요청은 null일 수 없습니다");
             }
 
             @Test
@@ -109,22 +108,22 @@ class PaymentEntityTest {
             void 주문_ID가_null이면_예외가_발생한다() {
                 // Given
                 PaymentDomainCreateRequest request = new PaymentDomainCreateRequest(
-                    1L,
-                    null, // orderId null
-                    "TXN_123",
-                    "CREDIT",
-                    "1234-5678-9012-3456",
-                    "http://callback.url",
-                    new BigDecimal("10000"),
-                    PaymentStatus.PENDING,
-                    ZonedDateTime.now(),
-                    null
+                        1L,
+                        null, // orderId null
+                        "TXN_123",
+                        "CREDIT",
+                        "1234-5678-9012-3456",
+                        "http://callback.url",
+                        new BigDecimal("10000"),
+                        PaymentStatus.PENDING,
+                        ZonedDateTime.now(),
+                        null
                 );
 
                 // When & Then
                 assertThatThrownBy(() -> PaymentEntity.createPayment(request))
-                    .isInstanceOf(NullPointerException.class)
-                    .hasMessageContaining("주문 ID는 필수입니다");
+                        .isInstanceOf(NullPointerException.class)
+                        .hasMessageContaining("주문 ID는 필수입니다");
             }
 
             @Test
@@ -137,8 +136,8 @@ class PaymentEntityTest {
 
                 // When & Then
                 assertThatThrownBy(() -> PaymentEntity.createPayment(request))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("결제 금액은 0보다 커야 합니다");
+                        .isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("결제 금액은 0보다 커야 합니다");
             }
 
             @Test
@@ -151,8 +150,8 @@ class PaymentEntityTest {
 
                 // When & Then
                 assertThatThrownBy(() -> PaymentEntity.createPayment(request))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("결제 금액은 0보다 커야 합니다");
+                        .isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("결제 금액은 0보다 커야 합니다");
             }
         }
     }
@@ -189,8 +188,8 @@ class PaymentEntityTest {
 
                 // When & Then
                 assertThatThrownBy(() -> payment.complete())
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("PENDING 상태의 결제만 완료 처리할 수 있습니다");
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessageContaining("PENDING 상태의 결제만 완료 처리할 수 있습니다");
             }
         }
 
@@ -221,8 +220,8 @@ class PaymentEntityTest {
 
                 // When & Then
                 assertThatThrownBy(() -> payment.fail("실패 사유"))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("PENDING 상태의 결제만 실패 처리할 수 있습니다");
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessageContaining("PENDING 상태의 결제만 실패 처리할 수 있습니다");
             }
         }
 
@@ -252,8 +251,8 @@ class PaymentEntityTest {
 
                 // When & Then
                 assertThatThrownBy(() -> payment.timeout())
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("PENDING 상태의 결제만 타임아웃 처리할 수 있습니다");
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessageContaining("PENDING 상태의 결제만 타임아웃 처리할 수 있습니다");
             }
         }
 
@@ -282,8 +281,8 @@ class PaymentEntityTest {
 
                 // When & Then
                 assertThatThrownBy(() -> payment.cancel())
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("완료된 결제만 취소할 수 있습니다");
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessageContaining("완료된 결제만 취소할 수 있습니다");
             }
         }
 
@@ -325,8 +324,8 @@ class PaymentEntityTest {
 
                 // When & Then
                 assertThatThrownBy(() -> payment.refund())
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("완료 또는 취소된 결제만 환불할 수 있습니다");
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessageContaining("완료 또는 취소된 결제만 환불할 수 있습니다");
             }
         }
     }
@@ -354,8 +353,8 @@ class PaymentEntityTest {
         void null_트랜잭션_키도_업데이트_가능하다() {
             // Given
             PaymentEntity payment = PaymentTestFixture.builder()
-                .transactionKey("TXN_OLD")
-                .build();
+                    .transactionKey("TXN_OLD")
+                    .build();
 
             // When
             payment.updateTransactionKey(null);
@@ -374,7 +373,7 @@ class PaymentEntityTest {
         void 유효한_상태에서는_예외가_발생하지_않는다() {
             // Given & When & Then
             assertThatCode(() -> PaymentTestFixture.createPendingPayment())
-                .doesNotThrowAnyException();
+                    .doesNotThrowAnyException();
         }
 
         // Note: guard()는 @PrePersist/@PreUpdate에서 호출되므로
@@ -390,10 +389,10 @@ class PaymentEntityTest {
         void Builder로_PENDING_결제를_생성한다() {
             // Given & When
             PaymentEntity payment = PaymentTestFixture.builder()
-                .pending()
-                .amount("30000")
-                .orderId(123L)
-                .build();
+                    .pending()
+                    .amount("30000")
+                    .orderId(123L)
+                    .build();
 
             // Then
             assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
@@ -407,9 +406,9 @@ class PaymentEntityTest {
         void Builder로_COMPLETED_결제를_생성한다() {
             // Given & When
             PaymentEntity payment = PaymentTestFixture.builder()
-                .completed()
-                .largeAmount()
-                .build();
+                    .completed()
+                    .largeAmount()
+                    .build();
 
             // Then
             assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
@@ -424,9 +423,9 @@ class PaymentEntityTest {
 
             // When
             PaymentEntity payment = PaymentTestFixture.builder()
-                .failed(failureReason)
-                .smallAmount()
-                .build();
+                    .failed(failureReason)
+                    .smallAmount()
+                    .build();
 
             // Then
             assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);

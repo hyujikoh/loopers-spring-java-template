@@ -45,6 +45,7 @@ import feign.RequestTemplate;
  * 3. Circuit Breaker 상태 전환 (CLOSED → OPEN → HALF_OPEN → CLOSED)
  * 4. OPEN 상태에서 호출 차단
  * 5. Fallback 로직 실
+ *
  * @author hyunjikoh
  * @since 2025. 12. 05.
  */
@@ -259,7 +260,7 @@ class PaymentCircuitIntegrationTest {
             // DB에 FAILED 상태로 저장됨
             PaymentEntity savedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
             assertThat(savedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
-            assertThat(savedPayment.getFailureReason()).contains("결제 시스템이 일시적으로 사용 불가능합니다");
+            assertThat(savedPayment.getFailureReason()).contains("결제 시스템 응답 지연으로 처리되지 않았습니다.");
         }
 
         @Test
@@ -650,7 +651,8 @@ class PaymentCircuitIntegrationTest {
     }
 
     private OrderEntity createAndSaveOrder(Long userId) {
-        OrderDomainCreateRequest request = new OrderDomainCreateRequest(userId, new BigDecimal("50000.00"), BigDecimal.ZERO, new BigDecimal("50000.00"));
+        String orderNumber = UUID.randomUUID().toString().substring(0, 8);
+        OrderDomainCreateRequest request = new OrderDomainCreateRequest(userId, orderNumber, new BigDecimal("50000.00"), BigDecimal.ZERO, new BigDecimal("50000.00"));
         OrderEntity order = OrderEntity.createOrder(request);
         return orderRepository.save(order);
     }

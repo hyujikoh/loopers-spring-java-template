@@ -51,6 +51,9 @@ public class OrderV1Dtos {
             @Schema(description = "주문 ID", example = "1")
             Long orderId,
 
+            @Schema(description = "주문 번호", example = "1733380825123456789")
+            String orderNumber,
+
             @Schema(description = "주문 상태", example = "PENDING")
             OrderStatus status,
 
@@ -72,6 +75,7 @@ public class OrderV1Dtos {
         public static OrderCreateResponse from(OrderInfo orderInfo) {
             return new OrderCreateResponse(
                     orderInfo.id(),
+                    orderInfo.orderNumber(),
                     orderInfo.status(),
                     orderInfo.originalTotalAmount(),
                     orderInfo.discountAmount(),
@@ -84,6 +88,7 @@ public class OrderV1Dtos {
         public static OrderCreateResponse from(OrderInfo orderInfo, com.loopers.application.payment.PaymentInfo paymentInfo) {
             return new OrderCreateResponse(
                     orderInfo.id(),
+                    orderInfo.orderNumber(),
                     orderInfo.status(),
                     orderInfo.originalTotalAmount(),
                     orderInfo.discountAmount(),
@@ -115,6 +120,9 @@ public class OrderV1Dtos {
             @Schema(description = "사용자 ID", example = "1")
             Long userId,
 
+            @Schema(description = "주문 번호", example = "1733380825123456789")
+            String orderNumber,
+
             @Schema(description = "주문 상태", example = "PENDING")
             OrderStatus status,
 
@@ -140,6 +148,7 @@ public class OrderV1Dtos {
             return new OrderDetailResponse(
                     orderInfo.id(),
                     orderInfo.userId(),
+                    orderInfo.orderNumber(),
                     orderInfo.status(),
                     orderInfo.originalTotalAmount(),
                     orderInfo.discountAmount(),
@@ -190,6 +199,9 @@ public class OrderV1Dtos {
             @Schema(description = "주문 ID", example = "1")
             Long orderId,
 
+            @Schema(description = "주문 번호", example = "1733380825123456789")
+            String orderNumber,
+
             @Schema(description = "주문 상태", example = "PENDING")
             OrderStatus status,
 
@@ -208,6 +220,7 @@ public class OrderV1Dtos {
         public static OrderListResponse from(OrderInfo orderInfo) {
             return new OrderListResponse(
                     orderInfo.id(),
+                    orderInfo.orderNumber(),
                     orderInfo.status(),
                     orderInfo.originalTotalAmount(),
                     orderInfo.discountAmount(),

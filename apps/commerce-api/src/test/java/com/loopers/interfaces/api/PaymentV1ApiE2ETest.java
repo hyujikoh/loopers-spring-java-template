@@ -1,8 +1,7 @@
 package com.loopers.interfaces.api;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.awaitility.Awaitility.*;
-
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
@@ -16,8 +15,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
 import com.loopers.application.order.OrderFacade;
-import com.loopers.application.payment.PaymentFacade;
-import com.loopers.application.point.PointFacade;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserRegisterCommand;
 import com.loopers.domain.brand.BrandEntity;
@@ -40,13 +37,13 @@ import com.loopers.utils.RedisCleanUp;
 
 /**
  * 카드 결제 E2E 테스트
- * 
+ * <p>
  * 검증 항목:
  * 1. 실제 PG 모듈(pg-simulator)과 통신
  * 2. 결제 요청 → PENDING 상태 저장
  * 3. PG 콜백 수신 → SUCCESS/FAILED 상태 업데이트
  * 4. 주문 상태 연동 (결제 성공 시 주문 CONFIRMED)
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 12. 05.
  */
@@ -69,11 +66,6 @@ class PaymentV1ApiE2ETest {
     @Autowired
     private OrderFacade orderFacade;
 
-    @Autowired
-    private PaymentFacade paymentFacade;
-
-    @Autowired
-    private PointFacade pointFacade;
 
     @Autowired
     private ProductService productService;
@@ -133,13 +125,17 @@ class PaymentV1ApiE2ETest {
 
             OrderV1Dtos.CardOrderCreateRequest request = new OrderV1Dtos.CardOrderCreateRequest(
                     List.of(new OrderV1Dtos.OrderItemRequest(testProductId, 1, null)),
-                    "CREDIT",
-                    "1234-5678-9012-3456"
+                    new OrderV1Dtos.CardPaymentInfo(
+                            "CREDIT",
+                            "1234-5678-9012-3456",
+                            "http://localhost:8080/api/v1/payments/callback"
+                    )
             );
 
             // When: 카드 결제 주문 생성
             ParameterizedTypeReference<ApiResponse<OrderV1Dtos.OrderCreateResponse>> responseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<OrderV1Dtos.OrderCreateResponse>> response =
                     testRestTemplate.exchange(
                             Uris.Order.CREATE_CARD,
@@ -154,8 +150,8 @@ class PaymentV1ApiE2ETest {
             assertThat(response.getBody().data().status()).isEqualTo(OrderStatus.PENDING);
 
             // Then: 결제 정보 확인 (PENDING 상태)
-            OrderV1Dtos.OrderCreateResponse.PaymentResponse paymentResponse = 
-                    response.getBody().data().payment();
+            OrderV1Dtos.PaymentResponseInfo paymentResponse =
+                    response.getBody().data().paymentInfo();
             assertThat(paymentResponse).isNotNull();
             assertThat(paymentResponse.status()).isEqualTo(PaymentStatus.PENDING);
             assertThat(paymentResponse.transactionKey()).isNotNull();
@@ -177,12 +173,16 @@ class PaymentV1ApiE2ETest {
 
             OrderV1Dtos.CardOrderCreateRequest orderRequest = new OrderV1Dtos.CardOrderCreateRequest(
                     List.of(new OrderV1Dtos.OrderItemRequest(testProductId, 1, null)),
-                    "CREDIT",
-                    "1234-5678-9012-3456"
+                    new OrderV1Dtos.CardPaymentInfo(
+                            "CREDIT",
+                            "1234-5678-9012-3456",
+                            "http://localhost:8080/api/v1/payments/callback"
+                    )
             );
 
             ParameterizedTypeReference<ApiResponse<OrderV1Dtos.OrderCreateResponse>> orderResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<OrderV1Dtos.OrderCreateResponse>> orderResponse =
                     testRestTemplate.exchange(
                             Uris.Order.CREATE_CARD,
@@ -192,18 +192,22 @@ class PaymentV1ApiE2ETest {
                     );
 
             Long orderId = Objects.requireNonNull(orderResponse.getBody()).data().orderId();
-            String transactionKey = orderResponse.getBody().data().payment().transactionKey();
+            String transactionKey = orderResponse.getBody().data().paymentInfo().transactionKey();
 
             // When: PG 콜백 수신 (SUCCESS)
             PaymentV1Dtos.PgCallbackRequest callbackRequest = new PaymentV1Dtos.PgCallbackRequest(
                     transactionKey,
                     orderId.toString(),
+                    "CREDIT",
+                    "1234-5678-9012-3456",
+                    50000L,
                     "SUCCESS",
                     "정상 승인되었습니다."
             );
 
             ParameterizedTypeReference<ApiResponse<Void>> callbackResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<Void>> callbackResponse = testRestTemplate.exchange(
                     Uris.Payment.CALLBACK,
                     HttpMethod.POST,
@@ -214,13 +218,13 @@ class PaymentV1ApiE2ETest {
             // Then: 콜백 처리 성공
             assertThat(callbackResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-            // Then: 결제 상태가 SUCCESS로 변경됨 (비동기 처리 대기)
+            // Then: 결제 상태가 COMPLETED로 변경됨 (비동기 처리 대기)
             await()
                     .atMost(Duration.ofSeconds(5))
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
                         PaymentEntity payment = paymentRepository.findByOrderId(orderId).orElseThrow();
-                        assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.SUCCESS);
+                        assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
                     });
 
             // Then: 주문 상태가 CONFIRMED로 변경됨
@@ -243,12 +247,16 @@ class PaymentV1ApiE2ETest {
 
             OrderV1Dtos.CardOrderCreateRequest orderRequest = new OrderV1Dtos.CardOrderCreateRequest(
                     List.of(new OrderV1Dtos.OrderItemRequest(testProductId, 1, null)),
-                    "CREDIT",
-                    "9999-9999-9999-9999" // 실패할 카드번호
+                    new OrderV1Dtos.CardPaymentInfo(
+                            "CREDIT",
+                            "9999-9999-9999-9999",
+                            "http://localhost:8080/api/v1/payments/callback"
+                    )
             );
 
             ParameterizedTypeReference<ApiResponse<OrderV1Dtos.OrderCreateResponse>> orderResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<OrderV1Dtos.OrderCreateResponse>> orderResponse =
                     testRestTemplate.exchange(
                             Uris.Order.CREATE_CARD,
@@ -258,18 +266,22 @@ class PaymentV1ApiE2ETest {
                     );
 
             Long orderId = Objects.requireNonNull(orderResponse.getBody()).data().orderId();
-            String transactionKey = orderResponse.getBody().data().payment().transactionKey();
+            String transactionKey = orderResponse.getBody().data().paymentInfo().transactionKey();
 
             // When: PG 콜백 수신 (FAILED)
             PaymentV1Dtos.PgCallbackRequest callbackRequest = new PaymentV1Dtos.PgCallbackRequest(
                     transactionKey,
                     orderId.toString(),
+                    "CREDIT",
+                    "9999-9999-9999-9999",
+                    50000L,
                     "FAILED",
                     "잘못된 카드입니다. 다른 카드를 선택해주세요."
             );
 
             ParameterizedTypeReference<ApiResponse<Void>> callbackResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<Void>> callbackResponse = testRestTemplate.exchange(
                     Uris.Payment.CALLBACK,
                     HttpMethod.POST,
@@ -310,12 +322,16 @@ class PaymentV1ApiE2ETest {
 
             OrderV1Dtos.CardOrderCreateRequest orderRequest = new OrderV1Dtos.CardOrderCreateRequest(
                     List.of(new OrderV1Dtos.OrderItemRequest(testProductId, 1, null)),
-                    "CREDIT",
-                    "1234-5678-9012-3456"
+                    new OrderV1Dtos.CardPaymentInfo(
+                            "CREDIT",
+                            "1234-5678-9012-3456",
+                            "http://localhost:8080/api/v1/payments/callback"
+                    )
             );
 
             ParameterizedTypeReference<ApiResponse<OrderV1Dtos.OrderCreateResponse>> orderResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<OrderV1Dtos.OrderCreateResponse>> orderResponse =
                     testRestTemplate.exchange(
                             Uris.Order.CREATE_CARD,
@@ -325,17 +341,21 @@ class PaymentV1ApiE2ETest {
                     );
 
             Long orderId = Objects.requireNonNull(orderResponse.getBody()).data().orderId();
-            String transactionKey = orderResponse.getBody().data().payment().transactionKey();
+            String transactionKey = orderResponse.getBody().data().paymentInfo().transactionKey();
 
             PaymentV1Dtos.PgCallbackRequest callbackRequest = new PaymentV1Dtos.PgCallbackRequest(
                     transactionKey,
                     orderId.toString(),
+                    "CREDIT",
+                    "1234-5678-9012-3456",
+                    50000L,
                     "SUCCESS",
                     "정상 승인되었습니다."
             );
 
             ParameterizedTypeReference<ApiResponse<Void>> callbackResponseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
 
             // When: 첫 번째 콜백
             ResponseEntity<ApiResponse<Void>> firstCallback = testRestTemplate.exchange(
@@ -357,13 +377,13 @@ class PaymentV1ApiE2ETest {
             assertThat(firstCallback.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(secondCallback.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-            // Then: 결제 상태는 SUCCESS 유지 (중복 처리 방지)
+            // Then: 결제 상태는 COMPLETED 유지 (중복 처리 방지)
             await()
                     .atMost(Duration.ofSeconds(5))
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
                         PaymentEntity payment = paymentRepository.findByOrderId(orderId).orElseThrow();
-                        assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.SUCCESS);
+                        assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
                     });
         }
 
@@ -378,13 +398,17 @@ class PaymentV1ApiE2ETest {
             PaymentV1Dtos.PgCallbackRequest callbackRequest = new PaymentV1Dtos.PgCallbackRequest(
                     "invalid-transaction-key",
                     "999999",
+                    "CREDIT",
+                    "1234-5678-9012-3456",
+                    50000L,
                     "SUCCESS",
                     "정상 승인되었습니다."
             );
 
             // When
             ParameterizedTypeReference<ApiResponse<Void>> responseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<Void>> response = testRestTemplate.exchange(
                     Uris.Payment.CALLBACK,
                     HttpMethod.POST,
@@ -411,13 +435,17 @@ class PaymentV1ApiE2ETest {
 
             OrderV1Dtos.CardOrderCreateRequest request = new OrderV1Dtos.CardOrderCreateRequest(
                     List.of(new OrderV1Dtos.OrderItemRequest(testProductId, 1, null)),
-                    "TIMEOUT", // PG-Simulator에서 타임아웃을 유발하는 특수 카드 타입
-                    "0000-0000-0000-0000"
+                    new OrderV1Dtos.CardPaymentInfo(
+                            "SAMSUNG", //
+                            "0000-0000-0000-0000",
+                            "http://localhost:8080/api/v1/payments/callback"
+                    )
             );
 
             // When
             ParameterizedTypeReference<ApiResponse<OrderV1Dtos.OrderCreateResponse>> responseType =
-                    new ParameterizedTypeReference<>() {};
+                    new ParameterizedTypeReference<>() {
+                    };
             ResponseEntity<ApiResponse<OrderV1Dtos.OrderCreateResponse>> response =
                     testRestTemplate.exchange(
                             Uris.Order.CREATE_CARD,

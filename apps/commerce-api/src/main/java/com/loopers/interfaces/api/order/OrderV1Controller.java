@@ -73,6 +73,7 @@ public class OrderV1Controller implements OrderV1ApiSpec {
         Page<OrderV1Dtos.OrderListResponse> responsePage = orders.map(summary ->
                 new OrderV1Dtos.OrderListResponse(
                         summary.id(),
+                        summary.orderNumber(),
                         summary.status(),
                         summary.originalTotalAmount(),
                         summary.discountAmount(),

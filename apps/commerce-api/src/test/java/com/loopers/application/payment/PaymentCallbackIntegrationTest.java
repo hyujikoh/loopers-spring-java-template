@@ -1,27 +1,28 @@
 package com.loopers.application.payment;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.awaitility.Awaitility.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.*;
-
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import com.loopers.application.order.OrderFacade;
 import com.loopers.domain.order.OrderEntity;
 import com.loopers.domain.order.OrderRepository;
 import com.loopers.domain.order.OrderStatus;
 import com.loopers.domain.order.dto.OrderDomainCreateRequest;
 import com.loopers.domain.payment.PaymentEntity;
 import com.loopers.domain.payment.PaymentRepository;
-import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.payment.PaymentStatus;
 import com.loopers.domain.payment.PgGateway;
 import com.loopers.domain.user.UserEntity;
@@ -31,6 +32,7 @@ import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
 import com.loopers.interfaces.api.payment.PaymentV1Dtos;
 import com.loopers.utils.DatabaseCleanUp;
 import com.loopers.utils.RedisCleanUp;
+
 /*
  * @author hyunjikoh
  * @since 2025. 12. 05.
@@ -97,12 +99,12 @@ class PaymentCallbackIntegrationTest {
 
             // Then: 비동기 이벤트 처리 대기 (주문 확정)
             await()
-                .atMost(5, TimeUnit.SECONDS)
-                .pollInterval(Duration.ofMillis(100))
-                .untilAsserted(() -> {
-                    OrderEntity updatedOrder = orderRepository.findByIdAndUserId(order.getId(), user.getId()).orElseThrow();
-                    assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
-                });
+                    .atMost(5, TimeUnit.SECONDS)
+                    .pollInterval(Duration.ofMillis(100))
+                    .untilAsserted(() -> {
+                        OrderEntity updatedOrder = orderRepository.findByIdAndUserId(order.getId(), user.getId()).orElseThrow();
+                        assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
+                    });
         }
 
         @Test
@@ -128,12 +130,12 @@ class PaymentCallbackIntegrationTest {
 
             // Then: 주문 확정 확인 (이벤트 처리 결과)
             await()
-                .atMost(5, TimeUnit.SECONDS)
-                .pollInterval(Duration.ofMillis(100))
-                .untilAsserted(() -> {
-                    OrderEntity updatedOrder = orderRepository.findByIdAndUserId(order.getId(), user.getId()).orElseThrow();
-                    assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
-                });
+                    .atMost(5, TimeUnit.SECONDS)
+                    .pollInterval(Duration.ofMillis(100))
+                    .untilAsserted(() -> {
+                        OrderEntity updatedOrder = orderRepository.findByIdAndUserId(order.getId(), user.getId()).orElseThrow();
+                        assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
+                    });
         }
     }
 
@@ -166,12 +168,12 @@ class PaymentCallbackIntegrationTest {
 
             // Then: 주문 취소 확인
             await()
-                .atMost(5, TimeUnit.SECONDS)
-                .pollInterval(Duration.ofMillis(100))
-                .untilAsserted(() -> {
-                    OrderEntity updatedOrder = orderRepository.findByIdAndUserId(order.getId(), user.getId()).orElseThrow();
-                    assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
-                });
+                    .atMost(5, TimeUnit.SECONDS)
+                    .pollInterval(Duration.ofMillis(100))
+                    .untilAsserted(() -> {
+                        OrderEntity updatedOrder = orderRepository.findByIdAndUserId(order.getId(), user.getId()).orElseThrow();
+                        assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+                    });
         }
 
         @Test
@@ -218,12 +220,12 @@ class PaymentCallbackIntegrationTest {
 
             // Then: 비동기 이벤트 처리 대기
             await()
-                .atMost(5, TimeUnit.SECONDS)
-                .pollInterval(Duration.ofMillis(100))
-                .untilAsserted(() -> {
-                    OrderEntity updatedOrder = orderRepository.findByIdAndUserId(order.getId(), user.getId()).orElseThrow();
-                    assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
-                });
+                    .atMost(5, TimeUnit.SECONDS)
+                    .pollInterval(Duration.ofMillis(100))
+                    .untilAsserted(() -> {
+                        OrderEntity updatedOrder = orderRepository.findByIdAndUserId(order.getId(), user.getId()).orElseThrow();
+                        assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+                    });
         }
     }
 
@@ -250,12 +252,12 @@ class PaymentCallbackIntegrationTest {
 
             // 상태 확인
             await()
-                .atMost(5, TimeUnit.SECONDS)
-                .pollInterval(Duration.ofMillis(100))
-                .untilAsserted(() -> {
-                    PaymentEntity completedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
-                    assertThat(completedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
-                });
+                    .atMost(5, TimeUnit.SECONDS)
+                    .pollInterval(Duration.ofMillis(100))
+                    .untilAsserted(() -> {
+                        PaymentEntity completedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+                        assertThat(completedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
+                    });
 
             PaymentEntity completedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
             var originalCompletedAt = completedPayment.getCompletedAt();
@@ -289,12 +291,12 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(firstCallback);
 
             await()
-                .atMost(5, TimeUnit.SECONDS)
-                .pollInterval(Duration.ofMillis(100))
-                .untilAsserted(() -> {
-                    PaymentEntity failedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
-                    assertThat(failedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
-                });
+                    .atMost(5, TimeUnit.SECONDS)
+                    .pollInterval(Duration.ofMillis(100))
+                    .untilAsserted(() -> {
+                        PaymentEntity failedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+                        assertThat(failedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
+                    });
 
             PaymentEntity failedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
             String originalFailureReason = failedPayment.getFailureReason();
@@ -327,12 +329,12 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(successCallback);
 
             await()
-                .atMost(5, TimeUnit.SECONDS)
-                .pollInterval(Duration.ofMillis(100))
-                .untilAsserted(() -> {
-                    PaymentEntity completedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
-                    assertThat(completedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
-                });
+                    .atMost(5, TimeUnit.SECONDS)
+                    .pollInterval(Duration.ofMillis(100))
+                    .untilAsserted(() -> {
+                        PaymentEntity completedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+                        assertThat(completedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
+                    });
 
             // When: FAILED 콜백 시도
             PaymentV1Dtos.PgCallbackRequest failedCallback = createFailedCallback(payment, order, "뒤늦은 실패");
@@ -358,13 +360,13 @@ class PaymentCallbackIntegrationTest {
             PaymentEntity payment = createAndSavePendingPayment(user, order);
 
             PaymentV1Dtos.PgCallbackRequest pendingCallback = new PaymentV1Dtos.PgCallbackRequest(
-                payment.getTransactionKey(),
-                order.getId().toString(),
-                "CREDIT",
-                "1234-****-****-3456",
-                50000L,
-                "PENDING",
-                null
+                    payment.getTransactionKey(),
+                    order.getId().toString(),
+                    "CREDIT",
+                    "1234-****-****-3456",
+                    50000L,
+                    "PENDING",
+                    null
             );
 
             // PG Gateway Mock: PG 조회 시 PENDING 응답
@@ -388,11 +390,14 @@ class PaymentCallbackIntegrationTest {
     }
 
     private OrderEntity createAndSaveOrder(Long userId) {
+        String orderNumber = UUID.randomUUID().toString().substring(0, 8);
+
         OrderDomainCreateRequest request = new OrderDomainCreateRequest(
-            userId,
-            new BigDecimal("50000.00"),
-            BigDecimal.ZERO,
-            new BigDecimal("50000.00")
+                userId,
+                orderNumber,
+                new BigDecimal("50000.00"),
+                BigDecimal.ZERO,
+                new BigDecimal("50000.00")
         );
         OrderEntity order = OrderEntity.createOrder(request);
         return orderRepository.save(order);
@@ -400,13 +405,13 @@ class PaymentCallbackIntegrationTest {
 
     private PaymentEntity createAndSavePendingPayment(UserEntity user, OrderEntity order) {
         PaymentCommand command = PaymentCommand.builder()
-            .username(user.getUsername())
-            .orderId(order.getId())
-            .cardType("CREDIT")
-            .cardNo("1234-5678-9012-3456")
-            .amount(order.getFinalTotalAmount())
-            .callbackUrl("http://localhost:8080/api/v1/payments/callback")
-            .build();
+                .username(user.getUsername())
+                .orderId(order.getId())
+                .cardType("CREDIT")
+                .cardNo("1234-5678-9012-3456")
+                .amount(order.getFinalTotalAmount())
+                .callbackUrl("http://localhost:8080/api/v1/payments/callback")
+                .build();
 
         PaymentEntity payment = PaymentEntity.createPending(user, command);
         payment.updateTransactionKey("TXN_TEST_" + System.currentTimeMillis());
@@ -418,13 +423,13 @@ class PaymentCallbackIntegrationTest {
      */
     private PaymentV1Dtos.PgCallbackRequest createSuccessCallback(PaymentEntity payment, OrderEntity order) {
         return new PaymentV1Dtos.PgCallbackRequest(
-            payment.getTransactionKey(),
-            order.getId().toString(),
-            "CREDIT",
-            "1234-****-****-3456",
-            order.getFinalTotalAmount().longValue(),
-            "SUCCESS",
-            null
+                payment.getTransactionKey(),
+                order.getId().toString(),
+                "CREDIT",
+                "1234-****-****-3456",
+                order.getFinalTotalAmount().longValue(),
+                "SUCCESS",
+                null
         );
     }
 
@@ -433,13 +438,13 @@ class PaymentCallbackIntegrationTest {
      */
     private PaymentV1Dtos.PgCallbackRequest createFailedCallback(PaymentEntity payment, OrderEntity order, String reason) {
         return new PaymentV1Dtos.PgCallbackRequest(
-            payment.getTransactionKey(),
-            order.getId().toString(),
-            "CREDIT",
-            "1234-****-****-3456",
-            order.getFinalTotalAmount().longValue(),
-            "FAILED",
-            reason
+                payment.getTransactionKey(),
+                order.getId().toString(),
+                "CREDIT",
+                "1234-****-****-3456",
+                order.getFinalTotalAmount().longValue(),
+                "FAILED",
+                reason
         );
     }
 
@@ -448,16 +453,16 @@ class PaymentCallbackIntegrationTest {
      */
     private PgPaymentResponse createPgSuccessResponse(PaymentEntity payment, OrderEntity order) {
         return new PgPaymentResponse(
-            new PgPaymentResponse.Meta("SUCCESS", null, null),
-            new PgPaymentResponse.Data(
-                payment.getTransactionKey(),
-                order.getId().toString(),
-                "CREDIT",
-                "1234-****-****-3456",
-                order.getFinalTotalAmount(),
-                "SUCCESS",
-                "정상 승인되었습니다."
-            )
+                new PgPaymentResponse.Meta("SUCCESS", null, null),
+                new PgPaymentResponse.Data(
+                        payment.getTransactionKey(),
+                        order.getId().toString(),
+                        "CREDIT",
+                        "1234-****-****-3456",
+                        order.getFinalTotalAmount(),
+                        "SUCCESS",
+                        "정상 승인되었습니다."
+                )
         );
     }
 
@@ -466,16 +471,16 @@ class PaymentCallbackIntegrationTest {
      */
     private PgPaymentResponse createPgFailedResponse(PaymentEntity payment, OrderEntity order, String reason) {
         return new PgPaymentResponse(
-            new PgPaymentResponse.Meta("SUCCESS", null, null),
-            new PgPaymentResponse.Data(
-                payment.getTransactionKey(),
-                order.getId().toString(),
-                "CREDIT",
-                "1234-****-****-3456",
-                order.getFinalTotalAmount(),
-                "FAILED",
-                reason
-            )
+                new PgPaymentResponse.Meta("SUCCESS", null, null),
+                new PgPaymentResponse.Data(
+                        payment.getTransactionKey(),
+                        order.getId().toString(),
+                        "CREDIT",
+                        "1234-****-****-3456",
+                        order.getFinalTotalAmount(),
+                        "FAILED",
+                        reason
+                )
         );
     }
 
@@ -484,16 +489,16 @@ class PaymentCallbackIntegrationTest {
      */
     private PgPaymentResponse createPgPendingResponse(PaymentEntity payment, OrderEntity order) {
         return new PgPaymentResponse(
-            new PgPaymentResponse.Meta("SUCCESS", null, null),
-            new PgPaymentResponse.Data(
-                payment.getTransactionKey(),
-                order.getId().toString(),
-                "CREDIT",
-                "1234-****-****-3456",
-                order.getFinalTotalAmount(),
-                "PENDING",
-                null
-            )
+                new PgPaymentResponse.Meta("SUCCESS", null, null),
+                new PgPaymentResponse.Data(
+                        payment.getTransactionKey(),
+                        order.getId().toString(),
+                        "CREDIT",
+                        "1234-****-****-3456",
+                        order.getFinalTotalAmount(),
+                        "PENDING",
+                        null
+                )
         );
     }
 }
