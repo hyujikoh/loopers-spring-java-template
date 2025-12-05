@@ -2,6 +2,8 @@ package com.loopers.application.payment;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -21,10 +23,11 @@ import com.loopers.domain.payment.PaymentEntity;
 import com.loopers.domain.payment.PaymentRepository;
 import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.payment.PaymentStatus;
+import com.loopers.domain.payment.PgGateway;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserRepository;
 import com.loopers.fixtures.UserTestFixture;
-import com.loopers.infrastructure.payment.client.PgClient;
+import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
 import com.loopers.interfaces.api.payment.PaymentV1Dtos;
 import com.loopers.utils.DatabaseCleanUp;
 import com.loopers.utils.RedisCleanUp;
@@ -85,7 +88,7 @@ class PaymentCallbackIntegrationTest {
     private OrderFacade orderFacade;
 
     @MockitoBean
-    private PgClient pgClient;
+    private PgGateway pgGateway;
 
     @BeforeEach
     void setUp() {
@@ -112,6 +115,10 @@ class PaymentCallbackIntegrationTest {
 
             // PG-Simulator가 보내는 실제 콜백 구조
             PaymentV1Dtos.PgCallbackRequest successCallback = createSuccessCallback(payment, order);
+
+            // PG Gateway Mock: PG 조회 시 SUCCESS 응답
+            given(pgGateway.getPayment(eq(user.getUsername()), eq(payment.getTransactionKey())))
+                    .willReturn(createPgSuccessResponse(payment, order));
 
             // When: SUCCESS 콜백 처리
             paymentFacade.handlePaymentCallback(successCallback);
@@ -140,6 +147,10 @@ class PaymentCallbackIntegrationTest {
             PaymentEntity payment = createAndSavePendingPayment(user, order);
 
             PaymentV1Dtos.PgCallbackRequest successCallback = createSuccessCallback(payment, order);
+
+            // PG Gateway Mock
+            given(pgGateway.getPayment(eq(user.getUsername()), eq(payment.getTransactionKey())))
+                    .willReturn(createPgSuccessResponse(payment, order));
 
             // When
             paymentFacade.handlePaymentCallback(successCallback);
@@ -174,6 +185,10 @@ class PaymentCallbackIntegrationTest {
             String failureReason = "잔액 부족";
             PaymentV1Dtos.PgCallbackRequest failedCallback = createFailedCallback(payment, order, failureReason);
 
+            // PG Gateway Mock: PG 조회 시 FAILED 응답
+            given(pgGateway.getPayment(eq(user.getUsername()), eq(payment.getTransactionKey())))
+                    .willReturn(createPgFailedResponse(payment, order, failureReason));
+
             // When
             paymentFacade.handlePaymentCallback(failedCallback);
 
@@ -203,6 +218,10 @@ class PaymentCallbackIntegrationTest {
             String failureReason = "카드 한도 초과";
             PaymentV1Dtos.PgCallbackRequest failedCallback = createFailedCallback(payment, order, failureReason);
 
+            // PG Gateway Mock
+            given(pgGateway.getPayment(eq(user.getUsername()), eq(payment.getTransactionKey())))
+                    .willReturn(createPgFailedResponse(payment, order, failureReason));
+
             // When
             paymentFacade.handlePaymentCallback(failedCallback);
 
@@ -220,7 +239,12 @@ class PaymentCallbackIntegrationTest {
             OrderEntity order = createAndSaveOrder(user.getId());
             PaymentEntity payment = createAndSavePendingPayment(user, order);
 
-            PaymentV1Dtos.PgCallbackRequest failedCallback = createFailedCallback(payment, order, "유효하지 않은 카드");
+            String failureReason = "유효하지 않은 카드";
+            PaymentV1Dtos.PgCallbackRequest failedCallback = createFailedCallback(payment, order, failureReason);
+
+            // PG Gateway Mock
+            given(pgGateway.getPayment(eq(user.getUsername()), eq(payment.getTransactionKey())))
+                    .willReturn(createPgFailedResponse(payment, order, failureReason));
 
             // When
             paymentFacade.handlePaymentCallback(failedCallback);
@@ -250,6 +274,11 @@ class PaymentCallbackIntegrationTest {
 
             // 첫 번째 콜백으로 COMPLETED 상태로 만듦
             PaymentV1Dtos.PgCallbackRequest firstCallback = createSuccessCallback(payment, order);
+
+            // PG Gateway Mock
+            given(pgGateway.getPayment(eq(user.getUsername()), eq(payment.getTransactionKey())))
+                    .willReturn(createPgSuccessResponse(payment, order));
+
             paymentFacade.handlePaymentCallback(firstCallback);
 
             // 상태 확인
@@ -285,6 +314,11 @@ class PaymentCallbackIntegrationTest {
             // 첫 번째 실패 콜백
             String firstReason = "첫 번째 실패";
             PaymentV1Dtos.PgCallbackRequest firstCallback = createFailedCallback(payment, order, firstReason);
+
+            // PG Gateway Mock
+            given(pgGateway.getPayment(eq(user.getUsername()), eq(payment.getTransactionKey())))
+                    .willReturn(createPgFailedResponse(payment, order, firstReason));
+
             paymentFacade.handlePaymentCallback(firstCallback);
 
             await()
@@ -318,6 +352,11 @@ class PaymentCallbackIntegrationTest {
             PaymentEntity payment = createAndSavePendingPayment(user, order);
 
             PaymentV1Dtos.PgCallbackRequest successCallback = createSuccessCallback(payment, order);
+
+            // PG Gateway Mock
+            given(pgGateway.getPayment(eq(user.getUsername()), eq(payment.getTransactionKey())))
+                    .willReturn(createPgSuccessResponse(payment, order));
+
             paymentFacade.handlePaymentCallback(successCallback);
 
             await()
@@ -461,6 +500,42 @@ class PaymentCallbackIntegrationTest {
             order.getFinalTotalAmount().longValue(),
             "FAILED",
             reason
+        );
+    }
+
+    /**
+     * PG SUCCESS 응답 생성 (Mock용)
+     */
+    private PgPaymentResponse createPgSuccessResponse(PaymentEntity payment, OrderEntity order) {
+        return new PgPaymentResponse(
+            new PgPaymentResponse.Meta("SUCCESS", null, null),
+            new PgPaymentResponse.Data(
+                payment.getTransactionKey(),
+                order.getId().toString(),
+                "CREDIT",
+                "1234-****-****-3456",
+                order.getFinalTotalAmount(),
+                "SUCCESS",
+                "정상 승인되었습니다."
+            )
+        );
+    }
+
+    /**
+     * PG FAILED 응답 생성 (Mock용)
+     */
+    private PgPaymentResponse createPgFailedResponse(PaymentEntity payment, OrderEntity order, String reason) {
+        return new PgPaymentResponse(
+            new PgPaymentResponse.Meta("SUCCESS", null, null),
+            new PgPaymentResponse.Data(
+                payment.getTransactionKey(),
+                order.getId().toString(),
+                "CREDIT",
+                "1234-****-****-3456",
+                order.getFinalTotalAmount(),
+                "FAILED",
+                reason
+            )
         );
     }
 }

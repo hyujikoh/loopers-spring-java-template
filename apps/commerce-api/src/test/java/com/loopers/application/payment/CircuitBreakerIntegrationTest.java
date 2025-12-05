@@ -644,7 +644,7 @@ class CircuitBreakerIntegrationTest {
      * 랜덤 사용자명으로 UserRegisterCommand 생성
      */
     private UserRegisterCommand createRandomUserCommand() {
-        String randomUsername = faker.name().firstName();
+        String randomUsername = faker.name().name();
         String randomEmail = randomUsername + "@example.com";
         return UserRegisterCommand.of(randomUsername, randomEmail, "1990-01-01", Gender.MALE);
     }
