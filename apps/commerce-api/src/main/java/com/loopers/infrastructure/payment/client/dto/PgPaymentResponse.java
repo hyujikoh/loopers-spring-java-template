@@ -2,27 +2,25 @@ package com.loopers.infrastructure.payment.client.dto;
 
 import java.math.BigDecimal;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 /**
  * PG API 응답 DTO
- *
+ * <p>
  * PG API 응답 구조:
  * {
- *   "meta": {
- *     "result": "SUCCESS" | "FAIL",
- *     "errorCode": "...",  // FAIL 시
- *     "message": "..."     // FAIL 시
- *   },
- *   "data": {
- *     "transactionKey": "...",
- *     "orderId": "...",
- *     "cardType": "...",
- *     "cardNo": "...",
- *     "amount": 5000,
- *     "status": "PENDING" | "SUCCESS" | "FAILED",
- *     "reason": "..."
- *   }
+ * "meta": {
+ * "result": "SUCCESS" | "FAIL",
+ * "errorCode": "...",  // FAIL 시
+ * "message": "..."     // FAIL 시
+ * },
+ * "data": {
+ * "transactionKey": "...",
+ * "orderId": "...",
+ * "cardType": "...",
+ * "cardNo": "...",
+ * "amount": 5000,
+ * "status": "PENDING" | "SUCCESS" | "FAILED",
+ * "reason": "..."
+ * }
  * }
  *
  * @author hyunjikoh

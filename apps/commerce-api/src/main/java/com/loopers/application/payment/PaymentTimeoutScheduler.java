@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 결제 타임아웃 처리 스케줄러
- *
+ * <p>
  * PENDING 상태로 오래 대기 중인 결제 건을 TIMEOUT 처리합니다.
  *
  * @author hyunjikoh
@@ -40,7 +40,7 @@ public class PaymentTimeoutScheduler {
         ZonedDateTime timeoutThreshold = ZonedDateTime.now().minusMinutes(10);
 
         List<PaymentEntity> timeoutPayments =
-            paymentService.findPendingPaymentsOlderThan(timeoutThreshold);
+                paymentService.findPendingPaymentsOlderThan(timeoutThreshold);
 
         if (timeoutPayments.isEmpty()) {
             return;
@@ -65,7 +65,7 @@ public class PaymentTimeoutScheduler {
                 ));
             } catch (Exception e) {
                 log.error("결제 타임아웃 처리 실패 - transactionKey: {}, orderId: {}",
-                         payment.getTransactionKey(), payment.getOrderId(), e);
+                        payment.getTransactionKey(), payment.getOrderId(), e);
             }
         }
 

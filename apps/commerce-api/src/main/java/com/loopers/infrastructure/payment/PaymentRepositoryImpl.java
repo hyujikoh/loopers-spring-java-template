@@ -40,8 +40,8 @@ public class PaymentRepositoryImpl implements PaymentRepository {
     @Override
     public List<PaymentEntity> findPendingPaymentsOlderThan(ZonedDateTime threshold) {
         return paymentJpaRepository.findByPaymentStatusAndRequestedAtBefore(
-            PaymentStatus.PENDING,
-            threshold
+                PaymentStatus.PENDING,
+                threshold
         );
     }
 }

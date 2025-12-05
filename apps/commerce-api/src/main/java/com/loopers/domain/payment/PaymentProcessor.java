@@ -11,13 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 결제 프로세서 (Domain Service)
- *
- * PG 결제 처리 흐름을 관리합니다:
- * 1. PENDING 상태 결제 생성
- * 2. PG 요청
- * 3. 응답 검증
- * 4. transactionKey 업데이트
+ * 결제 서비스 (Domain Service)
  *
  * @author hyunjikoh
  * @since 2025. 12. 05.
@@ -34,7 +28,7 @@ public class PaymentProcessor {
     /**
      * PG 카드 결제 처리
      *
-     * @param user 사용자 엔티티
+     * @param user    사용자 엔티티
      * @param command 결제 명령
      * @return 생성된 결제 엔티티
      */
@@ -65,11 +59,11 @@ public class PaymentProcessor {
 
     /**
      * PG에서 결제 상태 조회 (보안 강화)
-     *
+     * <p>
      * 콜백 데이터만 신뢰하지 않고, PG API에 직접 조회하여 검증
      *
      * @param transactionKey PG 거래 키
-     * @param username 사용자명
+     * @param username       사용자명
      * @return PG 실제 결제 데이터
      */
     public PgPaymentResponse verifyPaymentFromPg(String transactionKey, String username) {

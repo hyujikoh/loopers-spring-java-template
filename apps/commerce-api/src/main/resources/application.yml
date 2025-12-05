@@ -66,8 +66,13 @@ resilience4j:
   retry:
     instances:
       pgClient:
-        # 타임아웃 시 재시도 비활성화
-        max-attempts: 1
+        # 재시도 설정: meta.result = "FAIL"인 경우만 재시도
+        max-attempts: 3
+        wait-duration: 1s
+        retry-exceptions:
+          - feign.FeignException.ServiceUnavailable  # 503 에러
+          - feign.FeignException.InternalServerError # 500 에러
+        # 타임아웃은 재시도하지 않음 (RetryableException, TimeoutException 제외)
 
 ---
 spring:

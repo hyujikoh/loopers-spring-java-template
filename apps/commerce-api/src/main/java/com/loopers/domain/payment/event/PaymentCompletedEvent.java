@@ -11,4 +11,5 @@ public record PaymentCompletedEvent(
         Long orderId,
         Long userId,
         BigDecimal amount
-) {}
+) {
+}
