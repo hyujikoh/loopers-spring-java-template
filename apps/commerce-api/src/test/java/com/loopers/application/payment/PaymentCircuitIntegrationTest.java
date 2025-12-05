@@ -44,15 +44,7 @@ import feign.RequestTemplate;
  * 2. failureRateThreshold 계산 정확성
  * 3. Circuit Breaker 상태 전환 (CLOSED → OPEN → HALF_OPEN → CLOSED)
  * 4. OPEN 상태에서 호출 차단
- * 5. Fallback 로직 실행
- * <p>
- * 현재 설정 (application.yml):
- * - sliding-window-size: 10
- * - minimum-number-of-calls: 5
- * - failure-rate-threshold: 50
- * - wait-duration-in-open-state: 60s
- * - permitted-number-of-calls-in-half-open-state: 3
- *
+ * 5. Fallback 로직 실
  * @author hyunjikoh
  * @since 2025. 12. 05.
  */
