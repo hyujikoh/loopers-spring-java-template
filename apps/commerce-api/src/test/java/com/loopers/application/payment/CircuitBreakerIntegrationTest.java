@@ -39,12 +39,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import net.datafaker.Faker;
 
 /**
- * Level 3: Resilience4j Circuit Breaker 동작 검증 테스트
- *
- * 멘토링 핵심 강조 사항:
- * "서킷 브레이커 구현의 성패는 코드 작성이 아니라,
- *  의도한 대로 동작하는지를 어떻게 증명하는가에 달려있습니다."
- *
+ * Resilience4j Circuit Breaker 동작 검증 테스트
  * 검증 항목:
  * 1. minimumNumberOfCalls 로직 정확성
  * 2. failureRateThreshold 계산 정확성
@@ -111,7 +106,7 @@ class CircuitBreakerIntegrationTest {
     }
 
     @Nested
-    @DisplayName("1. minimumNumberOfCalls 검증")
+    @DisplayName("minimumNumberOfCalls 검증")
     class MinimumNumberOfCalls_검증 {
 
         @Test
@@ -182,7 +177,7 @@ class CircuitBreakerIntegrationTest {
     }
 
     @Nested
-    @DisplayName("2. failureRateThreshold 검증")
+    @DisplayName("failureRateThreshold 검증")
     class FailureRateThreshold_검증 {
 
         @Test
@@ -258,7 +253,7 @@ class CircuitBreakerIntegrationTest {
     }
 
     @Nested
-    @DisplayName("3. OPEN 상태에서 호출 차단")
+    @DisplayName("OPEN 상태에서 호출 차단")
     class OPEN_상태에서_호출_차단 {
 
         @Test
@@ -306,7 +301,274 @@ class CircuitBreakerIntegrationTest {
     }
 
     @Nested
-    @DisplayName("4. Fallback 메서드 실행 검증")
+    @DisplayName("4. HALF_OPEN 상태 전환 및 복구 테스트")
+    class HALF_OPEN_상태_전환_및_복구 {
+
+        @Test
+        @DisplayName("실패율 초과로 OPEN → 대기 시간 후 HALF_OPEN → 성공 시 CLOSED로 복구")
+        void 실패율_초과로_OPEN_상태_후_대기시간_경과하면_HALF_OPEN으로_전환되고_성공_시_CLOSED로_복구() throws InterruptedException {
+            // Given: Circuit을 OPEN 상태로 만들기 위한 Mock 설정
+            // Retry 설정: max-attempts = 3 (원본 1회 + 재시도 2회)
+            //
+            // 호출 1: 성공 (1회 PG)
+            // 호출 2: 성공 (1회 PG)
+            // 호출 3: 실패 (3회 PG - Retry)
+            // 호출 4: 실패 (3회 PG - Retry)
+            // 호출 5: 실패 (3회 PG - Retry) → OPEN
+            // 총: 1 + 1 + 3 + 3 + 3 = 11회
+            //
+            // HALF_OPEN:
+            // 호출 6: 성공 (3회 PG - Retry 포함, 첫 시도만 성공하면 됨)
+            // 호출 7: 성공 (3회 PG - Retry 포함)
+            // 호출 8: 성공 (3회 PG - Retry 포함) → CLOSED
+            // 총: 11 + 9 = 20회 (여유있게 설정)
+
+            given(pgClient.requestPayment(anyString(), any()))
+                // 1번 호출: 성공
+                .willReturn(createSuccessResponse())
+
+                // 2번 호출: 성공
+                .willReturn(createSuccessResponse())
+
+                // 3번 호출: 실패 (Retry 3회)
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+
+                // 4번 호출: 실패 (Retry 3회)
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+
+                // 5번 호출: 실패 (Retry 3회) → OPEN
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+
+                // HALF_OPEN 상태에서 3번 호출 (각 호출마다 Retry 가능성 고려)
+                // 6번 호출: 첫 시도 성공 (Retry 불필요)
+                .willReturn(createSuccessResponse())
+
+                // 7번 호출: 첫 시도 성공 (Retry 불필요)
+                .willReturn(createSuccessResponse())
+
+                // 8번 호출: 첫 시도 성공 (Retry 불필요) → CLOSED
+                .willReturn(createSuccessResponse())
+
+                // 추가 여유 응답 (혹시 모를 추가 호출 대비)
+                .willReturn(createSuccessResponse())
+                .willReturn(createSuccessResponse())
+                .willReturn(createSuccessResponse());
+
+            // When: 5회 호출 (성공 2, 실패 3) → 실패율 60% > 50%
+            for (int i = 0; i < 5; i++) {
+                UserInfo user = createAndSaveUser();
+                OrderEntity order = createAndSaveOrder(user.id());
+                PaymentCommand command = createPaymentCommand(order, user);
+                paymentFacade.processPayment(command);
+            }
+
+            // Then: OPEN 상태 확인
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
+
+            // When: HALF_OPEN으로 전환
+            // 실제 운영: wait-duration-in-open-state(60s) 경과 후 자동 전환
+            // 테스트: transitionToHalfOpenState()로 즉시 전환
+            circuitBreaker.transitionToHalfOpenState();
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.HALF_OPEN);
+
+            // When: HALF_OPEN 상태에서 permitted-number-of-calls-in-half-open-state = 3
+            // 3번 연속 성공 호출
+            for (int i = 0; i < 3; i++) {
+                UserInfo user = createAndSaveUser();
+                OrderEntity order = createAndSaveOrder(user.id());
+                PaymentCommand command = createPaymentCommand(order, user);
+
+                PaymentInfo result = paymentFacade.processPayment(command);
+                assertThat(result.status()).isEqualTo(PaymentStatus.PENDING);
+            }
+
+            // Then: HALF_OPEN → CLOSED 전환 (복구 완료!)
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
+        }
+
+        @Test
+        @DisplayName("OPEN 상태에서 일부 호출 성공 후 실패하면 다시 OPEN 유지")
+        void OPEN_상태에서_HALF_OPEN_전환_후_실패하면_다시_OPEN으로_전환() {
+            // Given: Circuit을 OPEN 상태로 만들기 위한 Mock 설정
+            // 5번 호출 (1+1+3+3+3=11) + HALF_OPEN에서 1번 호출 (Retry 3회) = 총 14번
+            given(pgClient.requestPayment(anyString(), any()))
+                .willReturn(createSuccessResponse())  // 1번 성공
+                .willReturn(createSuccessResponse())  // 2번 성공
+                .willThrow(createPgException())       // 3번 실패 (Retry 3회)
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willThrow(createPgException())       // 4번 실패 (Retry 3회)
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willThrow(createPgException())       // 5번 실패 (Retry 3회) → OPEN 전환
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willThrow(createPgException())       // 6번 실패 (HALF_OPEN, Retry 3회)
+                .willThrow(createPgException())
+                .willThrow(createPgException());
+
+            // When: 5회 호출로 OPEN 상태 만들기 (실패율 60%)
+            for (int i = 0; i < 5; i++) {
+                UserInfo user = createAndSaveUser();
+                OrderEntity order = createAndSaveOrder(user.id());
+                PaymentCommand command = createPaymentCommand(order, user);
+                paymentFacade.processPayment(command);
+            }
+
+            // Then: OPEN 상태 확인
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
+
+            // When: HALF_OPEN으로 전환 (실제로는 60초 대기 후 자동 전환)
+            circuitBreaker.transitionToHalfOpenState();
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.HALF_OPEN);
+
+            // When: HALF_OPEN 상태에서 실패 호출
+            UserInfo user = createAndSaveUser();
+            OrderEntity order = createAndSaveOrder(user.id());
+            PaymentCommand command = createPaymentCommand(order, user);
+
+            PaymentInfo result = paymentFacade.processPayment(command);
+
+            // Then: Fallback 실행 확인
+            assertThat(result.status()).isEqualTo(PaymentStatus.FAILED);
+
+            // Then: HALF_OPEN → OPEN 전환 (다시 차단!)
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
+        }
+
+        @Test
+        @DisplayName("HALF_OPEN 상태에서 부분 성공 후 실패해도 Fallback 성공으로 CLOSED 전환")
+        void HALF_OPEN_상태에서_부분_성공_후_PG실패해도_Fallback_성공으로_CLOSED_전환() {
+            // Given: Circuit을 OPEN 상태로 만들기 위한 Mock 설정
+            // 5번 호출 (1+1+3+3+3=11) + HALF_OPEN에서 3번 호출 (1+3+1=5) = 총 16번
+            // HALF_OPEN에서 PG는 실패하지만 Fallback이 성공하므로 Circuit Breaker는 성공으로 기록
+            given(pgClient.requestPayment(anyString(), any()))
+                .willReturn(createSuccessResponse())  // 1번 성공
+                .willReturn(createSuccessResponse())  // 2번 성공
+                .willThrow(createPgException())       // 3번 실패 (Retry 3회)
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willThrow(createPgException())       // 4번 실패 (Retry 3회)
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willThrow(createPgException())       // 5번 실패 (Retry 3회) → OPEN
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willReturn(createSuccessResponse())  // 6번 성공 (HALF_OPEN 1차)
+                .willThrow(createPgException())       // 7번 PG 실패 (Retry 3회) but Fallback 성공 (HALF_OPEN 2차)
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willReturn(createSuccessResponse()); // 8번 성공 (HALF_OPEN 3차) → CLOSED
+
+            // When: 5회 호출로 OPEN 상태 만들기
+            for (int i = 0; i < 5; i++) {
+                UserInfo user = createAndSaveUser();
+                OrderEntity order = createAndSaveOrder(user.id());
+                PaymentCommand command = createPaymentCommand(order, user);
+                paymentFacade.processPayment(command);
+            }
+
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
+
+            // When: HALF_OPEN으로 전환
+            circuitBreaker.transitionToHalfOpenState();
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.HALF_OPEN);
+
+            // When: 첫 번째 호출 성공
+            UserInfo user1 = createAndSaveUser();
+            OrderEntity order1 = createAndSaveOrder(user1.id());
+            PaymentCommand command1 = createPaymentCommand(order1, user1);
+            PaymentInfo result1 = paymentFacade.processPayment(command1);
+            assertThat(result1.status()).isEqualTo(PaymentStatus.PENDING);  // PG 성공
+
+            // Then: HALF_OPEN 유지
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.HALF_OPEN);
+
+            // When: 두 번째 호출 - PG는 실패하지만 Fallback 성공
+            UserInfo user2 = createAndSaveUser();
+            OrderEntity order2 = createAndSaveOrder(user2.id());
+            PaymentCommand command2 = createPaymentCommand(order2, user2);
+            PaymentInfo result2 = paymentFacade.processPayment(command2);
+            assertThat(result2.status()).isEqualTo(PaymentStatus.FAILED);  // Fallback 성공
+
+            // Then: Fallback이 성공했으므로 HALF_OPEN 유지
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.HALF_OPEN);
+
+            // When: 세 번째 호출 성공
+            UserInfo user3 = createAndSaveUser();
+            OrderEntity order3 = createAndSaveOrder(user3.id());
+            PaymentCommand command3 = createPaymentCommand(order3, user3);
+            PaymentInfo result3 = paymentFacade.processPayment(command3);
+            assertThat(result3.status()).isEqualTo(PaymentStatus.PENDING);  // PG 성공
+
+            // Then: 3번 모두 "성공" (Fallback 포함) → CLOSED로 전환
+            // Fallback도 성공으로 간주되므로 시스템 복구로 판단
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
+        }
+
+        @Test
+        @DisplayName("HALF_OPEN 상태에서 허용된 호출 수(3회) 모두 성공하면 CLOSED로 복구")
+        void HALF_OPEN_상태에서_허용된_호출_수_모두_성공하면_CLOSED로_복구() {
+            // Given: Circuit을 OPEN 상태로 만들기 위한 Mock 설정
+            // 5번 호출 (1+1+3+3+3=11) + HALF_OPEN에서 3번 호출 (1+1+1=3) = 총 14번
+            given(pgClient.requestPayment(anyString(), any()))
+                .willReturn(createSuccessResponse())  // 1번 성공
+                .willReturn(createSuccessResponse())  // 2번 성공
+                .willThrow(createPgException())       // 3번 실패 (Retry 3회)
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willThrow(createPgException())       // 4번 실패 (Retry 3회)
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willThrow(createPgException())       // 5번 실패 (Retry 3회) → OPEN
+                .willThrow(createPgException())
+                .willThrow(createPgException())
+                .willReturn(createSuccessResponse())  // 6번 성공 (HALF_OPEN 1차)
+                .willReturn(createSuccessResponse())  // 7번 성공 (HALF_OPEN 2차)
+                .willReturn(createSuccessResponse()); // 8번 성공 (HALF_OPEN 3차) → CLOSED
+
+            // When: 5회 호출로 OPEN 상태 만들기
+            for (int i = 0; i < 5; i++) {
+                UserInfo user = createAndSaveUser();
+                OrderEntity order = createAndSaveOrder(user.id());
+                PaymentCommand command = createPaymentCommand(order, user);
+                paymentFacade.processPayment(command);
+            }
+
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
+
+            // When: HALF_OPEN으로 전환
+            circuitBreaker.transitionToHalfOpenState();
+
+
+            // When: permitted-number-of-calls-in-half-open-state = 3
+            // 3번 연속 성공 호출
+            for (int i = 0; i < 3; i++) {
+                UserInfo user = createAndSaveUser();
+                OrderEntity order = createAndSaveOrder(user.id());
+                PaymentCommand command = createPaymentCommand(order, user);
+
+                PaymentInfo result = paymentFacade.processPayment(command);
+                assertThat(result.status()).isEqualTo(PaymentStatus.PENDING);
+            }
+
+            // Then: 3번 성공 후 CLOSED로 전환 (시스템 복구!)
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
+
+            // Metrics 확인
+            CircuitBreaker.Metrics metrics = circuitBreaker.getMetrics();
+            assertThat(metrics.getNumberOfSuccessfulCalls()).isEqualTo(3);
+        }
+    }
+
+    @Nested
+    @DisplayName("5. Fallback 메서드 실행 검증")
     class Fallback_메서드_실행_검증 {
 
         @Test
@@ -358,7 +620,7 @@ class CircuitBreakerIntegrationTest {
     }
 
     @Nested
-    @DisplayName("Circuit Breaker 메트릭 검증")
+    @DisplayName("6. Circuit Breaker 메트릭 검증")
     class Circuit_Breaker_메트릭_검증 {
 
         @Test
