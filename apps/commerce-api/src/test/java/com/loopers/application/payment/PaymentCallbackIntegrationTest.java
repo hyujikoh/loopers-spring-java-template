@@ -390,7 +390,9 @@ class PaymentCallbackIntegrationTest {
     }
 
     private OrderEntity createAndSaveOrder(Long userId) {
-        String orderNumber = UUID.randomUUID().toString().substring(0, 8);
+        long timestamp = System.currentTimeMillis();
+        int random = (int) (Math.random() * 1000000);
+        Long orderNumber = timestamp * 1000000L + random;
 
         OrderDomainCreateRequest request = new OrderDomainCreateRequest(
                 userId,
@@ -407,6 +409,7 @@ class PaymentCallbackIntegrationTest {
         PaymentCommand command = PaymentCommand.builder()
                 .username(user.getUsername())
                 .orderId(order.getId())
+                .orderNumber(order.getOrderNumber())
                 .cardType("CREDIT")
                 .cardNo("1234-5678-9012-3456")
                 .amount(order.getFinalTotalAmount())

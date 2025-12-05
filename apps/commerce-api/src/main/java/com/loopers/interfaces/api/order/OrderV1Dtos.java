@@ -51,8 +51,8 @@ public class OrderV1Dtos {
             @Schema(description = "주문 ID", example = "1")
             Long orderId,
 
-            @Schema(description = "주문 번호", example = "1733380825123456789")
-            String orderNumber,
+            @Schema(description = "주문 번호", example = "1733380825123456")
+            Long orderNumber,
 
             @Schema(description = "주문 상태", example = "PENDING")
             OrderStatus status,
@@ -120,8 +120,8 @@ public class OrderV1Dtos {
             @Schema(description = "사용자 ID", example = "1")
             Long userId,
 
-            @Schema(description = "주문 번호", example = "1733380825123456789")
-            String orderNumber,
+            @Schema(description = "주문 번호", example = "1733380825123456")
+            Long orderNumber,
 
             @Schema(description = "주문 상태", example = "PENDING")
             OrderStatus status,
@@ -199,8 +199,8 @@ public class OrderV1Dtos {
             @Schema(description = "주문 ID", example = "1")
             Long orderId,
 
-            @Schema(description = "주문 번호", example = "1733380825123456789")
-            String orderNumber,
+            @Schema(description = "주문 번호", example = "1733380825123456")
+            Long orderNumber,
 
             @Schema(description = "주문 상태", example = "PENDING")
             OrderStatus status,

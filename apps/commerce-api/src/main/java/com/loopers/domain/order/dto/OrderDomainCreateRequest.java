@@ -15,7 +15,7 @@ import java.math.RoundingMode;
  */
 public record OrderDomainCreateRequest(
         Long userId,
-        String orderNumber,
+        Long orderNumber,
         BigDecimal originalTotalAmount,
         BigDecimal discountAmount,
         BigDecimal finalTotalAmount
@@ -28,11 +28,8 @@ public record OrderDomainCreateRequest(
             throw new IllegalArgumentException("사용자 ID는 필수입니다.");
         }
 
-        if (orderNumber == null || orderNumber.isBlank()) {
-            throw new IllegalArgumentException("주문 번호는 필수입니다.");
-        }
-        if (orderNumber.length() < 6) {
-            throw new IllegalArgumentException("주문 번호는 6자 이상이어야 합니다.");
+        if (orderNumber == null || orderNumber <= 0) {
+            throw new IllegalArgumentException("주문 번호는 필수이며 0보다 커야 합니다.");
         }
 
         if (originalTotalAmount == null) {

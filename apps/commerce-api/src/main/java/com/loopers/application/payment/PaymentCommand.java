@@ -2,12 +2,11 @@ package com.loopers.application.payment;
 
 import java.math.BigDecimal;
 
-import com.loopers.application.order.OrderCreateCommand;
-import com.loopers.application.order.OrderInfo;
-
 import lombok.Builder;
 
 /**
+ * 결제 명령 DTO
+ * 
  * @author hyunjikoh
  * @since 2025. 12. 4.
  */
@@ -15,7 +14,7 @@ import lombok.Builder;
 public record PaymentCommand(
         String username,
         Long orderId,
-        String orderNumber,
+        Long orderNumber,
         String cardType,
         String cardNo,
         BigDecimal amount,

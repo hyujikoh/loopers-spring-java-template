@@ -549,7 +549,7 @@ class PaymentCircuitIntegrationTest {
             // DB 확인
             PaymentEntity savedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
             assertThat(savedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
-            assertThat(savedPayment.getFailureReason()).isNotNull().contains("일시적으로 사용 불가능");
+            assertThat(savedPayment.getFailureReason()).isNotNull().contains("결제 시스템 응답 지연으로 처리되지 않았습니다");
         }
 
         @Test
@@ -651,14 +651,24 @@ class PaymentCircuitIntegrationTest {
     }
 
     private OrderEntity createAndSaveOrder(Long userId) {
-        String orderNumber = UUID.randomUUID().toString().substring(0, 8);
+        long timestamp = System.currentTimeMillis();
+        int random = (int) (Math.random() * 1000000);
+        Long orderNumber = timestamp * 1000000L + random;
         OrderDomainCreateRequest request = new OrderDomainCreateRequest(userId, orderNumber, new BigDecimal("50000.00"), BigDecimal.ZERO, new BigDecimal("50000.00"));
         OrderEntity order = OrderEntity.createOrder(request);
         return orderRepository.save(order);
     }
 
     private PaymentCommand createPaymentCommand(OrderEntity order, UserInfo user) {
-        return PaymentCommand.builder().username(user.username()).orderId(order.getId()).cardType("CREDIT").cardNo("1234-5678-9012-3456").amount(order.getFinalTotalAmount()).callbackUrl("http://localhost:8080/api/v1/payments/callback").build();
+        return PaymentCommand.builder()
+                .username(user.username())
+                .orderId(order.getId())
+                .orderNumber(order.getOrderNumber())
+                .cardType("CREDIT")
+                .cardNo("1234-5678-9012-3456")
+                .amount(order.getFinalTotalAmount())
+                .callbackUrl("http://localhost:8080/api/v1/payments/callback")
+                .build();
     }
 
     /**

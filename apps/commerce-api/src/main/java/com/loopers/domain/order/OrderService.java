@@ -111,7 +111,7 @@ public class OrderService {
         BigDecimal finalTotalAmount = originalTotalAmount.subtract(totalDiscountAmount);
 
         // 2. 주문 번호 생성
-        String orderNumber = generateOrderNumber();
+        Long orderNumber = generateOrderNumber();
 
         // 3. 주문 엔티티 생성
         OrderEntity order = createOrder(
@@ -144,15 +144,15 @@ public class OrderService {
     /**
      * 주문 번호를 생성합니다.
      * 
-     * 형식: yyyyMMddHHmmssSSS + 6자리 랜덤 숫자
-     * 예시: 20251205143025123456789
+     * 형식: 타임스탬프(13자리) + 6자리 랜덤 숫자
+     * 예시: 1733380825123456789 (19자리)
      * 
      * @return 생성된 주문 번호
      */
-    private String generateOrderNumber() {
-        String timestamp = String.valueOf(System.currentTimeMillis());
-        String random = String.format("%06d", (int) (Math.random() * 1000000));
-        return timestamp + random;
+    private Long generateOrderNumber() {
+        long timestamp = System.currentTimeMillis();
+        int random = (int) (Math.random() * 1000000);
+        return timestamp * 1000000L + random;
     }
 
     /**

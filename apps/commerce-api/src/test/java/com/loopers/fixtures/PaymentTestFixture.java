@@ -23,7 +23,7 @@ public class PaymentTestFixture {
 
     // 기본 유효한 데이터
     public static final Long DEFAULT_ORDER_ID = 1L;
-    public static final String DEFAULT_ORDER_NUMBER= "ORDER_" + System.currentTimeMillis();
+    public static final Long DEFAULT_ORDER_NUMBER = System.currentTimeMillis() * 1000000L + 123456L;
 
     public static final Long DEFAULT_USER_ID = 1L;
     public static final String DEFAULT_TRANSACTION_KEY = "TXN_" + System.currentTimeMillis();

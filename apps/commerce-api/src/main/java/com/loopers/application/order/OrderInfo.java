@@ -17,7 +17,7 @@ import com.loopers.domain.order.OrderStatus;
 public record OrderInfo(
         Long id,
         Long userId,
-        String orderNumber,
+        Long orderNumber,
         BigDecimal originalTotalAmount,
         BigDecimal discountAmount,
         BigDecimal finalTotalAmount,

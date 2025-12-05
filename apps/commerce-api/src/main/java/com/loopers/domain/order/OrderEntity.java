@@ -31,8 +31,8 @@ public class OrderEntity extends BaseEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "order_number",unique = true, nullable = false)
-    private String orderNumber;
+    @Column(name = "order_number", unique = true, nullable = false)
+    private Long orderNumber;
 
 
     @Column(name = "original_total_amount", precision = 10, scale = 2, nullable = false)

@@ -282,9 +282,9 @@ class OrderUnitTest {
     }
 
 
-    public String getOrderNumber() {
-        UUID.randomUUID().toString().substring(0, 8);
-
-        return UUID.randomUUID().toString().substring(0, 8);
+    public Long getOrderNumber() {
+        long timestamp = System.currentTimeMillis();
+        int random = (int) (Math.random() * 1000000);
+        return timestamp * 1000000L + random;
     }
 }
