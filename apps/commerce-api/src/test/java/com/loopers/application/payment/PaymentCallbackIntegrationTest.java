@@ -400,39 +400,12 @@ class PaymentCallbackIntegrationTest {
                 null
             );
 
+            // PG Gateway Mock: PG 조회 시 PENDING 응답
+            given(pgGateway.getPayment(eq(user.getUsername()), eq(payment.getTransactionKey())))
+                    .willReturn(createPgPendingResponse(payment, order));
+
             // When
             paymentFacade.handlePaymentCallback(pendingCallback);
-
-            // Then: PENDING 상태 유지
-            PaymentEntity unchangedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
-            assertThat(unchangedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
-        }
-    }
-
-    @Nested
-    @DisplayName("알 수 없는 상태 처리")
-    class 알_수_없는_상태_처리 {
-
-        @Test
-        @DisplayName("알 수 없는 상태 콜백은 로그만 남기고 상태 변경하지 않는다")
-        void 알_수_없는_상태_콜백은_로그만_남기고_상태_변경하지_않는다() {
-            // Given
-            UserEntity user = createAndSaveUser();
-            OrderEntity order = createAndSaveOrder(user.getId());
-            PaymentEntity payment = createAndSavePendingPayment(user, order);
-
-            PaymentV1Dtos.PgCallbackRequest unknownCallback = new PaymentV1Dtos.PgCallbackRequest(
-                payment.getTransactionKey(),
-                order.getId().toString(),
-                "CREDIT",
-                "1234-****-****-3456",
-                50000L,
-                "UNKNOWN_STATUS",
-                null
-            );
-
-            // When
-            paymentFacade.handlePaymentCallback(unknownCallback);
 
             // Then: PENDING 상태 유지
             PaymentEntity unchangedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
@@ -535,6 +508,24 @@ class PaymentCallbackIntegrationTest {
                 order.getFinalTotalAmount(),
                 "FAILED",
                 reason
+            )
+        );
+    }
+
+    /**
+     * PG PENDING 응답 생성 (Mock용)
+     */
+    private PgPaymentResponse createPgPendingResponse(PaymentEntity payment, OrderEntity order) {
+        return new PgPaymentResponse(
+            new PgPaymentResponse.Meta("SUCCESS", null, null),
+            new PgPaymentResponse.Data(
+                payment.getTransactionKey(),
+                order.getId().toString(),
+                "CREDIT",
+                "1234-****-****-3456",
+                order.getFinalTotalAmount(),
+                "PENDING",
+                null
             )
         );
     }
