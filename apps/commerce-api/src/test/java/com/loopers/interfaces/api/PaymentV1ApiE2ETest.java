@@ -428,7 +428,8 @@ class PaymentV1ApiE2ETest {
         @Test
         @DisplayName("PG 타임아웃 발생 시 Fallback이 실행되고 FAILED 상태로 저장된다")
         void pg_timeout_triggers_fallback() {
-            // Given: PG 타임아웃을 유발하는 요청 (실제로는 PG-Simulator에서 지연 응답 필요)
+            // Given: PG 타임아웃을 유발하는 요청
+            // PG-Simulator는 300ms 이상 지연 응답하도록 설정되어 있음
             HttpHeaders headers = new HttpHeaders();
             headers.set("X-USER-ID", testUsername);
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -436,13 +437,13 @@ class PaymentV1ApiE2ETest {
             OrderV1Dtos.CardOrderCreateRequest request = new OrderV1Dtos.CardOrderCreateRequest(
                     List.of(new OrderV1Dtos.OrderItemRequest(testProductId, 1, null)),
                     new OrderV1Dtos.CardPaymentInfo(
-                            "SAMSUNG", //
+                            "SAMSUNG",
                             "0000-0000-0000-0000",
                             "http://localhost:8080/api/v1/payments/callback"
                     )
             );
 
-            // When
+            // When: 카드 결제 주문 생성 (타임아웃 발생 예상)
             ParameterizedTypeReference<ApiResponse<OrderV1Dtos.OrderCreateResponse>> responseType =
                     new ParameterizedTypeReference<>() {
                     };
@@ -454,9 +455,18 @@ class PaymentV1ApiE2ETest {
                             responseType
                     );
 
-            // Then: Fallback으로 처리되어 주문은 생성되지만 결제는 FAILED
-            // (실제 구현에 따라 다를 수 있음)
+            // Then: Fallback으로 처리되어 주문은 생성됨
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(Objects.requireNonNull(response.getBody()).data().orderId()).isNotNull();
+            assertThat(response.getBody().data().status()).isEqualTo(OrderStatus.PENDING);
+
+            // Then: 결제는 FAILED 상태로 저장됨 (Fallback 처리)
+            Long orderId = response.getBody().data().orderId();
+            PaymentEntity savedPayment = paymentRepository.findByOrderId(orderId).orElseThrow();
+            assertThat(savedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
+            assertThat(savedPayment.getFailureReason())
+                    .contains("일시적으로 사용 불가능");
+            assertThat(savedPayment.getTransactionKey()).isNull(); // 타임아웃으로 transactionKey 없음
         }
     }
 }

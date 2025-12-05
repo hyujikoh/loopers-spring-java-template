@@ -23,6 +23,8 @@ public class PaymentTestFixture {
 
     // 기본 유효한 데이터
     public static final Long DEFAULT_ORDER_ID = 1L;
+    public static final String DEFAULT_ORDER_NUMBER= "ORDER_" + System.currentTimeMillis();
+
     public static final Long DEFAULT_USER_ID = 1L;
     public static final String DEFAULT_TRANSACTION_KEY = "TXN_" + System.currentTimeMillis();
     public static final BigDecimal DEFAULT_AMOUNT = new BigDecimal("50000.00");
@@ -123,6 +125,7 @@ public class PaymentTestFixture {
         return new PaymentCommand(
                 "testuser",
                 DEFAULT_ORDER_ID,
+                DEFAULT_ORDER_NUMBER,
                 DEFAULT_CARD_TYPE,
                 DEFAULT_CARD_NO,
                 DEFAULT_AMOUNT,
@@ -137,6 +140,7 @@ public class PaymentTestFixture {
         return new PaymentCommand(
                 "testuser",
                 DEFAULT_ORDER_ID,
+                DEFAULT_ORDER_NUMBER,
                 DEFAULT_CARD_TYPE,
                 DEFAULT_CARD_NO,
                 amount,
@@ -151,6 +155,7 @@ public class PaymentTestFixture {
         return new PaymentCommand(
                 "testuser",
                 orderId,
+                DEFAULT_ORDER_NUMBER,
                 DEFAULT_CARD_TYPE,
                 DEFAULT_CARD_NO,
                 DEFAULT_AMOUNT,

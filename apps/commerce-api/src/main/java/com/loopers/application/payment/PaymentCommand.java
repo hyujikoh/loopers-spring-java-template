@@ -2,7 +2,8 @@ package com.loopers.application.payment;
 
 import java.math.BigDecimal;
 
-import com.loopers.interfaces.api.payment.PaymentV1Dtos;
+import com.loopers.application.order.OrderCreateCommand;
+import com.loopers.application.order.OrderInfo;
 
 import lombok.Builder;
 
@@ -14,19 +15,10 @@ import lombok.Builder;
 public record PaymentCommand(
         String username,
         Long orderId,
+        String orderNumber,
         String cardType,
         String cardNo,
         BigDecimal amount,
         String callbackUrl
 ) {
-    public static PaymentCommand of(String username, PaymentV1Dtos.PaymentRequest request) {
-        return new PaymentCommand(
-                username,
-                request.orderId(),
-                request.cardType(),
-                request.cardNo(),
-                request.amount(),
-                request.callbackUrl()
-        );
-    }
 }

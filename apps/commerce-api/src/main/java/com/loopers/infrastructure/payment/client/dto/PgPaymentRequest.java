@@ -26,7 +26,7 @@ public record PgPaymentRequest(
         Objects.requireNonNull(command.callbackUrl(), "콜백 URL(callbackUrl)이 null입니다.");
 
         return new PgPaymentRequest(
-                command.orderId(),
+                Long.valueOf(command.orderNumber()),
                 command.cardType(),
                 command.cardNo(),
                 command.amount(),

@@ -72,6 +72,7 @@ resilience4j:
         retry-exceptions:
           - feign.FeignException.ServiceUnavailable  # 503 에러
           - feign.FeignException.InternalServerError # 500 에러
+          - java.lang.RuntimeException               # PG API 응답 FAIL
         # 타임아웃은 재시도하지 않음 (RetryableException, TimeoutException 제외)
 
 ---

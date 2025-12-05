@@ -122,11 +122,17 @@ public class PaymentValidator {
                     pgResponse.meta().errorCode(),
                     pgResponse.meta().message());
             log.error(errorMessage);
-            throw new RuntimeException(errorMessage);
+            throw new PgApiFailureException(
+                    pgResponse.meta().errorCode(),
+                    errorMessage
+            );
         }
 
         if (pgResponse.data() == null || pgResponse.transactionKey() == null) {
-            throw new RuntimeException("PG 응답에 transactionKey가 없습니다.");
+            throw new PgApiFailureException(
+                    "INVALID_RESPONSE",
+                    "PG 응답에 transactionKey가 없습니다."
+            );
         }
     }
 }
