@@ -5,7 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.loopers.application.payment.PaymentCommand;
-import com.loopers.domain.payment.PaymentDomainCreateRequest;
+import com.loopers.domain.payment.PaymentDomainDtos;
 import com.loopers.domain.payment.PaymentEntity;
 import com.loopers.domain.payment.PaymentStatus;
 import com.loopers.domain.user.UserEntity;
@@ -41,8 +41,8 @@ public class PaymentTestFixture {
     /**
      * 기본값으로 PaymentDomainCreateRequest 생성
      */
-    public static PaymentDomainCreateRequest createDefaultDomainRequest() {
-        return new PaymentDomainCreateRequest(
+    public static PaymentDomainDtos.PaymentDomainCreateRequest createDefaultDomainRequest() {
+        return new PaymentDomainDtos.PaymentDomainCreateRequest(
                 DEFAULT_USER_ID,
                 DEFAULT_ORDER_ID,
                 DEFAULT_TRANSACTION_KEY,
@@ -59,8 +59,8 @@ public class PaymentTestFixture {
     /**
      * PENDING 상태의 PaymentDomainCreateRequest 생성
      */
-    public static PaymentDomainCreateRequest createPendingDomainRequest() {
-        return new PaymentDomainCreateRequest(
+    public static PaymentDomainDtos.PaymentDomainCreateRequest createPendingDomainRequest() {
+        return new PaymentDomainDtos.PaymentDomainCreateRequest(
                 DEFAULT_USER_ID,
                 DEFAULT_ORDER_ID,
                 null, // PENDING 상태에서는 transactionKey가 null
@@ -77,14 +77,14 @@ public class PaymentTestFixture {
     /**
      * 커스텀 PaymentDomainCreateRequest 생성
      */
-    public static PaymentDomainCreateRequest createDomainRequest(
+    public static PaymentDomainDtos.PaymentDomainCreateRequest createDomainRequest(
             Long userId,
             Long orderId,
             String transactionKey,
             BigDecimal amount,
             PaymentStatus status
     ) {
-        return new PaymentDomainCreateRequest(
+        return new PaymentDomainDtos.PaymentDomainCreateRequest(
                 userId,
                 orderId,
                 transactionKey,
@@ -101,10 +101,10 @@ public class PaymentTestFixture {
     /**
      * 커스텀 PaymentDomainCreateRequest 생성
      */
-    public static PaymentDomainCreateRequest createDomainRequestWithAmount(
+    public static PaymentDomainDtos.PaymentDomainCreateRequest createDomainRequestWithAmount(
             BigDecimal amount
     ) {
-        return new PaymentDomainCreateRequest(
+        return new PaymentDomainDtos.PaymentDomainCreateRequest(
                 DEFAULT_USER_ID,
                 DEFAULT_ORDER_ID,
                 DEFAULT_TRANSACTION_KEY,
@@ -308,7 +308,7 @@ public class PaymentTestFixture {
         }
 
         public PaymentEntity build() {
-            PaymentDomainCreateRequest request = new PaymentDomainCreateRequest(
+            PaymentDomainDtos.PaymentDomainCreateRequest request = new PaymentDomainDtos.PaymentDomainCreateRequest(
                     userId,
                     orderId,
                     transactionKey,

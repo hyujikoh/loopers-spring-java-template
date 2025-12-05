@@ -15,7 +15,7 @@ import com.loopers.fixtures.UserTestFixture;
 
 /**
  * PaymentEntity 단위 테스트
- * <p>
+ * 
  * Level 1: 단위 테스트 (P0 우선순위)
  * - PaymentEntity의 도메인 로직 검증
  * - 상태 전이 검증

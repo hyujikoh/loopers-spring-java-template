@@ -70,13 +70,13 @@ public class PaymentEntity extends BaseEntity {
      * @param request
      * @return
      */
-    public static PaymentEntity createPayment(PaymentDomainCreateRequest request) {
+    public static PaymentEntity createPayment(PaymentDomainDtos.PaymentDomainCreateRequest request) {
         Objects.requireNonNull(request, "결제 생성 요청은 null일 수 없습니다.");
         return new PaymentEntity(request);
     }
 
 
-    private PaymentEntity(PaymentDomainCreateRequest request) {
+    private PaymentEntity(PaymentDomainDtos.PaymentDomainCreateRequest request) {
 
         // transactionKey는 PENDING 상태에서 null 허용 (명시적 주석)
         Objects.requireNonNull(request, "결제 생성 요청은 필수입니다.");
@@ -106,7 +106,7 @@ public class PaymentEntity extends BaseEntity {
     }
 
     public static PaymentEntity createPending(UserEntity user, PaymentCommand command) {
-        PaymentDomainCreateRequest request = new PaymentDomainCreateRequest(
+        PaymentDomainDtos.PaymentDomainCreateRequest request = new PaymentDomainDtos.PaymentDomainCreateRequest(
                 user.getId(),
                 command.orderId(),
                 null,
@@ -124,7 +124,7 @@ public class PaymentEntity extends BaseEntity {
     }
 
     public static PaymentEntity createFailed(UserEntity user, PaymentCommand command, String reason) {
-        PaymentDomainCreateRequest request = new PaymentDomainCreateRequest(
+        PaymentDomainDtos.PaymentDomainCreateRequest request = new PaymentDomainDtos.PaymentDomainCreateRequest(
                 user.getId(),
                 command.orderId(),
                 null,

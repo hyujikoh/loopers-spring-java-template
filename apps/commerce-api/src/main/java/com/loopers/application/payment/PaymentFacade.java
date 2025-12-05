@@ -21,13 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 결제 유스케이스 Facade (응용 계층)
- * <p>
+ * 
  * DDD 원칙에 따라 유스케이스 조정 역할만 담당:
  * - 트랜잭션 경계 설정
  * - 여러 도메인 서비스 조합
  * - 이벤트 발행
  * - DTO 변환
- * <p>
+ * 
  * 비즈니스 로직은 도메인 계층(PaymentProcessor, PaymentValidator)에 위치
  *
  * @author hyunjikoh
@@ -48,14 +48,14 @@ public class PaymentFacade {
 
     /**
      * 카드 결제 처리 유스케이스
-     * <p>
+     * 
      * Resilience4j 적용:
      * - Circuit Breaker: PG 장애 시 빠른 실패 (Fallback 실행)
-     * <p>
+     * 
      * 타임아웃은 Feign Client 설정으로 처리:
      * - connect-timeout: 300ms
      * - read-timeout: 300ms
-     * <p>
+     * 
      * 타임아웃 발생 시 Fallback 실행, 결과는 콜백으로 확인
      */
     @CircuitBreaker(name = "pgClient", fallbackMethod = "processPaymentFallback")
@@ -77,7 +77,7 @@ public class PaymentFacade {
 
     /**
      * Fallback 메서드
-     * <p>
+     * 
      * PG 서비스 장애 또는 타임아웃(300ms) 시 실패 결제 생성
      */
     @SuppressWarnings("unused")
@@ -98,7 +98,7 @@ public class PaymentFacade {
 
     /**
      * PG 콜백 처리 유스케이스
-     * <p>
+     * 
      * 프로세스:
      * 1. 콜백 수신
      * 2. DB에서 결제 조회
@@ -107,7 +107,7 @@ public class PaymentFacade {
      * 5. 데이터 검증 (주문ID, 상태, 금액)
      * 6. 상태 업데이트
      * 7. 이벤트 발행
-     * <p>
+     * 
      * 멱등성 보장: PENDING 상태가 아니면 처리하지 않음
      */
     @Transactional

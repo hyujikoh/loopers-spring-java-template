@@ -14,9 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 결제 타임아웃 처리 스케줄러
- * <p>
+ * 
  * PENDING 상태로 오래 대기 중인 결제 건을 TIMEOUT 처리합니다.
- * <p>
+ * 
  * 설계 원칙:
  * - 스케줄러 메서드는 트랜잭션 없음 (조회 및 반복만 수행)
  * - 개별 결제 건마다 독립적인 트랜잭션으로 처리 (PaymentTimeoutProcessor 사용)
@@ -35,7 +35,7 @@ public class PaymentTimeoutScheduler {
 
     /**
      * 5분마다 PENDING 상태로 10분 이상 대기 중인 결제 건을 TIMEOUT 처리
-     * <p>
+     * 
      * 트랜잭션 없음: 조회 및 반복만 수행하여 롱 트랜잭션 방지
      */
     @Scheduled(fixedDelay = 300000) // 5분 (300,000ms)
