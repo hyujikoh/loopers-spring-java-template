@@ -174,7 +174,7 @@ class PaymentV1ApiE2ETest {
             OrderV1Dtos.CardOrderCreateRequest orderRequest = new OrderV1Dtos.CardOrderCreateRequest(
                     List.of(new OrderV1Dtos.OrderItemRequest(testProductId, 1, null)),
                     new OrderV1Dtos.CardPaymentInfo(
-                            "CREDIT",
+                            "SAMSUNG",
                             "1234-5678-9012-3456",
                             "http://localhost:8080/api/v1/payments/callback"
                     )
@@ -248,7 +248,7 @@ class PaymentV1ApiE2ETest {
             OrderV1Dtos.CardOrderCreateRequest orderRequest = new OrderV1Dtos.CardOrderCreateRequest(
                     List.of(new OrderV1Dtos.OrderItemRequest(testProductId, 1, null)),
                     new OrderV1Dtos.CardPaymentInfo(
-                            "CREDIT",
+                            "KB",
                             "9999-9999-9999-9999",
                             "http://localhost:8080/api/v1/payments/callback"
                     )
@@ -272,7 +272,7 @@ class PaymentV1ApiE2ETest {
             PaymentV1Dtos.PgCallbackRequest callbackRequest = new PaymentV1Dtos.PgCallbackRequest(
                     transactionKey,
                     orderId.toString(),
-                    "CREDIT",
+                    "KB",
                     "9999-9999-9999-9999",
                     50000L,
                     "FAILED",
@@ -323,7 +323,7 @@ class PaymentV1ApiE2ETest {
             OrderV1Dtos.CardOrderCreateRequest orderRequest = new OrderV1Dtos.CardOrderCreateRequest(
                     List.of(new OrderV1Dtos.OrderItemRequest(testProductId, 1, null)),
                     new OrderV1Dtos.CardPaymentInfo(
-                            "CREDIT",
+                            "SAUMSUNG",
                             "1234-5678-9012-3456",
                             "http://localhost:8080/api/v1/payments/callback"
                     )

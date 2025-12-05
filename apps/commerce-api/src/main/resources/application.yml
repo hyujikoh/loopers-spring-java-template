@@ -28,8 +28,8 @@ spring:
       client:
         config:
           pgClient:
-            connect-timeout: 300    # 연결 타임아웃 300ms
-            read-timeout: 300       # 읽기 타임아웃 300ms
+            connect-timeout: 500    # 연결 타임아웃 500ms
+            read-timeout: 500       # 읽기 타임아웃 500ms
             logger-level: full
 
 pg:
