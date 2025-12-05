@@ -31,31 +31,7 @@ import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
 import com.loopers.interfaces.api.payment.PaymentV1Dtos;
 import com.loopers.utils.DatabaseCleanUp;
 import com.loopers.utils.RedisCleanUp;
-
-/**
- * Level 2: 통합 테스트 - 결제 콜백 처리
- *
- * P0 우선순위 테스트:
- * - PG-Simulator의 실제 콜백 구조 기반 테스트
- * - 결제 성공 콜백 (SUCCESS) → 주문 확정
- * - 결제 실패 콜백 (FAILED) → 주문 취소
- * - 멱등성 검증 (중복 콜백)
- *
- * PG-Simulator 콜백 데이터 구조:
- * - transactionKey: 트랜잭션 키
- * - orderId: 주문 ID
- * - cardType: 카드 타입
- * - cardNo: 마스킹된 카드 번호
- * - amount: 결제 금액 (Long)
- * - status: SUCCESS, FAILED, PENDING
- * - reason: 실패 사유 (nullable)
- *
- * 검증 항목:
- * - PaymentEntity 상태 전이
- * - OrderEntity 상태 전이
- * - 이벤트 기반 비동기 처리
- * - 데이터 일관성
- *
+/*
  * @author hyunjikoh
  * @since 2025. 12. 05.
  */
@@ -73,9 +49,6 @@ class PaymentCallbackIntegrationTest {
     private PaymentFacade paymentFacade;
 
     @Autowired
-    private PaymentService paymentService;
-
-    @Autowired
     private PaymentRepository paymentRepository;
 
     @Autowired
@@ -84,16 +57,10 @@ class PaymentCallbackIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private OrderFacade orderFacade;
 
     @MockitoBean
     private PgGateway pgGateway;
 
-    @BeforeEach
-    void setUp() {
-        // 테스트 데이터는 각 테스트에서 생성
-    }
 
     @AfterEach
     void tearDown() {
