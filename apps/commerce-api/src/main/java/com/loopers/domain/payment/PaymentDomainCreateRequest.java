@@ -34,7 +34,7 @@ public record PaymentDomainCreateRequest(
                 command.amount(),
                 PaymentStatus.valueOf(pgResponse.status()),
                 ZonedDateTime.now(),
-                pgResponse.message()
+                pgResponse.reason()
         );
     }
 }

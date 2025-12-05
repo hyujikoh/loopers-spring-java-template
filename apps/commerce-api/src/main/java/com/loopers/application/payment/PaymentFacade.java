@@ -62,7 +62,7 @@ public class PaymentFacade {
         // 2. PaymentEntity 생성 및 저장
         PaymentEntity pendingPayment = paymentService.createPending(user, command);
 
-        // PG 결제 요청 (Circuit Breaker가 예외를 감지할 수 있도록 try-catch 제거)
+        // 3. PG 결제 요청
         log.info("결제 요청 시작 - orderId: {}, username: {}, amount: {}",
                 command.orderId(), command.username(), command.amount());
 
@@ -70,10 +70,26 @@ public class PaymentFacade {
                 user.getUsername(),
                 PgPaymentRequest.of(command)
         );
+
+        // 4. PG API 응답 검증
+        if (pgResponse.isApiFail()) {
+            // API 호출은 성공했지만, PG에서 FAIL 응답
+            String errorMessage = String.format("PG 결제 요청 실패 - errorCode: %s, message: %s",
+                    pgResponse.meta().errorCode(),
+                    pgResponse.meta().message());
+            log.error(errorMessage);
+            throw new RuntimeException(errorMessage);
+        }
+
+        // 5. transactionKey 업데이트
+        if (pgResponse.data() == null || pgResponse.transactionKey() == null) {
+            throw new RuntimeException("PG 응답에 transactionKey가 없습니다.");
+        }
+
         pendingPayment.updateTransactionKey(pgResponse.transactionKey());
 
-        log.info("PG 결제 요청 완료 - orderId: {}, transactionKey: {}, 콜백 대기 중",
-                command.orderId(), pgResponse.transactionKey());
+        log.info("PG 결제 요청 완료 - orderId: {}, transactionKey: {}, status: {}, 콜백 대기 중",
+                command.orderId(), pgResponse.transactionKey(), pgResponse.status());
 
         return PaymentInfo.from(pendingPayment);
 
@@ -132,13 +148,18 @@ public class PaymentFacade {
     }
 
     /**
-     * PG 콜백 처리
-     * <p>
-     * PG-Simulator가 보내는 콜백 데이터를 받아서 결제 상태를 업데이트합니다.
-     * - SUCCESS: 결제 성공
-     * - FAILED: 결제 실패
-     * - PENDING: 처리 중 (무시)
-     * <p>
+     * PG 콜백 처리 (개선)
+     *
+     * 프로세스:
+     * 1. 콜백 수신
+     * 2. DB에서 결제 조회
+     * 3. 멱등성 체크
+     * 4. ⭐ PG에 실제 상태 조회 (보안 강화)
+     * 5. ⭐ 데이터 검증 (주문ID, 상태, 금액)
+     * 6. ⭐ 주문 금액 vs 결제 금액 검증
+     * 7. 상태 업데이트
+     * 8. 이벤트 발행
+     *
      * 멱등성 보장: PENDING 상태가 아니면 처리하지 않음
      */
     @Transactional
@@ -146,21 +167,37 @@ public class PaymentFacade {
         log.info("결제 콜백 처리 시작 - transactionKey: {}, status: {}, orderId: {}",
                 request.transactionKey(), request.status(), request.orderId());
 
+        // 1. DB에서 결제 조회
         PaymentEntity payment = paymentService.getByTransactionKey(request.transactionKey());
 
-        // 멱등성 체크: 이미 처리된 결제는 무시
+        // 2. 멱등성 체크: 이미 처리된 결제는 무시
         if (payment.getPaymentStatus() != PaymentStatus.PENDING) {
             log.warn("이미 처리된 결제 - transactionKey: {}, currentStatus: {}",
                     request.transactionKey(), payment.getPaymentStatus());
             return;
         }
 
-        // 결제 결과에 따라 상태 업데이트 (PG-Simulator 기준: SUCCESS, FAILED, PENDING)
+        // 3. PG에서 실제 상태 조회
+        // userId로 user 조회 (username 필요)
+        // Note: PaymentEntity에 username을 저장하거나, UserRepository에 findById 메서드 추가 권장
+        // 현재는 orderId로 주문 조회 후 userId로 검증하는 방식 사용
+        OrderEntity order = orderService.getOrderByIdAndUserId(payment.getOrderId(), payment.getUserId());
+        UserEntity user = userService.getUserById(payment.getUserId());
+
+        PgPaymentResponse pgData = verifyPaymentFromPg(request.transactionKey(), user.getUsername());
+
+        // 4. 콜백 데이터 검증
+        validateCallbackData(payment, request, pgData);
+
+        // 5. 주문 금액 검증
+        validateOrderAmount(order, pgData.amount());
+
+        // 6. 결제 결과에 따라 상태 업데이트
         switch (request.status()) {
             case "SUCCESS" -> {
                 payment.complete();
-                log.info("결제 성공 처리 완료 - transactionKey: {}, orderId: {}",
-                        request.transactionKey(), request.orderId());
+                log.info("결제 성공 처리 완료 - transactionKey: {}, orderId: {}, amount: {}",
+                        request.transactionKey(), request.orderId(), pgData.amount());
 
                 // 이벤트 발행 (OrderFacade 직접 의존 X)
                 eventPublisher.publishEvent(new PaymentCompletedEvent(
@@ -192,5 +229,109 @@ public class PaymentFacade {
                         request.transactionKey(), request.status(), request.orderId());
             }
         }
+    }
+
+    /**
+     * PG에서 실제 결제 상태 조회
+     *
+     * 콜백 데이터를 그대로 신뢰하지 않고,
+     * PG에 직접 조회하여 실제 상태를 확인합니다.
+     *
+     * @param transactionKey 거래 키
+     * @param username 사용자명
+     * @return PG 결제 응답
+     * @throws RuntimeException PG 조회 실패 시
+     */
+    private PgPaymentResponse verifyPaymentFromPg(String transactionKey, String username) {
+        try {
+            log.debug("PG 결제 상태 조회 시작 - transactionKey: {}", transactionKey);
+            PgPaymentResponse pgData = pgClient.getPayment(username, transactionKey);
+
+            // API 응답 검증
+            if (pgData.isApiFail()) {
+                String errorMessage = String.format("PG 결제 조회 실패 - errorCode: %s, message: %s",
+                        pgData.meta().errorCode(),
+                        pgData.meta().message());
+                log.error(errorMessage);
+                throw new RuntimeException(errorMessage);
+            }
+
+            if (pgData.data() == null) {
+                throw new RuntimeException("PG 응답에 결제 데이터가 없습니다.");
+            }
+
+            log.debug("PG 결제 상태 조회 완료 - transactionKey: {}, status: {}",
+                    transactionKey, pgData.status());
+            return pgData;
+        } catch (Exception e) {
+            log.error("PG 결제 상태 조회 실패 - transactionKey: {}", transactionKey, e);
+            throw new RuntimeException("PG 결제 상태 조회에 실패했습니다. 다시 시도해주세요.", e);
+        }
+    }
+
+    /**
+     * 콜백 데이터 검증
+     *
+     * 검증 항목:
+     * 1. 주문 ID 일치 (DB vs 콜백)
+     * 2. 결제 상태 일치 (PG vs 콜백)
+     * 3. 결제 금액 일치 (DB vs PG)
+     *
+     * @param payment DB에 저장된 결제
+     * @param callback 콜백 요청 데이터
+     * @param pgData PG에서 조회한 실제 데이터
+     * @throws IllegalStateException 검증 실패 시
+     */
+    private void validateCallbackData(
+            PaymentEntity payment,
+            PaymentV1Dtos.PgCallbackRequest callback,
+            PgPaymentResponse pgData
+    ) {
+        // 1. 주문 ID 일치 확인
+        if (!payment.getOrderId().toString().equals(callback.orderId())) {
+            throw new IllegalStateException(
+                    String.format("주문 ID 불일치 - DB: %s, Callback: %s",
+                            payment.getOrderId(), callback.orderId())
+            );
+        }
+
+        // 2. PG 상태와 콜백 상태 일치 확인
+        if (!pgData.status().equals(callback.status())) {
+            throw new IllegalStateException(
+                    String.format("결제 상태 불일치 - PG: %s, Callback: %s",
+                            pgData.status(), callback.status())
+            );
+        }
+
+        // 3. 금액 일치 확인 (DB vs PG)
+        if (pgData.amount().compareTo(payment.getAmount()) != 0) {
+            throw new IllegalStateException(
+                    String.format("결제 금액 불일치 - DB: %s, PG: %s",
+                            payment.getAmount(), pgData.amount())
+            );
+        }
+
+        log.debug("콜백 데이터 검증 완료 - transactionKey: {}", callback.transactionKey());
+    }
+
+    /**
+     * 주문 금액 vs 결제 금액 검증
+     *
+     * 주문 시 계산된 최종 금액과 실제 결제된 금액이 일치하는지 확인합니다.
+     * 금액 변조를 방지하기 위한 필수 검증입니다.
+     *
+     * @param order 주문 엔티티
+     * @param paymentAmount 결제 금액
+     * @throws IllegalStateException 금액 불일치 시
+     */
+    private void validateOrderAmount(OrderEntity order, java.math.BigDecimal paymentAmount) {
+        if (order.getFinalTotalAmount().compareTo(paymentAmount) != 0) {
+            throw new IllegalStateException(
+                    String.format("주문 금액과 결제 금액 불일치 - 주문: %s, 결제: %s",
+                            order.getFinalTotalAmount(), paymentAmount)
+            );
+        }
+
+        log.debug("주문 금액 검증 완료 - orderId: {}, amount: {}", order.getId(), paymentAmount);
     }
 }
