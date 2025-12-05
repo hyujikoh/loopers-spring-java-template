@@ -15,7 +15,7 @@ import com.loopers.fixtures.UserTestFixture;
 
 /**
  * PaymentEntity 단위 테스트
- * <p>
+ * 
  * Level 1: 단위 테스트 (P0 우선순위)
  * - PaymentEntity의 도메인 로직 검증
  * - 상태 전이 검증
@@ -39,7 +39,7 @@ class PaymentEntityTest {
             @DisplayName("유효한 정보로 PENDING 상태 결제를 생성한다")
             void 유효한_정보로_PENDING_상태_결제를_생성한다() {
                 // Given
-                PaymentDomainCreateRequest request = PaymentTestFixture.createPendingDomainRequest();
+                PaymentDomainDtos.PaymentDomainCreateRequest request = PaymentTestFixture.createPendingDomainRequest();
 
                 // When
                 PaymentEntity payment = PaymentEntity.createPayment(request);
@@ -107,7 +107,8 @@ class PaymentEntityTest {
             @DisplayName("주문 ID가 null이면 예외가 발생한다")
             void 주문_ID가_null이면_예외가_발생한다() {
                 // Given
-                PaymentDomainCreateRequest request = new PaymentDomainCreateRequest(
+
+                PaymentDomainDtos.PaymentDomainCreateRequest request = new PaymentDomainDtos.PaymentDomainCreateRequest(
                         1L,
                         null, // orderId null
                         "TXN_123",
@@ -130,7 +131,7 @@ class PaymentEntityTest {
             @DisplayName("결제 금액이 0 이하면 예외가 발생한다")
             void 결제_금액이_0_이하면_예외가_발생한다() {
                 // Given
-                PaymentDomainCreateRequest request = PaymentTestFixture.createDomainRequestWithAmount(
+                PaymentDomainDtos.PaymentDomainCreateRequest request = PaymentTestFixture.createDomainRequestWithAmount(
                         BigDecimal.ZERO
                 );
 
@@ -144,7 +145,7 @@ class PaymentEntityTest {
             @DisplayName("결제 금액이 음수면 예외가 발생한다")
             void 결제_금액이_음수면_예외가_발생한다() {
                 // Given
-                PaymentDomainCreateRequest request = PaymentTestFixture.createDomainRequestWithAmount(
+                PaymentDomainDtos.PaymentDomainCreateRequest request = PaymentTestFixture.createDomainRequestWithAmount(
                         BigDecimal.valueOf(-1500L)
                 );
 

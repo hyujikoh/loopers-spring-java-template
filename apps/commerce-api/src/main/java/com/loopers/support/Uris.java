@@ -92,7 +92,7 @@ public class Uris {
     }
 
     /**
-     * Like API 엔드포인트
+     * Payment API 엔드포인트
      */
     public static class Payment {
         private Payment() {

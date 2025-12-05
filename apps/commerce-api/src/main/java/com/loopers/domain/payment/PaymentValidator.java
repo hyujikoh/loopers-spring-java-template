@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 결제 도메인 검증 로직
- * <p>
+ * 
  * DDD 원칙에 따라 비즈니스 검증 로직을 도메인 계층에 위치시킵니다.
  *
  * @author hyunjikoh
@@ -27,7 +27,7 @@ public class PaymentValidator {
 
     /**
      * 주문 결제 가능 여부 검증
-     * <p>
+     * 
      * 검증 항목:
      * - 주문 상태 확인 (PENDING만 결제 가능)
      * - 결제 금액 일치 여부
@@ -57,7 +57,7 @@ public class PaymentValidator {
 
     /**
      * PG 콜백 데이터 검증
-     * <p>
+     * 
      * 검증 항목:
      * - 주문 ID 일치 여부
      * - 콜백 상태 vs PG 실제 상태 일치 여부
@@ -95,7 +95,7 @@ public class PaymentValidator {
 
     /**
      * 주문 금액 vs 결제 금액 검증
-     * <p>
+     * 
      * 주문 금액과 PG 결제 금액이 일치하는지 검증
      *
      * @param order    주문 엔티티
@@ -116,7 +116,7 @@ public class PaymentValidator {
      * PG API 응답 검증
      *
      * @param pgResponse PG 응답
-     * @throws CoreException API 실패 시
+     * @throws RuntimeException API 실패 시
      */
     public void validatePgResponse(PgPaymentResponse pgResponse) {
         if (pgResponse.isApiFail()) {

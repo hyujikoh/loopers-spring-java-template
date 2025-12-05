@@ -59,7 +59,7 @@ public class PaymentProcessor {
 
     /**
      * PG에서 결제 상태 조회 (보안 강화)
-     * <p>
+     * 
      * 콜백 데이터만 신뢰하지 않고, PG API에 직접 조회하여 검증
      *
      * @param transactionKey PG 거래 키

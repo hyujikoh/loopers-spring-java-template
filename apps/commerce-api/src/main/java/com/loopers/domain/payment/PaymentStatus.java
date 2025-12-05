@@ -18,4 +18,12 @@ public enum PaymentStatus {
     TIMEOUT("결제 시간 만료");       // 콜백 미수신 타임아웃
 
     private final String description;
+
+    public static PaymentStatus fromString(String status) {
+        try {
+            return valueOf(status);
+        } catch (IllegalArgumentException e) {
+            return FAILED; // 또는 적절한 기본값
+        }
+    }
 }

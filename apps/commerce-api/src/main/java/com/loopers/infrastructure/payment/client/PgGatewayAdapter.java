@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * PgGateway 구현체 (Adapter)
- * <p>
+ * 
  * Domain Layer의 PgGateway 인터페이스를 구현하여
  * Infrastructure Layer의 PgClient를 연결합니다.
  *

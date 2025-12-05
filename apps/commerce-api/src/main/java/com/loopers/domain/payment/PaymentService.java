@@ -3,13 +3,18 @@ package com.loopers.domain.payment;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.application.payment.PaymentCommand;
+import com.loopers.domain.payment.event.PaymentCompletedEvent;
+import com.loopers.domain.payment.event.PaymentFailedEvent;
 import com.loopers.domain.user.UserEntity;
+import com.loopers.interfaces.api.payment.PaymentV1Dtos;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author hyunjikoh
@@ -18,8 +23,10 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
     private final PaymentRepository paymentRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PaymentEntity createPending(UserEntity user, PaymentCommand command) {
@@ -52,5 +59,45 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public List<PaymentEntity> findPendingPaymentsOlderThan(ZonedDateTime threshold) {
         return paymentRepository.findPendingPaymentsOlderThan(threshold);
+    }
+
+    /**
+     * 결제 결과 처리
+     * 
+     * 결제 상태에 따라:
+     * - SUCCESS: 결제 완료 처리 + PaymentCompletedEvent 발행
+     * - FAILED: 결제 실패 처리 + PaymentFailedEvent 발행
+     * - PENDING: 무시 (아직 처리 중)
+     */
+    public void processPaymentResult(PaymentEntity payment, PaymentV1Dtos.PgCallbackRequest request) {
+        switch (request.status()) {
+            case "SUCCESS" -> {
+                payment.complete();
+                log.info("결제 성공 처리 완료 - transactionKey: {}, orderId: {}",
+                        request.transactionKey(), request.orderId());
+
+                eventPublisher.publishEvent(new PaymentCompletedEvent(
+                        payment.getTransactionKey(),
+                        payment.getOrderId(),
+                        payment.getUserId(),
+                        payment.getAmount()
+                ));
+            }
+            case "FAILED" -> {
+                payment.fail(request.reason());
+                log.warn("결제 실패 처리 - transactionKey: {}, reason: {}",
+                        request.transactionKey(), request.reason());
+
+                eventPublisher.publishEvent(new PaymentFailedEvent(
+                        payment.getTransactionKey(),
+                        payment.getOrderId(),
+                        payment.getUserId(),
+                        request.reason()
+                ));
+            }
+            case "PENDING" -> log.debug("결제 처리 중 상태 콜백 수신 - transactionKey: {}", request.transactionKey());
+            default -> log.error("알 수 없는 결제 상태 - transactionKey: {}, status: {}",
+                    request.transactionKey(), request.status());
+        }
     }
 }
