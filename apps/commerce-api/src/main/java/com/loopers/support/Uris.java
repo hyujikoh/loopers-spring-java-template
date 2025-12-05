@@ -90,4 +90,15 @@ public class Uris {
         public static final String UPSERT = BASE + "/products/{productId}";
         public static final String CANCEL = BASE + "/products/{productId}";
     }
+
+    /**
+     * Like API 엔드포인트
+     */
+    public static class Payment {
+        private Payment() {
+        }
+
+        public static final String BASE = API_V1 + "/payments";
+        public static final String CALLBACK = BASE + "/callback";
+    }
 }

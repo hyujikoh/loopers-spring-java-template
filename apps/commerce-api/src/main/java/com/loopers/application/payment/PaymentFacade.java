@@ -141,7 +141,7 @@ public class PaymentFacade {
                 user.getUsername()
         );
 
-        // 5. 콜백 데이터 검증 (도메인 서비스에 위임)
+        // 5. 콜백 데이터 검증
         paymentValidator.validateCallbackData(payment, request, pgData);
         paymentValidator.validateOrderAmount(order, pgData.amount());
 

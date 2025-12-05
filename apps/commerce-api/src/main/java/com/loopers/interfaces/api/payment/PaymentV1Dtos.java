@@ -18,22 +18,6 @@ public class PaymentV1Dtos {
             String callbackUrl
     ) {}
 
-    public record PaymentResponse(
-            String transactionKey,
-            Long orderId,
-            BigDecimal amount,
-            PaymentStatus status
-    ) {
-        public static PaymentResponse from(PaymentInfo info) {
-            return new PaymentResponse(
-                    info.transactionKey(),
-                    info.orderId(),
-                    info.amount(),
-                    info.status()
-            );
-        }
-    }
-
     /**
      * PG-Simulator 콜백 요청 DTO
      *
