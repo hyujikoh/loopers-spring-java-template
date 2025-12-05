@@ -116,7 +116,7 @@ public class PaymentValidator {
      * PG API 응답 검증
      *
      * @param pgResponse PG 응답
-     * @throws CoreException API 실패 시
+     * @throws RuntimeException API 실패 시
      */
     public void validatePgResponse(PgPaymentResponse pgResponse) {
         if (pgResponse.isApiFail()) {

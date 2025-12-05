@@ -13,26 +13,6 @@ import com.loopers.domain.payment.PaymentType;
 
 public class OrderV1Dtos {
 
-//    @Schema(description = "주문 등록 요청")
-//    public record OrderCreateRequest(
-//            @Schema(description = "주문 상품 목록", requiredMode = Schema.RequiredMode.REQUIRED)
-//            List<OrderItemRequest> items,
-//
-//            @Schema(description = "결제 타입 (POINT: 포인트 결제, CARD: 카드 결제)", example = "POINT", requiredMode = Schema.RequiredMode.REQUIRED)
-//            PaymentType paymentType
-//    ) {
-//        public OrderCreateCommand toCommand(String username) {
-//            List<OrderItemCommand> orderItems = items.stream()
-//                    .map(item -> new OrderItemCommand(
-//                            item.productId(),
-//                            item.quantity(),
-//                            item.couponId()
-//                    ))
-//                    .toList();
-//            return new OrderCreateCommand(username, orderItems, paymentType);
-//        }
-//    }
-
     @Schema(description = "주문 상품 정보")
     public record OrderItemRequest(
             @Schema(description = "상품 ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)

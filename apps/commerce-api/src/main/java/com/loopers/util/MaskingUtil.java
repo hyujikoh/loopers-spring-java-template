@@ -1,9 +1,13 @@
 package com.loopers.util;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * @author hyunjikoh
  * @since 2025. 12. 4.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MaskingUtil {
     public static String maskCardNumber(String cardNo) {
         if (cardNo == null || cardNo.length() < 4) return "****";

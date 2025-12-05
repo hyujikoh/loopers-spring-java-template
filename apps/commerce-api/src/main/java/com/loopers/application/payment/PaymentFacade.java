@@ -45,8 +45,6 @@ public class PaymentFacade {
     private final UserService userService;
     private final OrderService orderService;
 
-    // 이벤트 발행
-    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 카드 결제 처리 유스케이스
@@ -142,46 +140,7 @@ public class PaymentFacade {
         paymentValidator.validateOrderAmount(order, pgData.amount());
 
         // 6. 결제 결과에 따라 상태 업데이트 및 이벤트 발행
-        processPaymentResult(payment, request);
+        paymentService.processPaymentResult(payment, request);
     }
 
-    /**
-     * 결제 결과 처리
-     * <p>
-     * 결제 상태에 따라:
-     * - SUCCESS: 결제 완료 처리 + PaymentCompletedEvent 발행
-     * - FAILED: 결제 실패 처리 + PaymentFailedEvent 발행
-     * - PENDING: 무시 (아직 처리 중)
-     */
-    private void processPaymentResult(PaymentEntity payment, PaymentV1Dtos.PgCallbackRequest request) {
-        switch (request.status()) {
-            case "SUCCESS" -> {
-                payment.complete();
-                log.info("결제 성공 처리 완료 - transactionKey: {}, orderId: {}",
-                        request.transactionKey(), request.orderId());
-
-                eventPublisher.publishEvent(new PaymentCompletedEvent(
-                        payment.getTransactionKey(),
-                        payment.getOrderId(),
-                        payment.getUserId(),
-                        payment.getAmount()
-                ));
-            }
-            case "FAILED" -> {
-                payment.fail(request.reason());
-                log.warn("결제 실패 처리 - transactionKey: {}, reason: {}",
-                        request.transactionKey(), request.reason());
-
-                eventPublisher.publishEvent(new PaymentFailedEvent(
-                        payment.getTransactionKey(),
-                        payment.getOrderId(),
-                        payment.getUserId(),
-                        request.reason()
-                ));
-            }
-            case "PENDING" -> log.debug("결제 처리 중 상태 콜백 수신 - transactionKey: {}", request.transactionKey());
-            default -> log.error("알 수 없는 결제 상태 - transactionKey: {}, status: {}",
-                    request.transactionKey(), request.status());
-        }
-    }
 }
