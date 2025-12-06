@@ -48,17 +48,7 @@ public class PaymentFacade {
 
     /**
      * 카드 결제 처리 유스케이스
-     * 
-     * Resilience4j 적용:
-     * - Circuit Breaker: PG 장애 시 빠른 실패 (Fallback 실행)
-     * 
-     * 타임아웃은 Feign Client 설정으로 처리:
-     * - connect-timeout: 300ms
-     * - read-timeout: 300ms
-     * 
-     * 타임아웃 발생 시 Fallback 실행, 결과는 콜백으로 확인
      */
-    @CircuitBreaker(name = "pgClient", fallbackMethod = "processPaymentFallback")
     @Transactional
     public PaymentInfo processPayment(PaymentCommand command) {
         // 1. 사용자 조회
@@ -76,38 +66,7 @@ public class PaymentFacade {
     }
 
     /**
-     * Fallback 메서드
-     * 
-     * PG 서비스 장애 또는 타임아웃(300ms) 시 실패 결제 생성
-     */
-    @SuppressWarnings("unused")
-    private PaymentInfo processPaymentFallback(PaymentCommand command, Throwable t) {
-        log.error("PG 서비스 장애 또는 타임아웃, 결제 요청 실패 처리 - exception: {}, message: {}",
-                t.getClass().getSimpleName(), t.getMessage(), t);
-
-        UserEntity user = userService.getUserByUsername(command.username());
-
-        // PG 호출 실패 시 FAILED 상태 결제 생성
-        PaymentEntity failed = paymentService.createFailedPayment(user,
-                command,
-                "결제 시스템 응답 지연으로 처리되지 않았습니다. 다시 시도해 주세요."
-        );
-
-        return PaymentInfo.from(failed);
-    }
-
-    /**
      * PG 콜백 처리 유스케이스
-     * 
-     * 프로세스:
-     * 1. 콜백 수신
-     * 2. DB에서 결제 조회
-     * 3. 멱등성 체크 (PENDING 상태만 처리)
-     * 4. PG에 실제 상태 조회 (보안 강화)
-     * 5. 데이터 검증 (주문ID, 상태, 금액)
-     * 6. 상태 업데이트
-     * 7. 이벤트 발행
-     * 
      * 멱등성 보장: PENDING 상태가 아니면 처리하지 않음
      */
     @Transactional

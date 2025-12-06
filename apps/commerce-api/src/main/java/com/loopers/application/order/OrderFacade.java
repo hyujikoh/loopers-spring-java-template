@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.application.payment.PaymentCommand;
+import com.loopers.application.payment.PaymentFacade;
 import com.loopers.application.payment.PaymentInfo;
 import com.loopers.domain.coupon.CouponEntity;
 import com.loopers.domain.coupon.CouponService;
@@ -46,7 +47,7 @@ public class OrderFacade {
     private final ProductService productService;
     private final PointService pointService;
     private final CouponService couponService;
-    private final com.loopers.application.payment.PaymentFacade paymentFacade;
+    private final PaymentFacade paymentFacade;
 
     /**
      * 주문 생성
