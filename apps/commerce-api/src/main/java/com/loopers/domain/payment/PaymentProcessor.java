@@ -1,6 +1,7 @@
 package com.loopers.domain.payment;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 import org.springframework.stereotype.Component;
 
@@ -39,6 +40,7 @@ public class PaymentProcessor {
      * @param command 결제 명령
      * @return 생성된 결제 엔티티
      */
+    @Retry(name = "pgClient", fallbackMethod = "processPaymentFallback")
     @CircuitBreaker(name = "pgClient", fallbackMethod = "processPaymentFallback")
     public PaymentEntity processPgPayment(UserEntity user, PaymentCommand command) {
         log.info("PG 결제 처리 시작 - orderNumber: {}, username: {}, amount: {}",
@@ -104,17 +106,14 @@ public class PaymentProcessor {
      * PG 서비스 장애 또는 타임아웃(500ms) 시 실패 결제 생성
      */
     @SuppressWarnings("unused")
-    private PaymentInfo processPaymentFallback(UserEntity user, PaymentCommand command, Throwable t) {
+    private PaymentEntity processPaymentFallback(UserEntity user, PaymentCommand command, Throwable t) {
         log.error("PG 서비스 장애 또는 타임아웃, 결제 요청 실패 처리 - exception: {}, message: {}",
                 t.getClass().getSimpleName(), t.getMessage(), t);
 
-        // PG 호출 실패 시 FAILED 상태 결제 생성
-        PaymentEntity failed = paymentService.createFailedPayment(user,
+        return paymentService.createFailedPayment(user,
                 command,
                 "결제 시스템 응답 지연으로 처리되지 않았습니다. 다시 시도해 주세요."
         );
-
-        return PaymentInfo.from(failed);
     }
 }
 

@@ -42,6 +42,18 @@ springdoc:
     path: /swagger-ui.html
 
 resilience4j:
+  retry:
+    instances:
+      pgClient:
+        # 재시도 설정: meta.result = "FAIL"인 경우만 재시도
+        max-attempts: 3
+        wait-duration: 1s
+        retry-exceptions:
+          - feign.FeignException.ServiceUnavailable  # 503 에러
+          - feign.FeignException.InternalServerError # 500 에러
+          - java.lang.RuntimeException               # PG API 응답 FAIL
+          - java.net.SocketTimeoutException
+
   circuitbreaker:
     instances:
       pgClient:
@@ -58,23 +70,7 @@ resilience4j:
 
         # 실패로 간주할 예외 (타임아웃 포함)
         record-exceptions:
-          - feign.FeignException.ServiceUnavailable
-          - feign.FeignException.InternalServerError
-          - java.util.concurrent.TimeoutException
           - feign.RetryableException  # Feign 타임아웃 예외
-
-  retry:
-    instances:
-      pgClient:
-        # 재시도 설정: meta.result = "FAIL"인 경우만 재시도
-        max-attempts: 3
-        wait-duration: 1s
-        retry-exceptions:
-          - feign.FeignException.ServiceUnavailable  # 503 에러
-          - feign.FeignException.InternalServerError # 500 에러
-          - java.lang.RuntimeException               # PG API 응답 FAIL
-          - java.net.SocketTimeoutException
-        # 타임아웃은 재시도하지 않음 (RetryableException, TimeoutException 제외)
 
 ---
 spring:
