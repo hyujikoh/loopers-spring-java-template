@@ -48,7 +48,7 @@ class PaymentEntityTest {
                 assertThat(payment).isNotNull();
                 assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
                 assertThat(payment.getAmount()).isEqualByComparingTo(request.amount());
-                assertThat(payment.getOrderId()).isEqualTo(request.orderNumber());
+                assertThat(payment.getOrderNumber()).isEqualTo(request.orderNumber());
                 assertThat(payment.getUserId()).isEqualTo(request.userId());
                 assertThat(payment.getTransactionKey()).isNull(); // PENDING 상태에서는 null
             }
@@ -67,7 +67,7 @@ class PaymentEntityTest {
                 assertThat(payment).isNotNull();
                 assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
                 assertThat(payment.getAmount()).isEqualByComparingTo(command.amount());
-                assertThat(payment.getOrderId()).isEqualTo(command.orderId());
+                assertThat(payment.getOrderNumber()).isEqualTo(command.orderId());
                 assertThat(payment.getUserId()).isEqualTo(user.getId());
                 assertThat(payment.getTransactionKey()).isNull();
             }
@@ -398,7 +398,7 @@ class PaymentEntityTest {
             // Then
             assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
             assertThat(payment.getAmount()).isEqualByComparingTo(new BigDecimal("30000"));
-            assertThat(payment.getOrderId()).isEqualTo(123L);
+            assertThat(payment.getOrderNumber()).isEqualTo(123L);
             assertThat(payment.getTransactionKey()).isNull();
         }
 

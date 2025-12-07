@@ -92,7 +92,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(successCallback);
 
             // Then: 결제 상태 확인
-            PaymentEntity updatedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+            PaymentEntity updatedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
             assertThat(updatedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
             assertThat(updatedPayment.getCompletedAt()).isNotNull();
 
@@ -101,7 +101,7 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        OrderEntity updatedOrder = orderRepository.findByOrderNumberAndUserId(order.getId(), user.getId()).orElseThrow();
+                        OrderEntity updatedOrder = orderRepository.findByOrderNumberAndUserId(order.getOrderNumber(), user.getId()).orElseThrow();
                         assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
                     });
         }
@@ -124,7 +124,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(successCallback);
 
             // Then: 결제 완료 확인
-            PaymentEntity updatedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+            PaymentEntity updatedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
             assertThat(updatedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
 
             // Then: 주문 확정 확인 (이벤트 처리 결과)
@@ -132,7 +132,7 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        OrderEntity updatedOrder = orderRepository.findByOrderNumberAndUserId(order.getId(), user.getId()).orElseThrow();
+                        OrderEntity updatedOrder = orderRepository.findByOrderNumberAndUserId(order.getOrderNumber(), user.getId()).orElseThrow();
                         assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
                     });
         }
@@ -161,7 +161,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(failedCallback);
 
             // Then: 결제 실패 확인
-            PaymentEntity updatedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+            PaymentEntity updatedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
             assertThat(updatedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
             assertThat(updatedPayment.getFailureReason()).isEqualTo(failureReason);
 
@@ -170,7 +170,7 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        OrderEntity updatedOrder = orderRepository.findByOrderNumberAndUserId(order.getId(), user.getId()).orElseThrow();
+                        OrderEntity updatedOrder = orderRepository.findByOrderNumberAndUserId(order.getOrderNumber(), user.getId()).orElseThrow();
                         assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
                     });
         }
@@ -194,7 +194,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(failedCallback);
 
             // Then
-            PaymentEntity updatedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+            PaymentEntity updatedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
             assertThat(updatedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
             assertThat(updatedPayment.getFailureReason()).isEqualTo(failureReason);
         }
@@ -222,7 +222,7 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        OrderEntity updatedOrder = orderRepository.findByOrderNumberAndUserId(order.getId(), user.getId()).orElseThrow();
+                        OrderEntity updatedOrder = orderRepository.findByOrderNumberAndUserId(order.getOrderNumber(), user.getId()).orElseThrow();
                         assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
                     });
         }
@@ -254,11 +254,11 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        PaymentEntity completedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+                        PaymentEntity completedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
                         assertThat(completedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
                     });
 
-            PaymentEntity completedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+            PaymentEntity completedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
             var originalCompletedAt = completedPayment.getCompletedAt();
 
             // When: 두 번째 SUCCESS 콜백 (중복)
@@ -266,7 +266,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(duplicateCallback);
 
             // Then: 상태 변경 없음
-            PaymentEntity unchangedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+            PaymentEntity unchangedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
             assertThat(unchangedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
             assertThat(unchangedPayment.getCompletedAt()).isEqualTo(originalCompletedAt);
         }
@@ -293,11 +293,11 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        PaymentEntity failedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+                        PaymentEntity failedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
                         assertThat(failedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
                     });
 
-            PaymentEntity failedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+            PaymentEntity failedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
             String originalFailureReason = failedPayment.getFailureReason();
 
             // When: 두 번째 실패 콜백 (다른 사유)
@@ -306,7 +306,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(duplicateCallback);
 
             // Then: failureReason 변경 없음 (첫 번째 값 유지)
-            PaymentEntity unchangedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+            PaymentEntity unchangedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
             assertThat(unchangedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
             assertThat(unchangedPayment.getFailureReason()).isEqualTo(originalFailureReason);
         }
@@ -331,7 +331,7 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        PaymentEntity completedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+                        PaymentEntity completedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
                         assertThat(completedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
                     });
 
@@ -340,7 +340,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(failedCallback);
 
             // Then: 여전히 COMPLETED 상태 유지
-            PaymentEntity unchangedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+            PaymentEntity unchangedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
             assertThat(unchangedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
             assertThat(unchangedPayment.getFailureReason()).isNull();
         }
@@ -360,7 +360,7 @@ class PaymentCallbackIntegrationTest {
 
             PaymentV1Dtos.PgCallbackRequest pendingCallback = new PaymentV1Dtos.PgCallbackRequest(
                     payment.getTransactionKey(),
-                    order.getId().toString(),
+                    order.getOrderNumber().toString(),
                     "CREDIT",
                     "1234-****-****-3456",
                     50000L,
@@ -376,7 +376,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(pendingCallback);
 
             // Then: PENDING 상태 유지
-            PaymentEntity unchangedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
+            PaymentEntity unchangedPayment = paymentRepository.findByOrderNumber(order.getOrderNumber()).orElseThrow();
             assertThat(unchangedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
         }
     }
@@ -407,7 +407,7 @@ class PaymentCallbackIntegrationTest {
     private PaymentEntity createAndSavePendingPayment(UserEntity user, OrderEntity order) {
         PaymentCommand command = PaymentCommand.builder()
                 .username(user.getUsername())
-                .orderId(order.getId())
+                .orderId(order.getOrderNumber())
                 .orderNumber(order.getOrderNumber())
                 .cardType("CREDIT")
                 .cardNo("1234-5678-9012-3456")
@@ -426,7 +426,7 @@ class PaymentCallbackIntegrationTest {
     private PaymentV1Dtos.PgCallbackRequest createSuccessCallback(PaymentEntity payment, OrderEntity order) {
         return new PaymentV1Dtos.PgCallbackRequest(
                 payment.getTransactionKey(),
-                order.getId().toString(),
+                order.getOrderNumber().toString(),
                 "CREDIT",
                 "1234-****-****-3456",
                 order.getFinalTotalAmount().longValue(),
@@ -441,7 +441,7 @@ class PaymentCallbackIntegrationTest {
     private PaymentV1Dtos.PgCallbackRequest createFailedCallback(PaymentEntity payment, OrderEntity order, String reason) {
         return new PaymentV1Dtos.PgCallbackRequest(
                 payment.getTransactionKey(),
-                order.getId().toString(),
+                order.getOrderNumber().toString(),
                 "CREDIT",
                 "1234-****-****-3456",
                 order.getFinalTotalAmount().longValue(),
@@ -458,7 +458,7 @@ class PaymentCallbackIntegrationTest {
                 new PgPaymentResponse.Meta("SUCCESS", null, null),
                 new PgPaymentResponse.Data(
                         payment.getTransactionKey(),
-                        order.getId().toString(),
+                        order.getOrderNumber().toString(),
                         "CREDIT",
                         "1234-****-****-3456",
                         order.getFinalTotalAmount(),
@@ -476,7 +476,7 @@ class PaymentCallbackIntegrationTest {
                 new PgPaymentResponse.Meta("SUCCESS", null, null),
                 new PgPaymentResponse.Data(
                         payment.getTransactionKey(),
-                        order.getId().toString(),
+                        order.getOrderNumber().toString(),
                         "CREDIT",
                         "1234-****-****-3456",
                         order.getFinalTotalAmount(),
@@ -494,7 +494,7 @@ class PaymentCallbackIntegrationTest {
                 new PgPaymentResponse.Meta("SUCCESS", null, null),
                 new PgPaymentResponse.Data(
                         payment.getTransactionKey(),
-                        order.getId().toString(),
+                        order.getOrderNumber().toString(),
                         "CREDIT",
                         "1234-****-****-3456",
                         order.getFinalTotalAmount(),
