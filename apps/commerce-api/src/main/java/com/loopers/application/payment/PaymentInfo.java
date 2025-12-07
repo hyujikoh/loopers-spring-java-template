@@ -20,7 +20,7 @@ public record PaymentInfo(
         return new PaymentInfo(
                 entity.getId(),
                 entity.getTransactionKey(),
-                entity.getOrderId(),
+                entity.getOrderNumber(),
                 entity.getAmount(),
                 entity.getPaymentStatus(),
                 entity.getFailureReason()
@@ -31,7 +31,7 @@ public record PaymentInfo(
         return new PaymentInfo(
                 entity.getId(),
                 entity.getTransactionKey(),
-                entity.getOrderId(),
+                entity.getOrderNumber(),
                 entity.getAmount(),
                 PaymentStatus.PENDING,
                 null

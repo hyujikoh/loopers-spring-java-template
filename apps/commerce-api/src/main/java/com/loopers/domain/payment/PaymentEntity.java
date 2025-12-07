@@ -22,39 +22,39 @@ import jakarta.persistence.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "payments", indexes = {
+@Table(name = "loopers_payments", indexes = {
         @Index(name = "idx_payment_user_id", columnList = "user_id"),
-        @Index(name = "idx_payment_transaction_key", columnList = "transactionKey"),
-        @Index(name = "idx_payment_order_id", columnList = "orderId")
+        @Index(name = "idx_payment_transaction_key", columnList = "transaction_key"),
+        @Index(name = "idx_payment_order_id", columnList = "orer_id"),
 })
 public class PaymentEntity extends BaseEntity {
 
-    @Column(nullable = true, unique = true, length = 50)
+    @Column(nullable = true, unique = true, length = 50, name = "transaction_key")
     private String transactionKey;
 
     @Column(nullable = false, name = "order_id")
-    private Long orderId;
+    private Long orderNumber;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2, name = "amount")
     private BigDecimal amount;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 20, name = "card_type")
     private String cardType;
 
-    @Column(nullable = false, length = 20)
-    private String cardNoMasked;
+    @Column(nullable = false, length = 20, name = "card_no")
+    private String cardNo;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 20, name = "payment_status")
     private PaymentStatus paymentStatus;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 255, name = "callback_url")
     private String callbackUrl;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", name = "failure_reason")
     private String failureReason;
 
     @Column(name = "completed_at")
@@ -80,7 +80,7 @@ public class PaymentEntity extends BaseEntity {
 
         // transactionKey는 PENDING 상태에서 null 허용 (명시적 주석)
         Objects.requireNonNull(request, "결제 생성 요청은 필수입니다.");
-        Objects.requireNonNull(request.orderId(), "주문 ID는 필수입니다.");
+        Objects.requireNonNull(request.orderNumber(), "주문 ID는 필수입니다.");
         Objects.requireNonNull(request.amount(), "결제 금액은 필수입니다.");
         Objects.requireNonNull(request.cardType(), "카드 타입은 필수입니다.");
         Objects.requireNonNull(request.cardNo(), "카드 번호는 필수입니다.");
@@ -94,10 +94,10 @@ public class PaymentEntity extends BaseEntity {
 
         // transactionKey는 null 가능 (PENDING 생성 시)
         this.transactionKey = request.transactionKey();
-        this.orderId = request.orderId();
+        this.orderNumber = request.orderNumber();
         this.amount = request.amount();
         this.cardType = request.cardType();
-        this.cardNoMasked = MaskingUtil.maskCardNumber(request.cardNo());
+        this.cardNo = MaskingUtil.maskCardNumber(request.cardNo());
         this.paymentStatus = request.paymentStatus();
         this.callbackUrl = request.callbackUrl();
         this.userId = request.userId();
@@ -108,7 +108,7 @@ public class PaymentEntity extends BaseEntity {
     public static PaymentEntity createPending(UserEntity user, PaymentCommand command) {
         PaymentDomainDtos.PaymentDomainCreateRequest request = new PaymentDomainDtos.PaymentDomainCreateRequest(
                 user.getId(),
-                command.orderId(),
+                command.orderNumber(),
                 null,
                 command.cardType(),
                 command.cardNo(),
@@ -126,7 +126,7 @@ public class PaymentEntity extends BaseEntity {
     public static PaymentEntity createFailed(UserEntity user, PaymentCommand command, String reason) {
         PaymentDomainDtos.PaymentDomainCreateRequest request = new PaymentDomainDtos.PaymentDomainCreateRequest(
                 user.getId(),
-                command.orderId(),
+                command.orderNumber(),
                 null,
                 command.cardType(),
                 command.cardNo(),

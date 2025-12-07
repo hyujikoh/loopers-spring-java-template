@@ -25,7 +25,7 @@ public record PaymentCommand(
         String maskedCardNo = cardNo != null && cardNo.length() >= 4
                 ? "*".repeat(cardNo.length() - 4) + cardNo.substring(cardNo.length() - 4)
                 : "****";
-        return "PaymentCommand[username=%s, orderId=%d, orderNumber=%d, cardType=%s, cardNo=%s, amount=%s, callbackUrl=%s]"
+        return "PaymentCommand[username=%s, orderNumber=%d, orderNumber=%d, cardType=%s, cardNo=%s, amount=%s, callbackUrl=%s]"
                 .formatted(username, orderId, orderNumber, cardType, maskedCardNo, amount, callbackUrl);
     }
 }

@@ -23,7 +23,7 @@ public class PaymentV1Dtos {
      *
      * PG-Simulator의 TransactionInfo 구조와 일치시킴
      * - transactionKey: 트랜잭션 키
-     * - orderId: 주문 ID
+     * - orderNumber: 주문 ID
      * - cardType: 카드 타입
      * - cardNo: 카드 번호
      * - amount: 결제 금액

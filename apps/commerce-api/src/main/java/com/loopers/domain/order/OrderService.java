@@ -169,7 +169,7 @@ public class OrderService {
         order.cancelOrder();
 
         // 주문 항목 조회 및 정렬 (교착 상태 방지)
-        return getOrderItemsByOrderId(order.getId())
+        return getOrderItemsByOrderId(order)
                 .stream()
                 .sorted(Comparator.comparing(OrderItemEntity::getProductId))
                 .toList();
@@ -192,6 +192,22 @@ public class OrderService {
     }
 
     /**
+     * 주문 ID로 주문을 조회합니다.
+     *
+     * @param orderNumber 주문 ID
+     * @param userId  사용자 ID
+     * @return 조회된 주문 엔티티
+     * @throws CoreException 주문을 찾을 수 없는 경우
+     */
+    public OrderEntity getOrderByOrderNumberAndUserId(Long orderNumber, Long userId) {
+        return orderRepository.findByOrderNumberAndUserId(orderNumber, userId)
+                .orElseThrow(() -> new CoreException(
+                        ErrorType.NOT_FOUND,
+                        String.format("주문을 찾을 수 없습니다. (ID: %d)", orderNumber)
+                ));
+    }
+
+    /**
      * 주문 항목을 생성합니다.
      *
      * @param request 주문 항목 생성 요청
@@ -206,11 +222,11 @@ public class OrderService {
     /**
      * 주문 ID로 주문 항목 목록을 조회합니다.
      *
-     * @param orderId 주문 ID
+     * @param order 주문 ID
      * @return 주문 항목 목록
      */
-    public List<OrderItemEntity> getOrderItemsByOrderId(Long orderId) {
-        return orderItemRepository.findByOrderId(orderId);
+    public List<OrderItemEntity> getOrderItemsByOrderId(OrderEntity order) {
+        return orderItemRepository.findByOrderId(order.getId());
     }
 
     /**
@@ -226,7 +242,7 @@ public class OrderService {
         OrderEntity order = getOrderByIdAndUserId(orderId, user.getId());
         order.delete();
 
-        List<OrderItemEntity> orderItemsByOrderId = getOrderItemsByOrderId(orderId);
+        List<OrderItemEntity> orderItemsByOrderId = getOrderItemsByOrderId(order);
 
         orderRepository.save(order);
         orderItemRepository.saveAll(orderItemsByOrderId);

@@ -48,7 +48,7 @@ class PaymentEntityTest {
                 assertThat(payment).isNotNull();
                 assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
                 assertThat(payment.getAmount()).isEqualByComparingTo(request.amount());
-                assertThat(payment.getOrderId()).isEqualTo(request.orderId());
+                assertThat(payment.getOrderId()).isEqualTo(request.orderNumber());
                 assertThat(payment.getUserId()).isEqualTo(request.userId());
                 assertThat(payment.getTransactionKey()).isNull(); // PENDING 상태에서는 null
             }
@@ -110,7 +110,7 @@ class PaymentEntityTest {
 
                 PaymentDomainDtos.PaymentDomainCreateRequest request = new PaymentDomainDtos.PaymentDomainCreateRequest(
                         1L,
-                        null, // orderId null
+                        null, // orderNumber null
                         "TXN_123",
                         "CREDIT",
                         "1234-5678-9012-3456",

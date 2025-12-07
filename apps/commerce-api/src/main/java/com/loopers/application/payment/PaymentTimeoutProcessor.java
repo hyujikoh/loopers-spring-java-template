@@ -40,23 +40,23 @@ public class PaymentTimeoutProcessor {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean processTimeout(PaymentEntity payment) {
         try {
-            log.warn("결제 타임아웃 처리 - transactionKey: {}, orderId: {}, requestedAt: {}",
+            log.warn("결제 타임아웃 처리 - transactionKey: {}, orderNumber: {}, requestedAt: {}",
                     payment.getTransactionKey(),
-                    payment.getOrderId(),
+                    payment.getOrderNumber(),
                     payment.getRequestedAt());
 
             payment.timeout();
 
             eventPublisher.publishEvent(new PaymentTimeoutEvent(
                     payment.getTransactionKey(),
-                    payment.getOrderId(),
+                    payment.getOrderNumber(),
                     payment.getUserId()
             ));
 
             return true;
         } catch (Exception e) {
-            log.error("결제 타임아웃 처리 실패 - transactionKey: {}, orderId: {}",
-                    payment.getTransactionKey(), payment.getOrderId(), e);
+            log.error("결제 타임아웃 처리 실패 - transactionKey: {}, orderNumber: {}",
+                    payment.getTransactionKey(), payment.getOrderNumber(), e);
             return false;
         }
     }

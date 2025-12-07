@@ -246,7 +246,7 @@ public class OrderFacade {
         order.confirmOrder();
 
         // 2. 주문 항목 조회
-        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
+        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order);
 
         return OrderInfo.from(order, orderItems);
     }
@@ -263,11 +263,11 @@ public class OrderFacade {
     @Transactional
     public OrderInfo confirmOrderByPayment(Long orderId, Long userId) {
         // 1. 주문 확정
-        OrderEntity order = orderService.getOrderByIdAndUserId(orderId, userId);
+        OrderEntity order = orderService.getOrderByOrderNumberAndUserId(orderId, userId);
         order.confirmOrder();
 
         // 2. 주문 항목 조회
-        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
+        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order);
 
         return OrderInfo.from(order, orderItems);
     }
@@ -284,7 +284,7 @@ public class OrderFacade {
     @Transactional
     public OrderInfo cancelOrderByPaymentFailure(Long orderId, Long userId) {
         // 1. 주문 조회 및 취소
-        OrderEntity order = orderService.getOrderByIdAndUserId(orderId, userId);
+        OrderEntity order = orderService.getOrderByOrderNumberAndUserId(orderId, userId);
         List<OrderItemEntity> orderItems = orderService.cancelOrderDomain(order);
 
         // 2. 재고 원복
@@ -367,7 +367,7 @@ public class OrderFacade {
     public OrderInfo getOrderById(String username, Long orderId) {
         UserEntity user = userService.getUserByUsername(username);
         OrderEntity order = orderService.getOrderByIdAndUserId(orderId, user.getId());
-        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
+        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order);
         return OrderInfo.from(order, orderItems);
     }
 

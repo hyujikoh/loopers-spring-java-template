@@ -52,7 +52,7 @@ public class PaymentValidator {
             );
         }
 
-        log.debug("주문 결제 검증 완료 - orderId: {}, amount: {}", order.getId(), paymentAmount);
+        log.debug("주문 결제 검증 완료 - orderNumber: {}, amount: {}", order.getId(), paymentAmount);
     }
 
     /**
@@ -73,10 +73,10 @@ public class PaymentValidator {
     ) {
         // 주문 ID 검증
         Long callbackOrderId = Long.parseLong(callbackRequest.orderId());
-        if (!payment.getOrderId().equals(callbackOrderId)) {
+        if (!payment.getOrderNumber().equals(callbackOrderId)) {
             throw new IllegalArgumentException(
                     String.format("주문 ID 불일치 - DB: %d, 콜백: %d",
-                            payment.getOrderId(), callbackOrderId)
+                            payment.getOrderNumber(), callbackOrderId)
             );
         }
 
@@ -109,7 +109,7 @@ public class PaymentValidator {
             );
         }
 
-        log.debug("주문 금액 검증 완료 - orderId: {}, amount: {}", order.getId(), pgAmount);
+        log.debug("주문 금액 검증 완료 - orderNumber: {}, amount: {}", order.getId(), pgAmount);
     }
 
     /**

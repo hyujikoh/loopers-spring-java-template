@@ -73,12 +73,12 @@ public class PaymentService {
         switch (request.status()) {
             case "SUCCESS" -> {
                 payment.complete();
-                log.info("결제 성공 처리 완료 - transactionKey: {}, orderId: {}",
+                log.info("결제 성공 처리 완료 - transactionKey: {}, orderNumber: {}",
                         request.transactionKey(), request.orderId());
 
                 eventPublisher.publishEvent(new PaymentCompletedEvent(
                         payment.getTransactionKey(),
-                        payment.getOrderId(),
+                        payment.getOrderNumber(),
                         payment.getUserId(),
                         payment.getAmount()
                 ));
@@ -90,7 +90,7 @@ public class PaymentService {
 
                 eventPublisher.publishEvent(new PaymentFailedEvent(
                         payment.getTransactionKey(),
-                        payment.getOrderId(),
+                        payment.getOrderNumber(),
                         payment.getUserId(),
                         request.reason()
                 ));

@@ -211,13 +211,6 @@ public class ProductMaterializedViewEntity extends BaseEntity {
             throw new IllegalArgumentException("좋아요 수는 0 이상이어야 합니다.");
         }
 
-        if (!this.productId.equals(product.getId())) {
-            throw new IllegalArgumentException(
-                    String.format("상품 ID가 일치하지 않습니다. (MV: %d, Product: %d)",
-                            this.productId, product.getId())
-            );
-        }
-
         this.name = product.getName();
         this.description = product.getDescription();
         this.price = product.getPrice();
@@ -227,6 +220,36 @@ public class ProductMaterializedViewEntity extends BaseEntity {
         this.likeCount = likeCount;
         this.productUpdatedAt = product.getUpdatedAt();
         this.brandUpdatedAt = brand.getUpdatedAt();
+        this.lastUpdatedAt = ZonedDateTime.now();
+    }
+
+    /**
+     * DTO로부터 기존 MV 엔티티를 동기화합니다.
+     *
+     * 배치 동기화 시 엔티티를 새로 생성하지 않고 필드만 업데이트합니다.
+     *
+     * @param dto 동기화용 DTO
+     * @throws IllegalArgumentException 필수 파라미터가 null인 경우
+     */
+    public void syncFromDto(ProductMVSyncDto dto) {
+        Objects.requireNonNull(dto, "동기화 DTO는 필수입니다.");
+
+        Long likeCount = dto.getLikeCount() != null ? dto.getLikeCount() : 0L;
+        if (likeCount < 0) {
+            throw new IllegalArgumentException("좋아요 수는 0 이상이어야 합니다.");
+        }
+
+        this.name = dto.getProductName();
+        this.description = dto.getProductDescription();
+        this.price = Price.of(dto.getOriginPrice(), dto.getDiscountPrice());
+        this.stockQuantity = dto.getStockQuantity();
+        this.productId = dto.getProductId();
+        this.brandId = dto.getBrandId();
+        this.brandName = dto.getBrandName();
+        this.likeCount = likeCount;
+        this.productUpdatedAt = dto.getProductUpdatedAt();
+        this.brandUpdatedAt = dto.getBrandUpdatedAt();
+        this.likeUpdatedAt = dto.getLikeUpdatedAt() != null ? dto.getLikeUpdatedAt() : ZonedDateTime.now();
         this.lastUpdatedAt = ZonedDateTime.now();
     }
 

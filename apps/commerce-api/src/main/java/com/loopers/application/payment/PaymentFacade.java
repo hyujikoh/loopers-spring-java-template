@@ -71,7 +71,7 @@ public class PaymentFacade {
      */
     @Transactional
     public void handlePaymentCallback(PaymentV1Dtos.PgCallbackRequest request) {
-        log.info("결제 콜백 처리 시작 - transactionKey: {}, status: {}, orderId: {}",
+        log.info("결제 콜백 처리 시작 - transactionKey: {}, status: {}, orderNumber: {}",
                 request.transactionKey(), request.status(), request.orderId());
 
         // 1. DB에서 결제 조회
@@ -86,7 +86,7 @@ public class PaymentFacade {
 
         // 3. 사용자 및 주문 조회
         UserEntity user = userService.getUserById(payment.getUserId());
-        OrderEntity order = orderService.getOrderByIdAndUserId(payment.getOrderId(), payment.getUserId());
+        OrderEntity order = orderService.getOrderByOrderNumberAndUserId(payment.getOrderNumber(), payment.getUserId());
 
         // 4. PG에서 실제 상태 조회
         PgPaymentResponse pgData = paymentProcessor.verifyPaymentFromPg(

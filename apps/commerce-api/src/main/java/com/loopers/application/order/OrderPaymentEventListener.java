@@ -27,9 +27,9 @@ public class OrderPaymentEventListener {
         try {
             Long orderId = event.orderId();
             orderFacade.confirmOrderByPayment(orderId, event.userId());
-            log.info("주문 확정 완료 - orderId: {}", orderId);
+            log.info("주문 확정 완료 - orderNumber: {}", orderId);
         } catch (Exception e) {
-            log.error("주문 확정 실패 - orderId: {}", event.orderId(), e);
+            log.error("주문 확정 실패 - orderNumber: {}", event.orderId(), e);
             // TODO: 실패 시 알림 또는 재처리 큐에 넣기
         }
     }
@@ -40,9 +40,9 @@ public class OrderPaymentEventListener {
         try {
             Long orderId = event.orderId();
             orderFacade.cancelOrderByPaymentFailure(orderId, event.userId());
-            log.info("주문 취소 완료 - orderId: {}", orderId);
+            log.info("주문 취소 완료 - orderNumber: {}", orderId);
         } catch (Exception e) {
-            log.error("주문 취소 실패 - orderId: {}", event.orderId(), e);
+            log.error("주문 취소 실패 - orderNumber: {}", event.orderId(), e);
         }
     }
 
@@ -51,9 +51,9 @@ public class OrderPaymentEventListener {
     public void handlePaymentTimeout(PaymentTimeoutEvent event) {
         try {
             orderFacade.cancelOrderByPaymentFailure(event.orderId(), event.userId());
-            log.info("타임아웃으로 주문 취소 - orderId: {}", event.orderId());
+            log.info("타임아웃으로 주문 취소 - orderNumber: {}", event.orderId());
         } catch (Exception e) {
-            log.error("타임아웃 주문 취소 실패 - orderId: {}", event.orderId(), e);
+            log.error("타임아웃 주문 취소 실패 - orderNumber: {}", event.orderId(), e);
         }
     }
 }

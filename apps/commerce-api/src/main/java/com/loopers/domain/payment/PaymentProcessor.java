@@ -41,7 +41,7 @@ public class PaymentProcessor {
      */
     @CircuitBreaker(name = "pgClient", fallbackMethod = "processPaymentFallback")
     public PaymentEntity processPgPayment(UserEntity user, PaymentCommand command) {
-        log.info("PG 결제 처리 시작 - orderId: {}, username: {}, amount: {}",
+        log.info("PG 결제 처리 시작 - orderNumber: {}, username: {}, amount: {}",
                 command.orderId(), user.getUsername(), command.amount());
 
         // 1. PENDING 상태 결제 생성
@@ -59,7 +59,7 @@ public class PaymentProcessor {
         // 4. transactionKey 업데이트
         pendingPayment.updateTransactionKey(pgResponse.transactionKey());
 
-        log.info("PG 결제 요청 완료 - orderId: {}, transactionKey: {}, status: {}, 콜백 대기 중",
+        log.info("PG 결제 요청 완료 - orderNumber: {}, transactionKey: {}, status: {}, 콜백 대기 중",
                 command.orderId(), pgResponse.transactionKey(), pgResponse.status());
 
         return pendingPayment;
@@ -104,11 +104,9 @@ public class PaymentProcessor {
      * PG 서비스 장애 또는 타임아웃(500ms) 시 실패 결제 생성
      */
     @SuppressWarnings("unused")
-    private PaymentInfo processPaymentFallback(PaymentCommand command, Throwable t) {
+    private PaymentInfo processPaymentFallback(UserEntity user, PaymentCommand command, Throwable t) {
         log.error("PG 서비스 장애 또는 타임아웃, 결제 요청 실패 처리 - exception: {}, message: {}",
                 t.getClass().getSimpleName(), t.getMessage(), t);
-
-        UserEntity user = userService.getUserByUsername(command.username());
 
         // PG 호출 실패 시 FAILED 상태 결제 생성
         PaymentEntity failed = paymentService.createFailedPayment(user,

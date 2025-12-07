@@ -9,6 +9,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -45,10 +46,6 @@ public class ProductEntity extends BaseEntity {
 
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;
-
-    // like_count는 ProductLikeStatsEntity(MV 테이블)에서 관리
-    // @Column(name = "like_count", nullable = false)
-    // private Long likeCount = 0L;
 
     /**
      * 상품 엔티티 생성자

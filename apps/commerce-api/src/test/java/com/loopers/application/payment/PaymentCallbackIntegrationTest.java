@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
@@ -93,7 +92,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(successCallback);
 
             // Then: 결제 상태 확인
-            PaymentEntity updatedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity updatedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             assertThat(updatedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
             assertThat(updatedPayment.getCompletedAt()).isNotNull();
 
@@ -102,7 +101,7 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        OrderEntity updatedOrder = orderRepository.findByIdAndUserId(order.getId(), user.getId()).orElseThrow();
+                        OrderEntity updatedOrder = orderRepository.findByOrderNumberAndUserId(order.getId(), user.getId()).orElseThrow();
                         assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
                     });
         }
@@ -125,7 +124,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(successCallback);
 
             // Then: 결제 완료 확인
-            PaymentEntity updatedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity updatedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             assertThat(updatedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
 
             // Then: 주문 확정 확인 (이벤트 처리 결과)
@@ -133,7 +132,7 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        OrderEntity updatedOrder = orderRepository.findByIdAndUserId(order.getId(), user.getId()).orElseThrow();
+                        OrderEntity updatedOrder = orderRepository.findByOrderNumberAndUserId(order.getId(), user.getId()).orElseThrow();
                         assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
                     });
         }
@@ -162,7 +161,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(failedCallback);
 
             // Then: 결제 실패 확인
-            PaymentEntity updatedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity updatedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             assertThat(updatedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
             assertThat(updatedPayment.getFailureReason()).isEqualTo(failureReason);
 
@@ -171,7 +170,7 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        OrderEntity updatedOrder = orderRepository.findByIdAndUserId(order.getId(), user.getId()).orElseThrow();
+                        OrderEntity updatedOrder = orderRepository.findByOrderNumberAndUserId(order.getId(), user.getId()).orElseThrow();
                         assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
                     });
         }
@@ -195,7 +194,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(failedCallback);
 
             // Then
-            PaymentEntity updatedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity updatedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             assertThat(updatedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
             assertThat(updatedPayment.getFailureReason()).isEqualTo(failureReason);
         }
@@ -223,7 +222,7 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        OrderEntity updatedOrder = orderRepository.findByIdAndUserId(order.getId(), user.getId()).orElseThrow();
+                        OrderEntity updatedOrder = orderRepository.findByOrderNumberAndUserId(order.getId(), user.getId()).orElseThrow();
                         assertThat(updatedOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
                     });
         }
@@ -255,11 +254,11 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        PaymentEntity completedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+                        PaymentEntity completedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
                         assertThat(completedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
                     });
 
-            PaymentEntity completedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity completedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             var originalCompletedAt = completedPayment.getCompletedAt();
 
             // When: 두 번째 SUCCESS 콜백 (중복)
@@ -267,7 +266,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(duplicateCallback);
 
             // Then: 상태 변경 없음
-            PaymentEntity unchangedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity unchangedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             assertThat(unchangedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
             assertThat(unchangedPayment.getCompletedAt()).isEqualTo(originalCompletedAt);
         }
@@ -294,11 +293,11 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        PaymentEntity failedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+                        PaymentEntity failedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
                         assertThat(failedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
                     });
 
-            PaymentEntity failedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity failedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             String originalFailureReason = failedPayment.getFailureReason();
 
             // When: 두 번째 실패 콜백 (다른 사유)
@@ -307,7 +306,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(duplicateCallback);
 
             // Then: failureReason 변경 없음 (첫 번째 값 유지)
-            PaymentEntity unchangedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity unchangedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             assertThat(unchangedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
             assertThat(unchangedPayment.getFailureReason()).isEqualTo(originalFailureReason);
         }
@@ -332,7 +331,7 @@ class PaymentCallbackIntegrationTest {
                     .atMost(5, TimeUnit.SECONDS)
                     .pollInterval(Duration.ofMillis(100))
                     .untilAsserted(() -> {
-                        PaymentEntity completedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+                        PaymentEntity completedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
                         assertThat(completedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
                     });
 
@@ -341,7 +340,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(failedCallback);
 
             // Then: 여전히 COMPLETED 상태 유지
-            PaymentEntity unchangedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity unchangedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             assertThat(unchangedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.COMPLETED);
             assertThat(unchangedPayment.getFailureReason()).isNull();
         }
@@ -377,7 +376,7 @@ class PaymentCallbackIntegrationTest {
             paymentFacade.handlePaymentCallback(pendingCallback);
 
             // Then: PENDING 상태 유지
-            PaymentEntity unchangedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity unchangedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             assertThat(unchangedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
         }
     }

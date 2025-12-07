@@ -48,8 +48,8 @@ public class ProductDataGeneratorRunner implements CommandLineRunner {
     private final Random random = new Random();
 
     private static final int BATCH_SIZE = 1000;
-    private static final int TOTAL_PRODUCTS = 100000; //  정확히 10만 개
-    private static final int INITIAL_BRAND_COUNT = 100; // 초기 브랜드 개수
+    private static final int TOTAL_PRODUCTS = 100; //  정확히 10만 개
+    private static final int INITIAL_BRAND_COUNT = 5; // 초기 브랜드 개수
 
     private final Set<String> generatedBrandNames = new HashSet<>();
 
