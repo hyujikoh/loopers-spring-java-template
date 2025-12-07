@@ -39,5 +39,6 @@ public record OrderCreateCommand(
             String cardNo,
             @NotBlank
             String callbackUrl
-    ) {}
+    ) {
+    }
 }

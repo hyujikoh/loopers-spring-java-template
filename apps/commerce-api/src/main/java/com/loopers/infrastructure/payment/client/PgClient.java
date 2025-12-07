@@ -37,7 +37,7 @@ public interface PgClient {
     );
 
     /**
-     * 결제 정보 목록 조회 (by orderId)
+     * 결제 정보 목록 조회 (by orderNumber)
      */
     @GetMapping("/api/v1/payments")
     List<PgPaymentResponse> getPaymentsByOrderId(

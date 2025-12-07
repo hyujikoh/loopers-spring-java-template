@@ -39,7 +39,7 @@ import feign.RequestTemplate;
 
 /**
  * Resilience4j Circuit Breaker 동작 검증 테스트
- * 
+ * <p>
  * 검증 항목:
  * - minimumNumberOfCalls 로직 정확성
  * - failureRateThreshold 계산 정확성
@@ -259,7 +259,7 @@ class PaymentCircuitIntegrationTest {
             then(pgClient).shouldHaveNoInteractions();
 
             // DB에 FAILED 상태로 저장됨
-            PaymentEntity savedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity savedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             assertThat(savedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
             assertThat(savedPayment.getFailureReason()).contains("결제 시스템 응답 지연으로 처리되지 않았습니다.");
         }
@@ -548,7 +548,7 @@ class PaymentCircuitIntegrationTest {
             assertThat(result.status()).isEqualTo(PaymentStatus.FAILED);
 
             // DB 확인
-            PaymentEntity savedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity savedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             assertThat(savedPayment.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
             assertThat(savedPayment.getFailureReason()).isNotNull().contains("결제 시스템 응답 지연으로 처리되지 않았습니다");
         }
@@ -569,7 +569,7 @@ class PaymentCircuitIntegrationTest {
             // Then: PG 호출에 실패했으므로 transactionKey가 없음
             assertThat(result.transactionKey()).isNull();
 
-            PaymentEntity savedPayment = paymentRepository.findByOrderId(order.getId()).orElseThrow();
+            PaymentEntity savedPayment = paymentRepository.findByOrderNumber(order.getId()).orElseThrow();
             assertThat(savedPayment.getTransactionKey()).isNull();
         }
     }

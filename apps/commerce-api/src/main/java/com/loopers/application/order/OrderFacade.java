@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.application.payment.PaymentCommand;
+import com.loopers.application.payment.PaymentFacade;
 import com.loopers.application.payment.PaymentInfo;
 import com.loopers.domain.coupon.CouponEntity;
 import com.loopers.domain.coupon.CouponService;
@@ -30,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 주문 Facade
- * 
+ * <p>
  * 주문 생성, 확정, 취소 등의 유스케이스를 조정합니다.
  *
  * @author hyunjikoh
@@ -46,11 +47,11 @@ public class OrderFacade {
     private final ProductService productService;
     private final PointService pointService;
     private final CouponService couponService;
-    private final com.loopers.application.payment.PaymentFacade paymentFacade;
+    private final PaymentFacade paymentFacade;
 
     /**
      * 주문 생성
-     * 
+     * <p>
      * 여러 도메인 서비스를 조정하여 주문 생성 유스케이스를 완성합니다.
      *
      * @param command 주문 생성 명령
@@ -120,7 +121,7 @@ public class OrderFacade {
 
     /**
      * 카드 결제용 주문 생성
-     * 
+     * <p>
      * 포인트 차감 없이 주문만 생성합니다.
      * 재고 차감, 쿠폰 사용은 주문 생성 시 처리하고, 결제는 별도 API로 진행합니다.
      *
@@ -189,7 +190,7 @@ public class OrderFacade {
 
     /**
      * 카드 결제와 함께 주문 생성 (통합 처리)
-     * 
+     * <p>
      * 주문 생성 + PG 결제 요청을 한 번에 처리합니다.
      *
      * @param command 주문 생성 명령 (카드 정보 포함)
@@ -202,15 +203,15 @@ public class OrderFacade {
 
         // 2. 결제 요청 (주문 ID 사용)
         PaymentCommand paymentCommand =
-            PaymentCommand.builder()
-                .username(command.username())
-                .orderId(orderInfo.id())
-                    .orderNumber(orderInfo.orderNumber())
-                .cardType(command.cardInfo().cardType())
-                .cardNo(command.cardInfo().cardNo())
-                .amount(orderInfo.finalTotalAmount())
-                .callbackUrl(command.cardInfo().callbackUrl())
-                .build();
+                PaymentCommand.builder()
+                        .username(command.username())
+                        .orderId(orderInfo.id())
+                        .orderNumber(orderInfo.orderNumber())
+                        .cardType(command.cardInfo().cardType())
+                        .cardNo(command.cardInfo().cardNo())
+                        .amount(orderInfo.finalTotalAmount())
+                        .callbackUrl(command.cardInfo().callbackUrl())
+                        .build();
 
         PaymentInfo paymentInfo = paymentFacade.processPayment(paymentCommand);
 
@@ -229,7 +230,7 @@ public class OrderFacade {
 
     /**
      * 주문 확정
-     * 
+     * <p>
      * 주문을 확정합니다. (재고는 이미 주문 생성 시 차감되었음)
      *
      * @param orderId  주문 ID
@@ -245,14 +246,14 @@ public class OrderFacade {
         order.confirmOrder();
 
         // 2. 주문 항목 조회
-        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
+        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order);
 
         return OrderInfo.from(order, orderItems);
     }
 
     /**
      * 결제 성공 시 주문 확정 처리
-     * 
+     * <p>
      * PG 결제 성공 콜백을 받았을 때 호출됩니다.
      * 포인트 차감 없이 주문만 확정합니다. (이미 카드 결제로 처리됨)
      *
@@ -262,18 +263,18 @@ public class OrderFacade {
     @Transactional
     public OrderInfo confirmOrderByPayment(Long orderId, Long userId) {
         // 1. 주문 확정
-        OrderEntity order = orderService.getOrderByIdAndUserId(orderId, userId);
+        OrderEntity order = orderService.getOrderByOrderNumberAndUserId(orderId, userId);
         order.confirmOrder();
 
         // 2. 주문 항목 조회
-        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
+        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order);
 
         return OrderInfo.from(order, orderItems);
     }
 
     /**
      * 결제 실패 시 주문 취소 및 보상 처리
-     * 
+     * <p>
      * PG 결제 실패 콜백을 받았을 때 호출됩니다.
      * 재고 복원, 쿠폰 복원 등의 보상 트랜잭션을 수행합니다.
      *
@@ -283,7 +284,7 @@ public class OrderFacade {
     @Transactional
     public OrderInfo cancelOrderByPaymentFailure(Long orderId, Long userId) {
         // 1. 주문 조회 및 취소
-        OrderEntity order = orderService.getOrderByIdAndUserId(orderId, userId);
+        OrderEntity order = orderService.getOrderByOrderNumberAndUserId(orderId, userId);
         List<OrderItemEntity> orderItems = orderService.cancelOrderDomain(order);
 
         // 2. 재고 원복
@@ -312,7 +313,7 @@ public class OrderFacade {
 
     /**
      * 주문 취소
-     * 
+     * <p>
      * 여러 도메인 서비스를 조정하여 주문 취소 유스케이스를 완성합니다.
      * 주문을 취소하고 차감된 재고를 원복하며 포인트를 환불합니다.
      *
@@ -366,7 +367,7 @@ public class OrderFacade {
     public OrderInfo getOrderById(String username, Long orderId) {
         UserEntity user = userService.getUserByUsername(username);
         OrderEntity order = orderService.getOrderByIdAndUserId(orderId, user.getId());
-        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(orderId);
+        List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order);
         return OrderInfo.from(order, orderItems);
     }
 

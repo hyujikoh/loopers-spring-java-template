@@ -7,8 +7,6 @@ import com.loopers.application.payment.PaymentCommand;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
 
-import lombok.Value;
-
 /**
  * @author hyunjikoh
  * @since 2025. 12. 5.
@@ -16,7 +14,7 @@ import lombok.Value;
 public class PaymentDomainDtos {
     public record PaymentDomainCreateRequest(
             Long userId,
-            Long orderId,
+            Long orderNumber,
             String transactionKey,
             String cardType,
             String cardNo,
@@ -43,14 +41,13 @@ public class PaymentDomainDtos {
     }
 
 
-
-    public record  PgPaymentResult(
+    public record PgPaymentResult(
             String transactionKey,
             String status,
             String failureReason,
             boolean isApiFail,
             String errorCode,
-            String message){
+            String message) {
         public static PgPaymentResult from(PgPaymentResponse pgResponse) {
             return new PgPaymentResult(
                     pgResponse.data().transactionKey(),

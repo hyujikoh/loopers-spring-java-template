@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 /**
  * PG API 응답 DTO
- * 
+ * <p>
  * PG API 응답 구조:
  * {
  * "meta": {
@@ -14,7 +14,7 @@ import java.math.BigDecimal;
  * },
  * "data": {
  * "transactionKey": "...",
- * "orderId": "...",
+ * "orderNumber": "...",
  * "cardType": "...",
  * "cardNo": "...",
  * "amount": 5000,
@@ -101,7 +101,7 @@ public record PgPaymentResponse(
     }
 
     /**
-     * orderId 조회
+     * orderNumber 조회
      */
     public String orderId() {
         return data != null ? data.orderId() : null;

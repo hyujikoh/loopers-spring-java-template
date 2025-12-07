@@ -2,9 +2,6 @@ package com.loopers.interfaces.api.payment;
 
 import java.math.BigDecimal;
 
-import com.loopers.application.payment.PaymentInfo;
-import com.loopers.domain.payment.PaymentStatus;
-
 /**
  * @author hyunjikoh
  * @since 2025. 12. 3.
@@ -16,14 +13,15 @@ public class PaymentV1Dtos {
             String cardNo,
             BigDecimal amount,
             String callbackUrl
-    ) {}
+    ) {
+    }
 
     /**
      * PG-Simulator 콜백 요청 DTO
-     *
+     * <p>
      * PG-Simulator의 TransactionInfo 구조와 일치시킴
      * - transactionKey: 트랜잭션 키
-     * - orderId: 주문 ID
+     * - orderNumber: 주문 ID
      * - cardType: 카드 타입
      * - cardNo: 카드 번호
      * - amount: 결제 금액

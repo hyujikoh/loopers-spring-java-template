@@ -1,16 +1,11 @@
 package com.loopers.application.payment;
 
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.order.OrderEntity;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.payment.*;
-import com.loopers.domain.payment.event.PaymentCompletedEvent;
-import com.loopers.domain.payment.event.PaymentFailedEvent;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserService;
 import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
@@ -21,13 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 결제 유스케이스 Facade (응용 계층)
- * 
+ * <p>
  * DDD 원칙에 따라 유스케이스 조정 역할만 담당:
  * - 트랜잭션 경계 설정
  * - 여러 도메인 서비스 조합
  * - 이벤트 발행
  * - DTO 변환
- * 
+ * <p>
  * 비즈니스 로직은 도메인 계층(PaymentProcessor, PaymentValidator)에 위치
  *
  * @author hyunjikoh
@@ -48,17 +43,7 @@ public class PaymentFacade {
 
     /**
      * 카드 결제 처리 유스케이스
-     * 
-     * Resilience4j 적용:
-     * - Circuit Breaker: PG 장애 시 빠른 실패 (Fallback 실행)
-     * 
-     * 타임아웃은 Feign Client 설정으로 처리:
-     * - connect-timeout: 300ms
-     * - read-timeout: 300ms
-     * 
-     * 타임아웃 발생 시 Fallback 실행, 결과는 콜백으로 확인
      */
-    @CircuitBreaker(name = "pgClient", fallbackMethod = "processPaymentFallback")
     @Transactional
     public PaymentInfo processPayment(PaymentCommand command) {
         // 1. 사용자 조회
@@ -76,43 +61,12 @@ public class PaymentFacade {
     }
 
     /**
-     * Fallback 메서드
-     * 
-     * PG 서비스 장애 또는 타임아웃(300ms) 시 실패 결제 생성
-     */
-    @SuppressWarnings("unused")
-    private PaymentInfo processPaymentFallback(PaymentCommand command, Throwable t) {
-        log.error("PG 서비스 장애 또는 타임아웃, 결제 요청 실패 처리 - exception: {}, message: {}",
-                t.getClass().getSimpleName(), t.getMessage(), t);
-
-        UserEntity user = userService.getUserByUsername(command.username());
-
-        // PG 호출 실패 시 FAILED 상태 결제 생성
-        PaymentEntity failed = paymentService.createFailedPayment(user,
-                command,
-                "결제 시스템 응답 지연으로 처리되지 않았습니다. 다시 시도해 주세요."
-        );
-
-        return PaymentInfo.from(failed);
-    }
-
-    /**
      * PG 콜백 처리 유스케이스
-     * 
-     * 프로세스:
-     * 1. 콜백 수신
-     * 2. DB에서 결제 조회
-     * 3. 멱등성 체크 (PENDING 상태만 처리)
-     * 4. PG에 실제 상태 조회 (보안 강화)
-     * 5. 데이터 검증 (주문ID, 상태, 금액)
-     * 6. 상태 업데이트
-     * 7. 이벤트 발행
-     * 
      * 멱등성 보장: PENDING 상태가 아니면 처리하지 않음
      */
     @Transactional
     public void handlePaymentCallback(PaymentV1Dtos.PgCallbackRequest request) {
-        log.info("결제 콜백 처리 시작 - transactionKey: {}, status: {}, orderId: {}",
+        log.info("결제 콜백 처리 시작 - transactionKey: {}, status: {}, orderNumber: {}",
                 request.transactionKey(), request.status(), request.orderId());
 
         // 1. DB에서 결제 조회
@@ -127,7 +81,7 @@ public class PaymentFacade {
 
         // 3. 사용자 및 주문 조회
         UserEntity user = userService.getUserById(payment.getUserId());
-        OrderEntity order = orderService.getOrderByIdAndUserId(payment.getOrderId(), payment.getUserId());
+        OrderEntity order = orderService.getOrderByOrderNumberAndUserId(payment.getOrderNumber(), payment.getUserId());
 
         // 4. PG에서 실제 상태 조회
         PgPaymentResponse pgData = paymentProcessor.verifyPaymentFromPg(

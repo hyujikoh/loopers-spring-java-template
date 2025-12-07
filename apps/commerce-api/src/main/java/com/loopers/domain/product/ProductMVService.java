@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.application.product.BatchUpdateResult;
-import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.product.dto.ProductSearchFilter;
 import com.loopers.infrastructure.cache.CacheStrategy;
 import com.loopers.support.error.CoreException;
@@ -23,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 상품 Materialized View 서비스
- * 
+ * <p>
  * MV 테이블 조회 및 배치 동기화를 담당하는 서비스입니다.
  * 상품, 브랜드, 좋아요 정보를 통합하여 조회 성능을 최적화합니다.
  *
@@ -39,7 +38,8 @@ public class ProductMVService {
     private final ProductMVRepository mvRepository;
     private final ProductCacheService productCacheService;
     private final AtomicReference<ZonedDateTime> lastBatchTime =
-                       new AtomicReference<>(ZonedDateTime.now().minusYears(1)); // 초기값
+            new AtomicReference<>(ZonedDateTime.now().minusYears(1)); // 초기값
+
     /**
      * 상품 ID로 MV를 조회합니다.
      *
@@ -79,7 +79,7 @@ public class ProductMVService {
 
     /**
      * 캐시 전략에 따라 MV 엔티티 목록을 조회합니다.
-     * 
+     * <p>
      * 도메인 엔티티만 반환하며, DTO 변환은 Facade에서 수행합니다.
      *
      * @param filter   검색 조건
@@ -117,7 +117,7 @@ public class ProductMVService {
                 strategy, brandId, pageable
         );
 
-        if (cachedIds.isPresent() && ! cachedIds.get().isEmpty()) {
+        if (cachedIds.isPresent() && !cachedIds.get().isEmpty()) {
             log.debug("{} 캐시 히트 - brandId: {}, page: {}", strategy, brandId, pageable.getPageNumber());
             return findByIdsAsPage(cachedIds.get(), pageable);
         }
@@ -239,18 +239,7 @@ public class ProductMVService {
      * DTO로부터 기존 MV를 동기화합니다.
      */
     private void syncMVFromDto(ProductMaterializedViewEntity mv, ProductMVSyncDto dto) {
-        ProductEntity product = new ProductEntity(
-                dto.getBrandId(),
-                dto.getProductName(),
-                dto.getProductDescription(),
-                dto.getOriginPrice(),
-                dto.getDiscountPrice(),
-                dto.getStockQuantity()
-        );
-
-        BrandEntity brand = new BrandEntity(dto.getBrandName(), null);
-
-        mv.sync(product, brand, dto.getLikeCount() != null ? dto.getLikeCount() : 0L);
+        mv.syncFromDto(dto);
     }
 
 

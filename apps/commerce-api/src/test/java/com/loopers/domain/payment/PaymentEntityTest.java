@@ -15,7 +15,7 @@ import com.loopers.fixtures.UserTestFixture;
 
 /**
  * PaymentEntity 단위 테스트
- * 
+ * <p>
  * Level 1: 단위 테스트 (P0 우선순위)
  * - PaymentEntity의 도메인 로직 검증
  * - 상태 전이 검증
@@ -48,7 +48,7 @@ class PaymentEntityTest {
                 assertThat(payment).isNotNull();
                 assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
                 assertThat(payment.getAmount()).isEqualByComparingTo(request.amount());
-                assertThat(payment.getOrderId()).isEqualTo(request.orderId());
+                assertThat(payment.getOrderNumber()).isEqualTo(request.orderNumber());
                 assertThat(payment.getUserId()).isEqualTo(request.userId());
                 assertThat(payment.getTransactionKey()).isNull(); // PENDING 상태에서는 null
             }
@@ -67,7 +67,7 @@ class PaymentEntityTest {
                 assertThat(payment).isNotNull();
                 assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
                 assertThat(payment.getAmount()).isEqualByComparingTo(command.amount());
-                assertThat(payment.getOrderId()).isEqualTo(command.orderId());
+                assertThat(payment.getOrderNumber()).isEqualTo(command.orderId());
                 assertThat(payment.getUserId()).isEqualTo(user.getId());
                 assertThat(payment.getTransactionKey()).isNull();
             }
@@ -110,7 +110,7 @@ class PaymentEntityTest {
 
                 PaymentDomainDtos.PaymentDomainCreateRequest request = new PaymentDomainDtos.PaymentDomainCreateRequest(
                         1L,
-                        null, // orderId null
+                        null, // orderNumber null
                         "TXN_123",
                         "CREDIT",
                         "1234-5678-9012-3456",
@@ -398,7 +398,7 @@ class PaymentEntityTest {
             // Then
             assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
             assertThat(payment.getAmount()).isEqualByComparingTo(new BigDecimal("30000"));
-            assertThat(payment.getOrderId()).isEqualTo(123L);
+            assertThat(payment.getOrderNumber()).isEqualTo(123L);
             assertThat(payment.getTransactionKey()).isNull();
         }
 
