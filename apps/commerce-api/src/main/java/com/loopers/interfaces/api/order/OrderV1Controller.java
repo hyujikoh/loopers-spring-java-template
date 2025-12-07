@@ -11,7 +11,6 @@ import com.loopers.application.order.OrderInfo;
 import com.loopers.application.order.OrderSummary;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
-import com.loopers.domain.payment.PaymentType;
 import com.loopers.interfaces.api.ApiResponse;
 import com.loopers.interfaces.api.common.PageResponse;
 import com.loopers.support.Uris;
@@ -28,7 +27,7 @@ public class OrderV1Controller implements OrderV1ApiSpec {
 
     /**
      * 포인트 결제 주문 생성
-     *
+     * <p>
      * 포인트로 즉시 결제하고 주문을 확정합니다.
      */
     @PostMapping(Uris.Order.CREATE_POINT)
@@ -44,7 +43,7 @@ public class OrderV1Controller implements OrderV1ApiSpec {
 
     /**
      * 카드 결제 주문 생성
-     *
+     * <p>
      * 주문 생성과 동시에 PG 결제를 요청합니다.
      * 결제는 비동기로 처리되며, 콜백을 통해 최종 결과를 받습니다.
      */

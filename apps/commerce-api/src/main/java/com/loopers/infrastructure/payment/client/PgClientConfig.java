@@ -7,7 +7,7 @@ import feign.Retryer;
 
 /**
  * PG Feign Client 설정
- * 
+ * <p>
  * 타임아웃 설정은 application.yml에서 관리:
  * - connect-timeout: 300ms
  * - read-timeout: 300ms

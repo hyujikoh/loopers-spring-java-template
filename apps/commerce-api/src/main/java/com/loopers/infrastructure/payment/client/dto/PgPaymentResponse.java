@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 /**
  * PG API 응답 DTO
- * 
+ * <p>
  * PG API 응답 구조:
  * {
  * "meta": {

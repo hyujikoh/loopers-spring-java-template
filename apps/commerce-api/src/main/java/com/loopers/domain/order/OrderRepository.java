@@ -34,7 +34,7 @@ public interface OrderRepository {
     /**
      * 주문 ID로 주문을 조회합니다.
      *
-     * @param orderNumber     주문 ID
+     * @param orderNumber 주문 ID
      * @param userId
      * @return 조회된 주문 엔티티 (Optional)
      */

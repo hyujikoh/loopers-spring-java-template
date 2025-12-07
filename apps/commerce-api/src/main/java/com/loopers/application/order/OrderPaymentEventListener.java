@@ -21,8 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class OrderPaymentEventListener {
     private final OrderFacade orderFacade;
+
     @Async
-    @TransactionalEventListener(phase =  TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
         try {
             Long orderId = event.orderId();

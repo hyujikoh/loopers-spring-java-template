@@ -3,7 +3,6 @@ package com.loopers.domain.order;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.util.UUID;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

@@ -41,14 +41,13 @@ public class PaymentDomainDtos {
     }
 
 
-
-    public record  PgPaymentResult(
+    public record PgPaymentResult(
             String transactionKey,
             String status,
             String failureReason,
             boolean isApiFail,
             String errorCode,
-            String message){
+            String message) {
         public static PgPaymentResult from(PgPaymentResponse pgResponse) {
             return new PgPaymentResult(
                     pgResponse.data().transactionKey(),

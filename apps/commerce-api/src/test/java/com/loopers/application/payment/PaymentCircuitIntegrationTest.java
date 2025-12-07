@@ -39,7 +39,7 @@ import feign.RequestTemplate;
 
 /**
  * Resilience4j Circuit Breaker 동작 검증 테스트
- * 
+ * <p>
  * 검증 항목:
  * - minimumNumberOfCalls 로직 정확성
  * - failureRateThreshold 계산 정확성

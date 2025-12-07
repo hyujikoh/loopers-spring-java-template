@@ -91,7 +91,7 @@ public class ProductFacade {
 
     /**
      * 상품을 삭제합니다.
-     * 
+     * <p>
      * 상품 삭제 후 MV 동기화 및 캐시 무효화를 수행합니다.
      *
      * @param productId 상품 ID

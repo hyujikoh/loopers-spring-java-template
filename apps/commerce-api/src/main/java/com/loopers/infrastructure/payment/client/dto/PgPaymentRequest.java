@@ -7,7 +7,7 @@ import com.loopers.application.payment.PaymentCommand;
 
 /**
  * PG 결제 요청 DTO
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 12. 2.
  */

@@ -14,7 +14,7 @@ import jakarta.persistence.*;
 
 /**
  * 상품 Materialized View 엔티티
- *
+ * <p>
  * 상품, 브랜드, 좋아요 정보를 통합하여 조회 성능을 최적화하기 위한 MV 테이블입니다.
  * 실시간 업데이트가 아닌 배치 업데이트(2분 간격)를 통해 데이터를 동기화합니다.
  *
@@ -124,9 +124,9 @@ public class ProductMaterializedViewEntity extends BaseEntity {
     /**
      * Product, Brand, 좋아요 수로부터 MV 엔티티를 생성합니다.
      *
-     * @param product   상품 엔티티
-     * @param brand     브랜드 엔티티
-     * @param likeCount 좋아요 수
+     * @param product       상품 엔티티
+     * @param brand         브랜드 엔티티
+     * @param likeCount     좋아요 수
      * @param likeUpdatedAt 좋아요 최신 업데이트 시간
      * @return 생성된 MV 엔티티
      * @throws IllegalArgumentException 필수 파라미터가 null인 경우
@@ -163,7 +163,7 @@ public class ProductMaterializedViewEntity extends BaseEntity {
 
     /**
      * ProductMVSyncDto로부터 MV 엔티티를 생성합니다.
-     *
+     * <p>
      * 배치 동기화 시 단일 쿼리 결과로부터 MV를 생성합니다.
      *
      * @param dto 동기화용 DTO
@@ -172,7 +172,7 @@ public class ProductMaterializedViewEntity extends BaseEntity {
      */
     public static ProductMaterializedViewEntity fromDto(ProductMVSyncDto dto) {
         Objects.requireNonNull(dto, "동기화 DTO는 필수입니다.");
-        
+
         Long likeCount = dto.getLikeCount() != null ? dto.getLikeCount() : 0L;
         if (likeCount < 0) {
             throw new IllegalArgumentException("좋아요 수는 0 이상이어야 합니다.");
@@ -225,7 +225,7 @@ public class ProductMaterializedViewEntity extends BaseEntity {
 
     /**
      * DTO로부터 기존 MV 엔티티를 동기화합니다.
-     *
+     * <p>
      * 배치 동기화 시 엔티티를 새로 생성하지 않고 필드만 업데이트합니다.
      *
      * @param dto 동기화용 DTO

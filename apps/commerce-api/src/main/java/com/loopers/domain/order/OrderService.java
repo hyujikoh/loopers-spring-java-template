@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 주문 도메인 서비스
- *
+ * <p>
  * 주문과 주문 항목에 대한 핵심 비즈니스 로직을 처리합니다.
  *
  * @author hyunjikoh
@@ -54,13 +54,12 @@ public class OrderService {
 
     /**
      * 주문과 주문 항목들을 생성합니다 (도메인 로직).
-     *
+     * <p>
      * 주문 생성의 핵심 도메인 로직을 처리합니다:
-     *
-     *   주문 항목별 금액 계산 (원가, 할인, 최종가)
-     *   전체 주문 금액 집계
-     *   주문 엔티티 및 주문 항목 엔티티 생성
-     *
+     * <p>
+     * 주문 항목별 금액 계산 (원가, 할인, 최종가)
+     * 전체 주문 금액 집계
+     * 주문 엔티티 및 주문 항목 엔티티 생성
      *
      * @param userId            사용자 ID
      * @param orderableProducts 주문 가능한 상품 목록 (재고 확인 완료)
@@ -143,10 +142,10 @@ public class OrderService {
 
     /**
      * 주문 번호를 생성합니다.
-     * 
+     * <p>
      * 형식: 타임스탬프(13자리) + 6자리 랜덤 숫자
      * 예시: 1733380825123456789 (19자리)
-     * 
+     *
      * @return 생성된 주문 번호
      */
     private Long generateOrderNumber() {
@@ -157,7 +156,7 @@ public class OrderService {
 
     /**
      * 주문 취소의 도메인 로직을 처리합니다.
-     *
+     * <p>
      * 주문 상태를 취소로 변경하고 주문 항목 목록을 반환합니다.
      *
      * @param order 취소할 주문 엔티티
@@ -195,7 +194,7 @@ public class OrderService {
      * 주문 ID로 주문을 조회합니다.
      *
      * @param orderNumber 주문 ID
-     * @param userId  사용자 ID
+     * @param userId      사용자 ID
      * @return 조회된 주문 엔티티
      * @throws CoreException 주문을 찾을 수 없는 경우
      */

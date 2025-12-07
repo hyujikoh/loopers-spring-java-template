@@ -1,16 +1,11 @@
 package com.loopers.application.payment;
 
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.order.OrderEntity;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.payment.*;
-import com.loopers.domain.payment.event.PaymentCompletedEvent;
-import com.loopers.domain.payment.event.PaymentFailedEvent;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserService;
 import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
@@ -21,13 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 결제 유스케이스 Facade (응용 계층)
- * 
+ * <p>
  * DDD 원칙에 따라 유스케이스 조정 역할만 담당:
  * - 트랜잭션 경계 설정
  * - 여러 도메인 서비스 조합
  * - 이벤트 발행
  * - DTO 변환
- * 
+ * <p>
  * 비즈니스 로직은 도메인 계층(PaymentProcessor, PaymentValidator)에 위치
  *
  * @author hyunjikoh

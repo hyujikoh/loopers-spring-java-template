@@ -5,10 +5,10 @@ import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
 
 /**
  * PG(Payment Gateway) 인터페이스
- * 
+ * <p>
  * Domain Layer가 Infrastructure Layer에 직접 의존하지 않도록
  * 인터페이스를 Domain Layer에 정의합니다.
- * 
+ * <p>
  * 실제 구현체(PgClient)는 Infrastructure Layer에 위치합니다.
  *
  * @author hyunjikoh

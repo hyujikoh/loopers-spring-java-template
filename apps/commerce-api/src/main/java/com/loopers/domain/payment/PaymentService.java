@@ -63,7 +63,7 @@ public class PaymentService {
 
     /**
      * 결제 결과 처리
-     * 
+     * <p>
      * 결제 상태에 따라:
      * - SUCCESS: 결제 완료 처리 + PaymentCompletedEvent 발행
      * - FAILED: 결제 실패 처리 + PaymentFailedEvent 발행
