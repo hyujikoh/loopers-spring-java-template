@@ -50,7 +50,7 @@ public class OrderV1Controller implements OrderV1ApiSpec {
             @RequestBody OrderV1Dtos.CardOrderCreateRequest request
     ) {
         OrderFacadeDtos.OrderCreateCommand command = request.toCommand(username);
-        OrderFacade.OrderWithPaymentInfo result = orderFacade.createOrderWithCardPayment(command);
+        OrderFacadeDtos.OrderWithPaymentInfo result = orderFacade.createOrderWithCardPayment(command);
         OrderV1Dtos.OrderCreateResponse response = OrderV1Dtos.OrderCreateResponse.from(
                 result.order(),
                 result.payment()

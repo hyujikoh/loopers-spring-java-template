@@ -2,6 +2,7 @@ package com.loopers.domain.payment;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -98,6 +99,20 @@ public class PaymentService {
             case "PENDING" -> log.debug("결제 처리 중 상태 콜백 수신 - transactionKey: {}", request.transactionKey());
             default -> log.error("알 수 없는 결제 상태 - transactionKey: {}, status: {}",
                     request.transactionKey(), request.status());
+        }
+    }
+
+    @Transactional
+    public PaymentEntity upsertFailPayment(UserEntity user, PaymentCommand command, String s) {
+        Optional<PaymentEntity> existingPayment = paymentRepository.findByOrderNumber(command.orderNumber());
+
+        if (existingPayment.isPresent()) {
+            PaymentEntity payment = existingPayment.get();
+            payment.fail(s);
+            return paymentRepository.save(payment);
+        } else {
+            PaymentEntity newPayment = PaymentEntity.createFailed(user, command, s);
+            return paymentRepository.save(newPayment);
         }
     }
 }

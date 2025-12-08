@@ -197,7 +197,7 @@ public class OrderFacade {
      * @return 주문 정보 + 결제 정보
      */
     @Transactional
-    public OrderWithPaymentInfo createOrderWithCardPayment(OrderFacadeDtos.OrderCreateCommand command) {
+    public OrderFacadeDtos.OrderWithPaymentInfo createOrderWithCardPayment(OrderFacadeDtos.OrderCreateCommand command) {
         // 1. 주문 생성 (재고 차감, 쿠폰 사용, 포인트 차감 안 함)
         OrderFacadeDtos.OrderInfo orderInfo = createOrderForCardPayment(command);
 
@@ -216,16 +216,7 @@ public class OrderFacade {
         PaymentInfo paymentInfo = paymentFacade.processPayment(paymentCommand);
 
         // 3. 주문 + 결제 정보 반환
-        return new OrderWithPaymentInfo(orderInfo, paymentInfo);
-    }
-
-    /**
-     * 주문 + 결제 정보 래퍼
-     */
-    public record OrderWithPaymentInfo(
-            OrderFacadeDtos.OrderInfo order,
-            PaymentInfo payment
-    ) {
+        return new OrderFacadeDtos.OrderWithPaymentInfo(orderInfo, paymentInfo);
     }
 
     /**

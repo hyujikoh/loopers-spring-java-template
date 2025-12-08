@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import com.loopers.application.payment.PaymentInfo;
 import com.loopers.domain.order.OrderEntity;
 import com.loopers.domain.order.OrderItemEntity;
 import com.loopers.domain.order.OrderStatus;
@@ -191,5 +192,14 @@ public class OrderFacadeDtos {
                 String callbackUrl
         ) {
         }
+    }
+
+    /**
+     * 주문 + 결제 정보 래퍼
+     */
+    public record OrderWithPaymentInfo(
+            OrderFacadeDtos.OrderInfo order,
+            PaymentInfo payment
+    ) {
     }
 }
