@@ -59,13 +59,13 @@ public class OrderFacade {
      * @throws IllegalArgumentException 재고 부족 또는 주문 불가능한 경우
      */
     @Transactional
-    public OrderInfo createOrderByPoint(OrderCreateCommand command) {
+    public OrderFacadeDtos.OrderInfo createOrderByPoint(OrderFacadeDtos.OrderCreateCommand command) {
         // 1. 주문자 정보 조회 (락 적용)
         UserEntity user = userService.findByUsernameWithLock(command.username());
 
         // 2. 주문 항목을 상품 ID 기준으로 정렬 (교착 상태 방지)
-        List<OrderItemCommand> sortedItems = command.orderItems().stream()
-                .sorted(Comparator.comparing(OrderItemCommand::productId))
+        List<OrderFacadeDtos.OrderItemCommand> sortedItems = command.orderItems().stream()
+                .sorted(Comparator.comparing(OrderFacadeDtos.OrderItemCommand::productId))
                 .toList();
 
         // 3. 상품 검증 및 준비 (재고 확인, 락 적용)
@@ -73,7 +73,7 @@ public class OrderFacade {
         List<CouponEntity> coupons = new ArrayList<>();
         List<Integer> quantities = new ArrayList<>();
 
-        for (OrderItemCommand itemCommand : sortedItems) {
+        for (OrderFacadeDtos.OrderItemCommand itemCommand : sortedItems) {
             // 상품 정보 조회 및 재고 잠금
             ProductEntity product = productService.getProductDetailLock(itemCommand.productId());
 
@@ -116,7 +116,7 @@ public class OrderFacade {
                 .forEach(i -> productService.deductStock(orderableProducts.get(i), quantities.get(i)));
 
         // 8. 주문 정보 반환
-        return OrderInfo.from(creationResult.order(), creationResult.orderItems());
+        return OrderFacadeDtos.OrderInfo.from(creationResult.order(), creationResult.orderItems());
     }
 
     /**
@@ -130,13 +130,13 @@ public class OrderFacade {
      * @throws IllegalArgumentException 재고 부족 또는 주문 불가능한 경우
      */
     @Transactional
-    public OrderInfo createOrderForCardPayment(OrderCreateCommand command) {
+    public OrderFacadeDtos.OrderInfo createOrderForCardPayment(OrderFacadeDtos.OrderCreateCommand command) {
         // 1. 주문자 정보 조회 (락 적용)
         UserEntity user = userService.findByUsernameWithLock(command.username());
 
         // 2. 주문 항목을 상품 ID 기준으로 정렬 (교착 상태 방지)
-        List<OrderItemCommand> sortedItems = command.orderItems().stream()
-                .sorted(Comparator.comparing(OrderItemCommand::productId))
+        List<OrderFacadeDtos.OrderItemCommand> sortedItems = command.orderItems().stream()
+                .sorted(Comparator.comparing(OrderFacadeDtos.OrderItemCommand::productId))
                 .toList();
 
         // 3. 상품 검증 및 준비 (재고 확인, 락 적용)
@@ -144,7 +144,7 @@ public class OrderFacade {
         List<CouponEntity> coupons = new ArrayList<>();
         List<Integer> quantities = new ArrayList<>();
 
-        for (OrderItemCommand itemCommand : sortedItems) {
+        for (OrderFacadeDtos.OrderItemCommand itemCommand : sortedItems) {
             // 상품 정보 조회 및 재고 잠금
             ProductEntity product = productService.getProductDetailLock(itemCommand.productId());
 
@@ -185,7 +185,7 @@ public class OrderFacade {
                 .forEach(i -> productService.deductStock(orderableProducts.get(i), quantities.get(i)));
 
         // 8. 주문 정보 반환 (PENDING 상태)
-        return OrderInfo.from(creationResult.order(), creationResult.orderItems());
+        return OrderFacadeDtos.OrderInfo.from(creationResult.order(), creationResult.orderItems());
     }
 
     /**
@@ -197,9 +197,9 @@ public class OrderFacade {
      * @return 주문 정보 + 결제 정보
      */
     @Transactional
-    public OrderWithPaymentInfo createOrderWithCardPayment(OrderCreateCommand command) {
+    public OrderWithPaymentInfo createOrderWithCardPayment(OrderFacadeDtos.OrderCreateCommand command) {
         // 1. 주문 생성 (재고 차감, 쿠폰 사용, 포인트 차감 안 함)
-        OrderInfo orderInfo = createOrderForCardPayment(command);
+        OrderFacadeDtos.OrderInfo orderInfo = createOrderForCardPayment(command);
 
         // 2. 결제 요청 (주문 ID 사용)
         PaymentCommand paymentCommand =
@@ -223,7 +223,7 @@ public class OrderFacade {
      * 주문 + 결제 정보 래퍼
      */
     public record OrderWithPaymentInfo(
-            OrderInfo order,
+            OrderFacadeDtos.OrderInfo order,
             PaymentInfo payment
     ) {
     }
@@ -238,7 +238,7 @@ public class OrderFacade {
      * @return 확정된 주문 정보
      */
     @Transactional
-    public OrderInfo confirmOrderByPoint(Long orderId, String username) {
+    public OrderFacadeDtos.OrderInfo confirmOrderByPoint(Long orderId, String username) {
         UserEntity user = userService.getUserByUsername(username);
 
         // 1. 주문 확정
@@ -248,7 +248,7 @@ public class OrderFacade {
         // 2. 주문 항목 조회
         List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order);
 
-        return OrderInfo.from(order, orderItems);
+        return OrderFacadeDtos.OrderInfo.from(order, orderItems);
     }
 
     /**
@@ -261,7 +261,7 @@ public class OrderFacade {
      * @return 확정된 주문 정보
      */
     @Transactional
-    public OrderInfo confirmOrderByPayment(Long orderId, Long userId) {
+    public OrderFacadeDtos.OrderInfo confirmOrderByPayment(Long orderId, Long userId) {
         // 1. 주문 확정
         OrderEntity order = orderService.getOrderByOrderNumberAndUserId(orderId, userId);
         order.confirmOrder();
@@ -269,7 +269,7 @@ public class OrderFacade {
         // 2. 주문 항목 조회
         List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order);
 
-        return OrderInfo.from(order, orderItems);
+        return OrderFacadeDtos.OrderInfo.from(order, orderItems);
     }
 
     /**
@@ -282,7 +282,7 @@ public class OrderFacade {
      * @return 취소된 주문 정보
      */
     @Transactional
-    public OrderInfo cancelOrderByPaymentFailure(Long orderId, Long userId) {
+    public OrderFacadeDtos.OrderInfo cancelOrderByPaymentFailure(Long orderId, Long userId) {
         // 1. 주문 조회 및 취소
         OrderEntity order = orderService.getOrderByOrderNumberAndUserId(orderId, userId);
         List<OrderItemEntity> orderItems = orderService.cancelOrderDomain(order);
@@ -308,7 +308,7 @@ public class OrderFacade {
 
         // 4. 포인트는 차감하지 않았으므로 환불하지 않음
 
-        return OrderInfo.from(order, orderItems);
+        return OrderFacadeDtos.OrderInfo.from(order, orderItems);
     }
 
     /**
@@ -322,7 +322,7 @@ public class OrderFacade {
      * @return 취소된 주문 정보
      */
     @Transactional
-    public OrderInfo cancelOrderByPoint(Long orderId, String username) {
+    public OrderFacadeDtos.OrderInfo cancelOrderByPoint(Long orderId, String username) {
         // 1. 사용자 조회
         UserEntity user = userService.getUserByUsername(username);
 
@@ -354,7 +354,7 @@ public class OrderFacade {
         // 6. 포인트 환불 (할인 후 금액으로)
         pointService.refund(username, order.getFinalTotalAmount());
 
-        return OrderInfo.from(order, orderItems);
+        return OrderFacadeDtos.OrderInfo.from(order, orderItems);
     }
 
     /**
@@ -364,11 +364,11 @@ public class OrderFacade {
      * @param orderId  주문 ID
      * @return 주문 정보
      */
-    public OrderInfo getOrderById(String username, Long orderId) {
+    public OrderFacadeDtos.OrderInfo getOrderById(String username, Long orderId) {
         UserEntity user = userService.getUserByUsername(username);
         OrderEntity order = orderService.getOrderByIdAndUserId(orderId, user.getId());
         List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order);
-        return OrderInfo.from(order, orderItems);
+        return OrderFacadeDtos.OrderInfo.from(order, orderItems);
     }
 
     /**
@@ -379,11 +379,11 @@ public class OrderFacade {
      * @param pageable 페이징 정보
      * @return 페이징된 주문 요약 정보 목록
      */
-    public Page<OrderSummary> getOrderSummariesByUserId(Long userId, Pageable pageable) {
+    public Page<OrderFacadeDtos.OrderSummary> getOrderSummariesByUserId(Long userId, Pageable pageable) {
         Page<OrderEntity> orderPage = orderService.getOrdersByUserId(userId, pageable);
         return orderPage.map(order -> {
             int itemCount = orderService.countOrderItems(order.getId());
-            return OrderSummary.from(order, itemCount);
+            return OrderFacadeDtos.OrderSummary.from(order, itemCount);
         });
     }
 
@@ -395,14 +395,14 @@ public class OrderFacade {
      * @param pageable 페이징 정보
      * @return 페이징된 주문 요약 정보 목록
      */
-    public Page<OrderSummary> getOrderSummariesByUserIdAndStatus(
+    public Page<OrderFacadeDtos.OrderSummary> getOrderSummariesByUserIdAndStatus(
             Long userId,
             OrderStatus status,
             Pageable pageable) {
         Page<OrderEntity> orderPage = orderService.getOrdersByUserIdAndStatus(userId, status, pageable);
         return orderPage.map(order -> {
             int itemCount = orderService.countOrderItems(order.getId());
-            return OrderSummary.from(order, itemCount);
+            return OrderFacadeDtos.OrderSummary.from(order, itemCount);
         });
     }
 
@@ -412,12 +412,12 @@ public class OrderFacade {
      * @param orderId 주문 ID
      * @return 주문 요약 정보
      */
-    public OrderSummary getOrderSummaryById(Long orderId, String username) {
+    public OrderFacadeDtos.OrderSummary getOrderSummaryById(Long orderId, String username) {
         UserEntity user = userService.getUserByUsername(username);
 
         OrderEntity order = orderService.getOrderByIdAndUserId(orderId, user.getId());
         int itemCount = orderService.countOrderItems(orderId);
-        return OrderSummary.from(order, itemCount);
+        return OrderFacadeDtos.OrderSummary.from(order, itemCount);
     }
 
     /**
@@ -428,7 +428,7 @@ public class OrderFacade {
      * @param pageable 페이징 정보
      * @return 주문 항목 정보 페이지
      */
-    public Page<OrderItemInfo> getOrderItemsByOrderId(
+    public Page<OrderFacadeDtos.OrderItemInfo> getOrderItemsByOrderId(
             Long orderId,
             String username,
             Pageable pageable) {
@@ -440,6 +440,6 @@ public class OrderFacade {
         // 주문 항목 페이징 조회
         Page<OrderItemEntity> orderItemsPage =
                 orderService.getOrderItemsByOrderId(orderId, pageable);
-        return orderItemsPage.map(OrderItemInfo::from);
+        return orderItemsPage.map(OrderFacadeDtos.OrderItemInfo::from);
     }
 }
