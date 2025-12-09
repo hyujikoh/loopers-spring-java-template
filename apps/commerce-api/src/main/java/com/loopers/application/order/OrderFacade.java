@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ import com.loopers.application.payment.PaymentFacade;
 import com.loopers.application.payment.PaymentInfo;
 import com.loopers.domain.coupon.CouponEntity;
 import com.loopers.domain.coupon.CouponService;
+import com.loopers.domain.coupon.event.CouponConsumeEvent;
 import com.loopers.domain.order.OrderEntity;
 import com.loopers.domain.order.OrderItemEntity;
 import com.loopers.domain.order.OrderService;
@@ -48,6 +50,7 @@ public class OrderFacade {
     private final PointService pointService;
     private final CouponService couponService;
     private final PaymentFacade paymentFacade;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 주문 생성
@@ -109,11 +112,15 @@ public class OrderFacade {
         // 5. 포인트 차감
         pointService.use(user, creationResult.order().getFinalTotalAmount());
 
-        // 6. 쿠폰 사용 처리
-        coupons.stream().filter(Objects::nonNull).forEach(couponService::consumeCoupon);
 
         IntStream.range(0, orderableProducts.size())
                 .forEach(i -> productService.deductStock(orderableProducts.get(i), quantities.get(i)));
+
+        // 쿠폰 사용 이벤트 발행 (동기 처리)
+        List<Long> couponIds = coupons.stream()
+                .filter(Objects::nonNull)
+                .map(CouponEntity::getId).toList();
+        eventPublisher.publishEvent(new CouponConsumeEvent(couponIds, user.getId(), creationResult.order().getId()));
 
         // 8. 주문 정보 반환
         return OrderFacadeDtos.OrderInfo.from(creationResult.order(), creationResult.orderItems());

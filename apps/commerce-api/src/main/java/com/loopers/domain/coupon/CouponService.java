@@ -1,6 +1,7 @@
 package com.loopers.domain.coupon;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
@@ -54,5 +55,9 @@ public class CouponService {
     public void revertCoupon(CouponEntity coupon) {
         coupon.revert();
         couponRepository.save(coupon);
+    }
+
+    public List<CouponEntity> getCouponByIdsAndUserId(List<Long> couponIds, Long userId) {
+        return couponRepository.findByIdsAndUserId(couponIds, userId);
     }
 }
