@@ -184,13 +184,18 @@ public class OrderFacade {
                 quantities
         );
 
-        // 6. 쿠폰 사용 처리
-        coupons.stream().filter(Objects::nonNull).forEach(couponService::consumeCoupon);
-
         // 7. 재고 차감
         IntStream.range(0, orderableProducts.size())
                 .forEach(i -> productService.deductStock(orderableProducts.get(i), quantities.get(i)));
 
+
+        // 쿠폰 사용 이벤트 발행 (동기 처리)
+        List<Long> couponIds = coupons.stream()
+                .filter(Objects::nonNull)
+                .map(CouponEntity::getId).toList();
+        eventPublisher.publishEvent(new CouponConsumeEvent(couponIds, user.getId(), creationResult.order().getId()));
+
+        
         // 8. 주문 정보 반환 (PENDING 상태)
         return OrderFacadeDtos.OrderInfo.from(creationResult.order(), creationResult.orderItems());
     }
