@@ -2,17 +2,13 @@ package com.loopers.application.coupon;
 
 import java.util.List;
 
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import com.loopers.application.order.OrderFacade;
 import com.loopers.domain.coupon.CouponEntity;
 import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.coupon.event.CouponConsumeEvent;
-import com.loopers.domain.order.OrderService;
-import com.loopers.domain.payment.event.PaymentCompletedEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class CouponOrderEventListener {
+public class CouponOrderEventHandler {
     private final CouponService couponService;
 
 
@@ -45,7 +41,6 @@ public class CouponOrderEventListener {
     }
 
     // 2. 부가 기능 - 비동기 처리
-    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCouponUsageStatistics(CouponConsumeEvent event) {
         // 쿠폰 사용 통계, 알림 등 부가 기능

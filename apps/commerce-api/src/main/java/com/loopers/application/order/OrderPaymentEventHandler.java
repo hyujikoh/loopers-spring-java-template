@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class OrderPaymentEventListener {
+public class OrderPaymentEventHandler {
     private final OrderFacade orderFacade;
 
     @Async
