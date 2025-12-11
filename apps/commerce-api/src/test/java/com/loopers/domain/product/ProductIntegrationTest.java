@@ -29,6 +29,7 @@ import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.like.LikeEntity;
 import com.loopers.domain.like.LikeRepository;
 import com.loopers.domain.product.dto.ProductSearchFilter;
+import com.loopers.domain.product.ProductMVRepository;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
@@ -41,7 +42,7 @@ import com.loopers.utils.RedisCleanUp;
  * @author hyunjikoh
  * @since 2025. 11. 10.
  */
-@SpringBootTest
+@SpringBootTest(properties = { "spring.scheduling.enabled=false" })
 @DisplayName("Product 통합 테스트")
 public class ProductIntegrationTest {
     @Autowired
@@ -71,6 +72,9 @@ public class ProductIntegrationTest {
     @Autowired
     private ProductMVService productMVService;
 
+    @Autowired
+    private ProductMVRepository mvRepository;
+
     @AfterEach
     void tearDown() {
         databaseCleanUp.truncateAllTables();
@@ -90,6 +94,7 @@ public class ProductIntegrationTest {
             // when
             ProductEntity product = ProductTestFixture.createAndSave(
                     productRepository,
+                    mvRepository,
                     brand,
                     "Air Max",
                     "편안한 운동화",
@@ -112,7 +117,7 @@ public class ProductIntegrationTest {
         @DisplayName("상품 목록을 페이징하여 조회할 수 있다")
         void get_product_pagination() {
             // given
-            ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
+            ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, mvRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
             productMVService.syncMaterializedView();
 
             Pageable pageable = PageRequest.of(0, 5);
@@ -136,7 +141,7 @@ public class ProductIntegrationTest {
         @DisplayName("브랜드 ID로 상품을 필터링하여 조회할 수 있다")
         void filter_products_by_brand() {
             // given
-            ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
+            ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, mvRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
             productMVService.syncMaterializedView();
             Pageable pageable = PageRequest.of(0, 25);
             ProductSearchFilter productSearchFilter = new ProductSearchFilter(1L, null, pageable);
@@ -197,7 +202,7 @@ public class ProductIntegrationTest {
         @DisplayName("존재하지 않는 브랜드로 상품을 필터링하면 빈 목록을 반환한다")
         void return_empty_list_when_filtering_by_non_existent_brand() {
             // given
-            ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
+            ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, mvRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
             productMVService.syncMaterializedView();
             Pageable pageable = PageRequest.of(0, 25);
             ProductSearchFilter productSearchFilter = new ProductSearchFilter(9L, null, pageable);
@@ -220,7 +225,7 @@ public class ProductIntegrationTest {
         @DisplayName("상품 상세를 조회할 수 있다")
         void get_product_detail_success() {
             // given
-            ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
+            ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, mvRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
             productMVService.syncMaterializedView();
 
             // when
@@ -251,11 +256,10 @@ public class ProductIntegrationTest {
         void throw_exception_when_product_has_non_existent_brand() {
             // given
             BrandEntity brand = BrandTestFixture.createAndSave(brandRepository, "Test Brand", "Test Description");
-            ProductEntity product = ProductTestFixture.createAndSave(productRepository, brand);
+            ProductEntity product = ProductTestFixture.createAndSave(productRepository, mvRepository, brand);
 
             // 브랜드 삭제 (소프트 삭제)
-            brand.delete();
-            brandRepository.save(brand);
+            productFacade.deletedBrand(brand.getId());
 
             productMVService.syncMaterializedView();
 
@@ -411,7 +415,7 @@ public class ProductIntegrationTest {
 
         @Test
         @DisplayName("좋아요 취소 후 상품 조회 시 isLiked가 false이고 카운트가 감소한다")
-        void should_return_is_liked_false_and_decreased_count_after_unlike() {
+        void should_return_is_liked_false_and_decreased_count_after_unlike() throws InterruptedException {
             // Given: 사용자 생성
             UserRegisterCommand command = UserTestFixture.createDefaultUserCommand();
             UserInfo userInfo = userFacade.registerUser(command);
@@ -433,6 +437,7 @@ public class ProductIntegrationTest {
             likeFacade.upsertLike(userInfo.username(), product.getId());
             likeFacade.unlikeProduct(userInfo.username(), product.getId());
 
+            Thread.sleep(500); // 비동기 이벤트 처리를 위한 대기 시간
             // When: 상품 상세 조회
             ProductDetailInfo result = productFacade.getProductDetail(
                     product.getId(),

@@ -1,11 +1,15 @@
 package com.loopers.application.product;
 
+import net.datafaker.providers.base.Brand;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.loopers.domain.brand.BrandEntity;
+import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.like.LikeService;
 import com.loopers.domain.product.*;
 import com.loopers.domain.product.dto.ProductSearchFilter;
@@ -31,6 +35,7 @@ public class ProductFacade {
     private final ProductCacheService productCacheService;
     private final LikeService likeService;
     private final UserService userService;
+    private final BrandService brandService;
 
     /**
      * 도메인 서비스에서 MV 엔티티를 조회하고, Facade에서 DTO로 변환합니다.
@@ -108,5 +113,25 @@ public class ProductFacade {
         // 3. 캐시 무효화
         productCacheService.getProductDetailFromCache(productId)
                 .ifPresent(detail -> productCacheService.evictProductDetail(productId));
+    }
+
+    /**
+     * 상품을 삭제합니다.
+     * <p>
+     * 상품 삭제 후 MV 동기화 및 캐시 무효화를 수행합니다.
+     *
+     * @param brandId 상품 ID
+     */
+    @Transactional
+    public void deletedBrand(Long brandId) {
+        // 1. 상품 삭제
+        BrandEntity brand = brandService.getBrandById(brandId);
+        brand.delete();
+
+        // 2. MV 동기화
+        mvService.deleteByBrandId(brand.getId());
+
+        // 3. 캐시 무효화
+        productCacheService.evictBrandCaches(Set.of(brandId));
     }
 }

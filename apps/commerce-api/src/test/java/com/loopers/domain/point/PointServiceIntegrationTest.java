@@ -54,7 +54,6 @@ class PointServiceIntegrationTest {
     void tearDown() {
         databaseCleanUp.truncateAllTables();
         redisCleanUp.truncateAll();
-
     }
 
     @Nested
