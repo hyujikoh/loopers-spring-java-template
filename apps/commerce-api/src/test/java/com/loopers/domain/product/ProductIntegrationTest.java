@@ -42,7 +42,7 @@ import com.loopers.utils.RedisCleanUp;
  * @author hyunjikoh
  * @since 2025. 11. 10.
  */
-@SpringBootTest(properties = { "spring.scheduling.enabled=false" })
+@SpringBootTest
 @DisplayName("Product 통합 테스트")
 public class ProductIntegrationTest {
     @Autowired

@@ -47,9 +47,6 @@ class PointServiceIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
-    @MockitoSpyBean
-    private PointHistoryRepository pointHistoryRepository;
-
     @AfterEach
     void tearDown() {
         databaseCleanUp.truncateAllTables();
