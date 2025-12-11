@@ -27,14 +27,13 @@ import lombok.RequiredArgsConstructor;
  */
 @Component
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class ProductMVRepositoryImpl implements ProductMVRepository {
 
     private final ProductMVJpaRepository jpaRepository;
     private final ProductMVQueryRepository queryRepository;
 
     @Override
-    public Optional<ProductMaterializedViewEntity> findById(Long productId) {
+    public Optional<ProductMaterializedViewEntity> findByProductId(Long productId) {
         return jpaRepository.findByProductId(productId);
     }
 
@@ -73,6 +72,9 @@ public class ProductMVRepositoryImpl implements ProductMVRepository {
     public void deleteByProductIdIn(List<Long> productIds) {
         jpaRepository.deleteByProductIdIn(productIds);
     }
+
+    @Override
+    public void deleteByBrandId(Long brandId) {jpaRepository.deleteByBrandId(brandId);}
 
     @Override
     public boolean existsByProductId(Long productId) {
