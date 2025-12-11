@@ -1,10 +1,12 @@
 package com.loopers.application.like;
 
+
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.like.LikeResult;
 import com.loopers.domain.like.LikeService;
+
 import com.loopers.domain.product.ProductCacheService;
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductService;
@@ -33,6 +35,7 @@ public class LikeFacade {
     private final LikeService likeService;
     private final ProductCacheService cacheService;
 
+
     /**
      * 좋아요를 등록하거나 복원합니다.
      *
@@ -51,10 +54,10 @@ public class LikeFacade {
         // 2. 상품 검증
         ProductEntity product = productService.getActiveProductDetail(productId);
 
-        // 3. 좋아요 등록/복원 (실제 변경 여부 확인)
+        // 3. 좋아요 등록/복원 (도메인 엔티티에서 이벤트 발행)
         LikeResult result = likeService.upsertLike(user, product);
 
-        // 5. DTO 변환 후 반환
+        // 4. DTO 변환 후 반환
         return LikeInfo.of(result.entity(), product, user);
     }
 
@@ -77,7 +80,7 @@ public class LikeFacade {
         // 2. 상품 검증
         ProductEntity product = productService.getActiveProductDetail(productId);
 
-        // 3. 좋아요 취소
+        // 3. 좋아요 취소 (도메인 엔티티에서 이벤트 발행)
         likeService.unlikeProduct(user, product);
     }
 }
