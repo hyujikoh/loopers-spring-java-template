@@ -36,7 +36,6 @@ public class LikeEventHandler {
      *
      * @param event 좋아요 변경 이벤트
      */
-    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleLikeChanged(LikeChangedEvent event) {
         try {
