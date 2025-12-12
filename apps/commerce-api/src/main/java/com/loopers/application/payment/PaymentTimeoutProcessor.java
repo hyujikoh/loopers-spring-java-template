@@ -29,8 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PaymentTimeoutProcessor {
 
-    private final ApplicationEventPublisher eventPublisher;
-
     /**
      * 개별 결제 타임아웃 처리
      *
@@ -44,12 +42,6 @@ public class PaymentTimeoutProcessor {
                     payment.getTransactionKey(),
                     payment.getOrderNumber(),
                     payment.getRequestedAt());
-
-            eventPublisher.publishEvent(new PaymentTimeoutEvent(
-                    payment.getTransactionKey(),
-                    payment.getOrderNumber(),
-                    payment.getUserId()
-            ));
 
             payment.timeoutWithEvent();
 

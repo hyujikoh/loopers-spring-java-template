@@ -227,24 +227,7 @@ public class OrderFacade {
         return OrderFacadeDtos.OrderInfo.from(creationResult.order(), creationResult.orderItems());
     }
 
-    /**
-     * 카드 결제용 분리된 커맨드 오버로드
-     */
-    @Transactional
-    public OrderFacadeDtos.OrderInfo createOrderForCardPayment(@jakarta.validation.Valid OrderFacadeDtos.CardOrderCreateCommand command) {
-        OrderFacadeDtos.OrderCreateCommand.CardPaymentInfo legacyCard = new OrderFacadeDtos.OrderCreateCommand.CardPaymentInfo(
-                command.cardInfo().cardType(),
-                command.cardInfo().cardNo(),
-                command.cardInfo().callbackUrl()
-        );
-        OrderFacadeDtos.OrderCreateCommand legacy = OrderFacadeDtos.OrderCreateCommand.builder()
-                .username(command.username())
-                .orderItems(command.orderItems())
-                .paymentType(com.loopers.domain.payment.PaymentType.CARD)
-                .cardInfo(legacyCard)
-                .build();
-        return createOrderForCardPayment(legacy);
-    }
+
 
     /**
      * 카드 결제와 함께 주문 생성 (통합 처리)
