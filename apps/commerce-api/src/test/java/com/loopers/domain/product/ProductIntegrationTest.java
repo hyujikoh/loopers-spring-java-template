@@ -1,10 +1,12 @@
 package com.loopers.domain.product;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -118,7 +120,17 @@ public class ProductIntegrationTest {
             // given
             // given
             BrandEntity brand = BrandTestFixture.createAndSave(brandRepository, "Test Brand", "Test Description");
-            ProductEntity product = ProductTestFixture.createAndSave(productRepository, mvRepository, brand);
+           for(int i=0; i<10; i++) {
+               ProductTestFixture.createAndSave(
+                       productRepository,
+                       brand,
+                       "Test Product " + i,
+                       "Product Description " + i,
+                       new BigDecimal("10000"),
+                       100
+               );
+           }
+
             productMVService.syncMaterializedView();
 
             Pageable pageable = PageRequest.of(0, 5);
@@ -437,7 +449,11 @@ public class ProductIntegrationTest {
             // Given: 좋아요 등록 후 취소
             likeFacade.upsertLike(userInfo.username(), product.getId());
             likeFacade.unlikeProduct(userInfo.username(), product.getId());
-
+// 비동기 이벤트 완료 대기 (Awaitility 사용)
+            await().atMost(1, TimeUnit.SECONDS).until(() -> {
+                ProductDetailInfo temp = productFacade.getProductDetail(product.getId(), userInfo.username());
+                return temp.likeCount() == 0L;
+            });
             // When: 상품 상세 조회
             ProductDetailInfo result = productFacade.getProductDetail(
                     product.getId(),

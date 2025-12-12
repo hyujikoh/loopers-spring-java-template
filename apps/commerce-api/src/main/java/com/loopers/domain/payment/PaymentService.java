@@ -97,15 +97,15 @@ public class PaymentService {
     }
 
     @Transactional
-    public PaymentEntity upsertFailPayment(UserEntity user, PaymentCommand command, String s) {
+    public PaymentEntity upsertFailPayment(UserEntity user, PaymentCommand command, String reason) {
         Optional<PaymentEntity> existingPayment = paymentRepository.findByOrderNumber(command.orderNumber());
 
         if (existingPayment.isPresent()) {
             PaymentEntity payment = existingPayment.get();
-            payment.fail(s);
+            payment.failWithEvent(reason);
             return paymentRepository.save(payment);
         } else {
-            PaymentEntity newPayment = PaymentEntity.createFailed(user, command, s);
+            PaymentEntity newPayment = PaymentEntity.createFailed(user, command, reason);
             return paymentRepository.save(newPayment);
         }
     }
