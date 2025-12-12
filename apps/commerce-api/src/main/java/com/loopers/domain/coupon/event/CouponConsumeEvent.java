@@ -6,8 +6,8 @@ import com.loopers.domain.coupon.CouponEntity;
  * @author hyunjikoh
  * @since 2025. 12. 9.
  */
-public record CouponConsumeEvent (
+public record CouponConsumeEvent(
         CouponEntity coupon,
         Long orderId
-){
+) {
 }

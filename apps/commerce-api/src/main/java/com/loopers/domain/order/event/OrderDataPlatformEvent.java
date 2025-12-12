@@ -9,7 +9,7 @@ import com.loopers.domain.order.OrderStatus;
  * 주문 데이터 플랫폼 전송 이벤트
  * <p>
  * 주문 확정/취소 시 데이터 플랫폼으로 전송할 이벤트
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 12. 12.
  */
@@ -24,7 +24,7 @@ public record OrderDataPlatformEvent(
         ZonedDateTime eventTime,
         String eventType // "ORDER_CONFIRMED", "ORDER_CANCELLED"
 ) {
-    
+
     public static OrderDataPlatformEvent confirmed(
             Long orderId,
             Long orderNumber,
@@ -45,7 +45,7 @@ public record OrderDataPlatformEvent(
                 "ORDER_CONFIRMED"
         );
     }
-    
+
     public static OrderDataPlatformEvent cancelled(
             Long orderId,
             Long orderNumber,

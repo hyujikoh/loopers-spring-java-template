@@ -177,7 +177,7 @@ public class OrderService {
     /**
      * 주문 상태를 취소로 변경하고 주문 항목 목록을 반환합니다 (도메인 이벤트 + 데이터 플랫폼 이벤트 발행)
      *
-     * @param order 취소할 주문 엔티티
+     * @param order  취소할 주문 엔티티
      * @param reason 취소 사유
      * @return 정렬된 주문 항목 목록 (교착 상태 방지를 위해 productId 기준 정렬)
      */

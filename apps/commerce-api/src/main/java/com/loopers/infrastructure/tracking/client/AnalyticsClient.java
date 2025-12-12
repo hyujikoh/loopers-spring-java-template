@@ -11,31 +11,31 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 사용자 행동 추적 로깅 시스템
  * 분석 시스템 API를 호출합니다.
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 12. 12.
  */
 @Component
 @Slf4j
 public class AnalyticsClient {
-    
+
     /**
      * 유저 행동 데이터를 분석 시스템에 전송
-     * 
+     *
      * @param event 유저 행동 이벤트
      * @return 전송 성공 여부
      */
     public boolean sendBehaviorData(UserBehaviorEvent event) {
         try {
             // Fake 분석 시스템 API 호출 시뮬레이션
-            log.info("📈 [ANALYTICS] 유저 행동 데이터 전송 시작 - eventType: {}, userId: {}, targetId: {}", 
+            log.info("📈 [ANALYTICS] 유저 행동 데이터 전송 시작 - eventType: {}, userId: {}, targetId: {}",
                     event.eventType(), event.userId(), event.targetId());
-            
+
             // 실제로는 HTTP 요청을 보냄
             // analyticsApi.track(event.userId(), event.eventType(), event.properties());
             // mixpanelClient.track(event.userId(), event.eventType(), event.properties());
             // amplitudeClient.logEvent(event.userId(), event.eventType(), event.properties());
-            
+
             // 성공 시뮬레이션 (95% 성공률)
             if (Math.random() < 0.95) {
 
@@ -52,12 +52,12 @@ public class AnalyticsClient {
                     default -> log.info("[ANALYTICS] 유저 행동 추적 완료 - eventType: {}, userId: {}",
                             event.eventType(), event.userId());
                 }
-                
+
                 return true;
             } else {
                 throw new CoreException(ErrorType.INTERNAL_ERROR, "분석 시스템 API 호출 실패 (시뮬레이션)");
             }
-            
+
         } catch (Exception e) {
             log.error(" [ANALYTICS] 유저 행동 데이터 전송 실패 - eventType: {}, userId: {}, error: {}",
                     event.eventType(), event.userId(), e.getMessage());

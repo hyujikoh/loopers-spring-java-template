@@ -65,7 +65,7 @@ public class PaymentService {
      * - SUCCESS: 결제 완료 처리 + PaymentCompletedEvent 발행
      * - FAILED: 결제 실패 처리 + PaymentFailedEvent 발행
      * - PENDING: 무시 (아직 처리 중)
-     *
+     * <p>
      * 도메인 이벤트는 PaymentEntity.processCallbackResult()에서 발행됨
      */
     @Transactional
@@ -97,15 +97,15 @@ public class PaymentService {
     }
 
     @Transactional
-    public PaymentEntity upsertFailPayment(UserEntity user, PaymentCommand command, String s) {
+    public PaymentEntity upsertFailPayment(UserEntity user, PaymentCommand command, String reason) {
         Optional<PaymentEntity> existingPayment = paymentRepository.findByOrderNumber(command.orderNumber());
 
         if (existingPayment.isPresent()) {
             PaymentEntity payment = existingPayment.get();
-            payment.fail(s);
+            payment.failWithEvent(reason);
             return paymentRepository.save(payment);
         } else {
-            PaymentEntity newPayment = PaymentEntity.createFailed(user, command, s);
+            PaymentEntity newPayment = PaymentEntity.createFailed(user, command, reason);
             return paymentRepository.save(newPayment);
         }
     }

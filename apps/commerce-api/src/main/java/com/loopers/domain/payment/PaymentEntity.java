@@ -167,7 +167,7 @@ public class PaymentEntity extends BaseEntity {
      */
     public void completeWithEvent() {
         complete();
-        
+
         // 주문 처리용 도메인 이벤트 발행
         registerEvent(new PaymentCompletedEvent(
                 this.transactionKey,
@@ -175,7 +175,7 @@ public class PaymentEntity extends BaseEntity {
                 this.userId,
                 this.amount
         ));
-        
+
         // 데이터 플랫폼 전송용 이벤트 발행
         registerEvent(PaymentDataPlatformEvent.completed(
                 this.transactionKey,
@@ -204,7 +204,7 @@ public class PaymentEntity extends BaseEntity {
      */
     public void failWithEvent(String reason) {
         fail(reason);
-        
+
         // 주문 처리용 도메인 이벤트 발행
         registerEvent(new PaymentFailedEvent(
                 this.transactionKey,
@@ -212,7 +212,7 @@ public class PaymentEntity extends BaseEntity {
                 this.userId,
                 reason
         ));
-        
+
         // 데이터 플랫폼 전송용 이벤트 발행
         registerEvent(PaymentDataPlatformEvent.failed(
                 this.transactionKey,
@@ -242,14 +242,14 @@ public class PaymentEntity extends BaseEntity {
      */
     public void timeoutWithEvent() {
         timeout();
-        
+
         // 주문 처리용 도메인 이벤트 발행
         registerEvent(new PaymentTimeoutEvent(
                 this.transactionKey,
                 this.orderNumber,
                 this.userId
         ));
-        
+
         // 데이터 플랫폼 전송용 이벤트 발행
         registerEvent(PaymentDataPlatformEvent.timeout(
                 this.transactionKey,
@@ -292,8 +292,17 @@ public class PaymentEntity extends BaseEntity {
      */
     public void processCallbackResult(String status, String reason) {
         switch (status) {
-            case "SUCCESS" -> completeWithEvent();
-            case "FAILED" -> failWithEvent(reason);
+            case "SUCCESS" -> {
+                if (this.paymentStatus == PaymentStatus.COMPLETED)
+                    return;
+                completeWithEvent();
+
+            }
+            case "FAILED" -> {
+                if (this.paymentStatus == PaymentStatus.FAILED)
+                    return;
+                failWithEvent(reason);
+            }
             case "PENDING" -> {
                 // PENDING 상태는 아직 처리 중이므로 아무 작업도 하지 않음
             }

@@ -1,10 +1,12 @@
 package com.loopers.domain.product;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +31,6 @@ import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.like.LikeEntity;
 import com.loopers.domain.like.LikeRepository;
 import com.loopers.domain.product.dto.ProductSearchFilter;
-import com.loopers.domain.product.ProductMVRepository;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;
@@ -117,7 +118,19 @@ public class ProductIntegrationTest {
         @DisplayName("상품 목록을 페이징하여 조회할 수 있다")
         void get_product_pagination() {
             // given
-            ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, mvRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
+            // given
+            BrandEntity brand = BrandTestFixture.createAndSave(brandRepository, "Test Brand", "Test Description");
+           for(int i=0; i<10; i++) {
+               ProductTestFixture.createAndSave(
+                       productRepository,
+                       brand,
+                       "Test Product " + i,
+                       "Product Description " + i,
+                       new BigDecimal("10000"),
+                       100
+               );
+           }
+
             productMVService.syncMaterializedView();
 
             Pageable pageable = PageRequest.of(0, 5);
@@ -436,8 +449,11 @@ public class ProductIntegrationTest {
             // Given: 좋아요 등록 후 취소
             likeFacade.upsertLike(userInfo.username(), product.getId());
             likeFacade.unlikeProduct(userInfo.username(), product.getId());
-
-            Thread.sleep(500); // 비동기 이벤트 처리를 위한 대기 시간
+// 비동기 이벤트 완료 대기 (Awaitility 사용)
+            await().atMost(1, TimeUnit.SECONDS).until(() -> {
+                ProductDetailInfo temp = productFacade.getProductDetail(product.getId(), userInfo.username());
+                return temp.likeCount() == 0L;
+            });
             // When: 상품 상세 조회
             ProductDetailInfo result = productFacade.getProductDetail(
                     product.getId(),

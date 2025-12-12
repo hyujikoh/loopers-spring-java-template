@@ -14,7 +14,8 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
-import com.loopers.application.order.*;
+import com.loopers.application.order.OrderFacade;
+import com.loopers.application.order.OrderFacadeDtos;
 import com.loopers.application.point.PointFacade;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserRegisterCommand;

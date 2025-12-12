@@ -28,9 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class CouponEventHandler {
-
-    private final CouponService couponService;
-
     /**
      * 쿠폰 사용 이벤트 처리 (핵심 비즈니스 로직)
      * <p>
@@ -46,29 +43,9 @@ public class CouponEventHandler {
         log.debug("쿠폰 사용 처리 시작 - orderId={}, userId={}, couponId={}",
                 event.orderId(), coupon.getUserId(), coupon.getId());
 
-        couponService.consumeCoupon(coupon);
+        coupon.use();
 
         log.debug("쿠폰 사용 처리 완료 - orderId={}",
                 event.orderId());
-    }
-
-    /**
-     * 쿠폰 사용 통계 처리 (부가 기능)
-     * <p>
-     * AFTER_COMMIT으로 주문 완료 후 비동기 처리
-     * 실패해도 주문에 영향 없음
-     */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleCouponUsageStatistics(CouponConsumeEvent event) {
-        try {
-            // 쿠폰 사용 통계, 알림 등 부가 기능
-            log.debug("쿠폰 사용 통계 처리 - orderId={}, userId={}, coupons={}",
-                    event.orderId(), event.coupon().getUserId(), event.coupon().getId());
-
-            // TODO: 쿠폰 사용 통계 업데이트, 마케팅 알림 등 부가 기능 구현
-        } catch (Exception e) {
-            // 부가 기능 실패는 주문에 영향 없음
-            log.error("쿠폰 사용 통계 처리 실패 - orderId={}", event.orderId(), e);
-        }
     }
 }

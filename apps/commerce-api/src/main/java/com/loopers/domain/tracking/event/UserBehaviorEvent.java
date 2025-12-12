@@ -7,7 +7,7 @@ import java.util.Map;
  * 유저 행동 추적 이벤트
  * <p>
  * 상품 조회, 클릭, 좋아요, 주문 등 모든 유저 행동을 추적합니다.
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 12. 12.
  */
@@ -20,10 +20,10 @@ public record UserBehaviorEvent(
         ZonedDateTime eventTime,    // 이벤트 발생 시간
         String source              // 이벤트 발생 위치 ("WEB", "MOBILE_APP", "API" 등)
 ) {
-    
+
     // 상품 조회 이벤트
     public static UserBehaviorEvent productView(
-            Long userId, 
+            Long userId,
             Long productId,
             Map<String, Object> properties
     ) {
@@ -37,11 +37,11 @@ public record UserBehaviorEvent(
                 "WEB"
         );
     }
-    
+
     // 좋아요 액션 이벤트
     public static UserBehaviorEvent likeAction(
             Long userId,
-            Long productId, 
+            Long productId,
             String action // "LIKE" or "UNLIKE"
     ) {
         return new UserBehaviorEvent(
@@ -54,14 +54,11 @@ public record UserBehaviorEvent(
                 "WEB"
         );
     }
-    
+
     // 주문 생성 이벤트
     public static UserBehaviorEvent orderCreate(
-            Long userId, 
-            String sessionId, 
-            Long orderId, 
-            String userAgent, 
-            String ipAddress,
+            Long userId,
+            Long orderId,
             Map<String, Object> properties
     ) {
         return new UserBehaviorEvent(

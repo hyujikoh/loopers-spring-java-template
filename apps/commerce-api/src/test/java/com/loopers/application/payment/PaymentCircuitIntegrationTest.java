@@ -31,7 +31,6 @@ import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
 import com.loopers.utils.DatabaseCleanUp;
 import com.loopers.utils.RedisCleanUp;
 
-import feign.FeignException;
 import feign.Request;
 import feign.RequestTemplate;
 import feign.RetryableException;
@@ -125,7 +124,7 @@ class PaymentCircuitIntegrationTest {
             // Metrics 확인
             // RetryableException이 발생하여 Circuit Breaker에 실패로 기록됨
             CircuitBreaker.Metrics metrics = circuitBreaker.getMetrics();
-            assertThat(metrics.getNumberOfSuccessfulCalls()).isEqualTo(0);  
+            assertThat(metrics.getNumberOfSuccessfulCalls()).isEqualTo(0);
             assertThat(metrics.getNumberOfFailedCalls()).isEqualTo(4);
             assertThat(metrics.getFailureRate()).isEqualTo(-1.0f);  // minimumNumberOfCalls 미만이므로 -1
         }
@@ -411,15 +410,14 @@ class PaymentCircuitIntegrationTest {
         @DisplayName("HALF_OPEN 상태에서 PG 실패 시 Circuit Breaker는 실패로 기록하여 다시 OPEN으로 전환")
         void HALF_OPEN_상태에서_PG실패_시_Circuit_Breaker는_실패로_기록() {
             // Given: Circuit을 OPEN 상태로 만들기 위한 Mock 설정
-            given(pgClient.requestPayment(anyString(), any()))
-                    .willReturn(createSuccessResponse())  // 1번 성공
+            given(pgClient.requestPayment(anyString(), any())).willReturn(createSuccessResponse())  // 1번 성공
                     .willReturn(createSuccessResponse())  // 2번 성공
                     .willThrow(createPgException())       // 3번 실패
                     .willThrow(createPgException())       // 4번 실패
                     .willThrow(createPgException())       // 5번 실패 → OPEN
                     .willReturn(createSuccessResponse())  // 6번 성공 (HALF_OPEN 1차)
                     .willThrow(createPgException())       // 7번 실패 (HALF_OPEN 2차) → OPEN으로 재전환
-                    .willThrow(createPgException()); // 8번 성공 (사용되지 않음)
+                    .willThrow(createPgException());      // 8번 실패 (사용되지 않음)
 
             // When: 5회 호출로 OPEN 상태 만들기
             for (int i = 0; i < 5; i++) {
@@ -452,17 +450,17 @@ class PaymentCircuitIntegrationTest {
             PaymentInfo result2 = paymentFacade.processPayment(command2);
             assertThat(result2.status()).isEqualTo(PaymentStatus.FAILED);  // Fallback 실행
 
+            // HALF_OPEN 유지 (설정에 따라 다를 수 있음)
             assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.HALF_OPEN);
 
-
-            // When:  번째 호출 - PG 실패, Fallback 실행되지만 Circuit Breaker는 실패로 기록
+            // When: 세 번째 호출 - PG 실패, Fallback 실행되지만 Circuit Breaker는 실패로 기록
             UserInfo user3 = createAndSaveUser();
             OrderEntity order3 = createAndSaveOrder(user3.id());
             PaymentCommand command3 = createPaymentCommand(order3, user3);
             PaymentInfo result3 = paymentFacade.processPayment(command3);
-            assertThat(result3.status()).isEqualTo(PaymentStatus.FAILED);  // PG 성공
+            assertThat(result3.status()).isEqualTo(PaymentStatus.FAILED);  // Fallback 실행
 
-            // Then: RetryableException으로 인해 Circuit Breaker는 실패로 기록하여 다시 CLOSE 전환
+            // Then: RetryableException으로 인해 Circuit Breaker는 실패로 기록하여 다시 OPEN으로 전환
             assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreaker.State.OPEN);
         }
 
@@ -597,7 +595,7 @@ class PaymentCircuitIntegrationTest {
 
                 // Fallback이 있으므로 예외가 발생하지 않음
                 PaymentInfo result = paymentFacade.processPayment(command);
-                
+
                 if (i < 3) {
                     assertThat(result.status()).isEqualTo(PaymentStatus.PENDING);  // 성공
                 } else {
@@ -652,7 +650,6 @@ class PaymentCircuitIntegrationTest {
     }
 
 
-
     private OrderEntity createAndSaveOrder(Long userId) {
         long timestamp = System.currentTimeMillis();
         int random = (int) (Math.random() * 1000000);
@@ -679,7 +676,7 @@ class PaymentCircuitIntegrationTest {
      */
     private RetryableException createPgException() {
         Request request = Request.create(Request.HttpMethod.POST, "http://pg-simulator/api/v1/payments", java.util.Collections.emptyMap(), null, new RequestTemplate());
-        
+
         return new RetryableException(503, "PG 서비스 일시적 장애", Request.HttpMethod.POST, (Long) null, request);
     }
 

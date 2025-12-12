@@ -7,7 +7,6 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.product.ProductMVRepository;
 import com.loopers.domain.product.ProductMVSyncDto;
@@ -74,7 +73,9 @@ public class ProductMVRepositoryImpl implements ProductMVRepository {
     }
 
     @Override
-    public void deleteByBrandId(Long brandId) {jpaRepository.deleteByBrandId(brandId);}
+    public void deleteByBrandId(Long brandId) {
+        jpaRepository.deleteByBrandId(brandId);
+    }
 
     @Override
     public boolean existsByProductId(Long productId) {
