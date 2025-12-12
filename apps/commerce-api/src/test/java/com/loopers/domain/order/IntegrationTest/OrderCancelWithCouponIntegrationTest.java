@@ -8,10 +8,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import com.loopers.application.order.OrderCreateCommand;
-import com.loopers.application.order.OrderFacade;
-import com.loopers.application.order.OrderInfo;
-import com.loopers.application.order.OrderItemCommand;
+import com.loopers.application.order.*;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
@@ -122,10 +119,10 @@ public class OrderCancelWithCouponIntegrationTest {
 
             // Given: 쿠폰을 사용하여 주문 생성 (수량 2개)
             // 예상 계산: (10,000 * 2) - 5,000 = 15,000원
-            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+            OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                     .username(userInfo.username())
                     .orderItems(List.of(
-                            OrderItemCommand.builder()
+                            OrderFacadeDtos.OrderItemCommand.builder()
                                     .productId(product.getId())
                                     .quantity(2)
                                     .couponId(fixedCoupon.getId())
@@ -133,7 +130,7 @@ public class OrderCancelWithCouponIntegrationTest {
                     ))
                     .build();
 
-            OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
+            OrderFacadeDtos.OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
 
             // Given: 주문 생성 후 쿠폰이 사용됨 상태인지 확인
             CouponEntity usedCoupon = couponService.getCouponByIdAndUserId(fixedCoupon.getId(), user.getId());
@@ -142,7 +139,7 @@ public class OrderCancelWithCouponIntegrationTest {
                     .isEqualTo(CouponStatus.USED);
 
             // When: 주문 취소
-            OrderInfo cancelledOrder = orderFacade.cancelOrderByPoint(createdOrder.id(), userInfo.username());
+            OrderFacadeDtos.OrderInfo cancelledOrder = orderFacade.cancelOrderByPoint(createdOrder.id(), userInfo.username());
 
             // Then: 쿠폰이 복구되어 UNUSED 상태로 변경되었는지 검증
             CouponEntity restoredCoupon = couponService.getCouponByIdAndUserId(fixedCoupon.getId(), user.getId());
@@ -201,10 +198,10 @@ public class OrderCancelWithCouponIntegrationTest {
 
             // Given: 쿠폰을 사용하여 주문 생성 (수량 2개)
             // 예상 계산: (20,000 * 2) * 0.75 = 30,000원
-            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+            OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                     .username(userInfo.username())
                     .orderItems(List.of(
-                            OrderItemCommand.builder()
+                            OrderFacadeDtos.OrderItemCommand.builder()
                                     .productId(product.getId())
                                     .quantity(2)
                                     .couponId(percentageCoupon.getId())
@@ -212,7 +209,7 @@ public class OrderCancelWithCouponIntegrationTest {
                     ))
                     .build();
 
-            OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
+            OrderFacadeDtos.OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
 
             // Given: 주문 생성 후 쿠폰이 사용됨 상태인지 확인
             CouponEntity usedCoupon = couponService.getCouponByIdAndUserId(percentageCoupon.getId(), user.getId());
@@ -277,10 +274,10 @@ public class OrderCancelWithCouponIntegrationTest {
                     .isEqualTo(CouponStatus.UNUSED);
 
             // Given: 쿠폰을 사용하여 주문 생성
-            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+            OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                     .username(userInfo.username())
                     .orderItems(List.of(
-                            OrderItemCommand.builder()
+                            OrderFacadeDtos.OrderItemCommand.builder()
                                     .productId(product.getId())
                                     .quantity(1)
                                     .couponId(coupon.getId())
@@ -288,7 +285,7 @@ public class OrderCancelWithCouponIntegrationTest {
                     ))
                     .build();
 
-            OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
+            OrderFacadeDtos.OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
 
             // Given: 주문 후 쿠폰 상태가 USED로 변경되었는지 확인
             CouponEntity usedCoupon = couponService.getCouponByIdAndUserId(coupon.getId(), user.getId());
@@ -360,15 +357,15 @@ public class OrderCancelWithCouponIntegrationTest {
             // 상품1: 15,000 - 5,000 = 10,000원
             // 상품2: 25,000 * 0.8 = 20,000원
             // 총 30,000원
-            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+            OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                     .username(userInfo.username())
                     .orderItems(List.of(
-                            OrderItemCommand.builder()
+                            OrderFacadeDtos.OrderItemCommand.builder()
                                     .productId(product1.getId())
                                     .quantity(1)
                                     .couponId(fixedCoupon.getId())
                                     .build(),
-                            OrderItemCommand.builder()
+                            OrderFacadeDtos.OrderItemCommand.builder()
                                     .productId(product2.getId())
                                     .quantity(1)
                                     .couponId(percentageCoupon.getId())
@@ -376,7 +373,7 @@ public class OrderCancelWithCouponIntegrationTest {
                     ))
                     .build();
 
-            OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
+            OrderFacadeDtos.OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
 
             // Given: 주문 생성 후 모든 쿠폰이 사용됨 상태인지 확인
             CouponEntity usedFixedCoupon = couponService.getCouponByIdAndUserId(fixedCoupon.getId(), user.getId());
@@ -468,10 +465,10 @@ public class OrderCancelWithCouponIntegrationTest {
             // Given: 쿠폰을 사용하여 주문 생성 (수량 2개)
             // 원래 금액: 12,000 * 2 = 24,000원
             // 할인 후 금액: 24,000 - 3,000 = 21,000원
-            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+            OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                     .username(userInfo.username())
                     .orderItems(List.of(
-                            OrderItemCommand.builder()
+                            OrderFacadeDtos.OrderItemCommand.builder()
                                     .productId(product.getId())
                                     .quantity(2)
                                     .couponId(coupon.getId())
@@ -479,7 +476,7 @@ public class OrderCancelWithCouponIntegrationTest {
                     ))
                     .build();
 
-            OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
+            OrderFacadeDtos.OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
 
             // Given: 주문 후 포인트 확인
             UserEntity userAfterOrder = userService.getUserByUsername(userInfo.username());
@@ -541,10 +538,10 @@ public class OrderCancelWithCouponIntegrationTest {
 
             // Given: 쿠폰을 사용하여 주문 생성 (수량 7개)
             int orderQuantity = 7;
-            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+            OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                     .username(userInfo.username())
                     .orderItems(List.of(
-                            OrderItemCommand.builder()
+                            OrderFacadeDtos.OrderItemCommand.builder()
                                     .productId(product.getId())
                                     .quantity(orderQuantity)
                                     .couponId(coupon.getId())
@@ -552,7 +549,7 @@ public class OrderCancelWithCouponIntegrationTest {
                     ))
                     .build();
 
-            OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
+            OrderFacadeDtos.OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
 
             // Given: 주문 후 재고 확인
             ProductEntity productAfterOrder = productService.getActiveProductDetail(product.getId());
@@ -615,10 +612,10 @@ public class OrderCancelWithCouponIntegrationTest {
             // 원래 금액: 30,000 * 2 = 60,000원
             // 쿠폰 할인: -10,000원
             // 실제 결제 금액: 50,000원
-            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+            OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                     .username(userInfo.username())
                     .orderItems(List.of(
-                            OrderItemCommand.builder()
+                            OrderFacadeDtos.OrderItemCommand.builder()
                                     .productId(product.getId())
                                     .quantity(2)
                                     .couponId(coupon.getId())
@@ -626,7 +623,7 @@ public class OrderCancelWithCouponIntegrationTest {
                     ))
                     .build();
 
-            OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
+            OrderFacadeDtos.OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
 
             // Given: 주문 후 포인트 확인
             UserEntity userAfterOrder = userService.getUserByUsername(userInfo.username());
@@ -728,20 +725,20 @@ public class OrderCancelWithCouponIntegrationTest {
             // 상품2: (30,000 * 1) * 0.8 = 24,000원
             // 상품3: (40,000 * 1) - 8,000 = 32,000원
             // 총 결제 금액: 91,000원
-            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+            OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                     .username(userInfo.username())
                     .orderItems(List.of(
-                            OrderItemCommand.builder()
+                            OrderFacadeDtos.OrderItemCommand.builder()
                                     .productId(product1.getId())
                                     .quantity(2)
                                     .couponId(fixedCoupon1.getId())
                                     .build(),
-                            OrderItemCommand.builder()
+                            OrderFacadeDtos.OrderItemCommand.builder()
                                     .productId(product2.getId())
                                     .quantity(1)
                                     .couponId(percentageCoupon.getId())
                                     .build(),
-                            OrderItemCommand.builder()
+                            OrderFacadeDtos.OrderItemCommand.builder()
                                     .productId(product3.getId())
                                     .quantity(1)
                                     .couponId(fixedCoupon2.getId())
@@ -749,7 +746,7 @@ public class OrderCancelWithCouponIntegrationTest {
                     ))
                     .build();
 
-            OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
+            OrderFacadeDtos.OrderInfo createdOrder = orderFacade.createOrderByPoint(orderCommand);
 
             // Given: 주문 후 포인트와 재고 확인
             UserEntity userAfterOrder = userService.getUserByUsername(userInfo.username());

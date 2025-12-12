@@ -6,7 +6,6 @@ import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.stereotype.Component;
 
 import com.loopers.application.payment.PaymentCommand;
-import com.loopers.application.payment.PaymentInfo;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserService;
 import com.loopers.infrastructure.payment.client.dto.PgPaymentRequest;
@@ -29,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentProcessor {
 
     private final PaymentService paymentService;
-    private final UserService userService;
     private final PaymentValidator paymentValidator;
     private final PgGateway pgGateway;
 
@@ -40,8 +38,8 @@ public class PaymentProcessor {
      * @param command 결제 명령
      * @return 생성된 결제 엔티티
      */
-    @Retry(name = "pgClient", fallbackMethod = "processPaymentFallback")
     @CircuitBreaker(name = "pgClient", fallbackMethod = "processPaymentFallback")
+    @Retry(name = "pgClient")
     public PaymentEntity processPgPayment(UserEntity user, PaymentCommand command) {
         log.info("PG 결제 처리 시작 - orderNumber: {}, username: {}, amount: {}",
                 command.orderId(), user.getUsername(), command.amount());
@@ -83,7 +81,7 @@ public class PaymentProcessor {
             PgPaymentResponse pgData = pgGateway.getPayment(username, transactionKey);
 
             if (pgData.isApiFail()) {
-                throw new RuntimeException(
+                throw new CoreException(ErrorType.PG_API_FAIL,
                         String.format("PG 결제 조회 실패 - errorCode: %s, message: %s",
                                 pgData.meta().errorCode(), pgData.meta().message())
                 );
@@ -105,12 +103,11 @@ public class PaymentProcessor {
      * <p>
      * PG 서비스 장애 또는 타임아웃(500ms) 시 실패 결제 생성
      */
-    @SuppressWarnings("unused")
     private PaymentEntity processPaymentFallback(UserEntity user, PaymentCommand command, Throwable t) {
         log.error("PG 서비스 장애 또는 타임아웃, 결제 요청 실패 처리 - exception: {}, message: {}",
                 t.getClass().getSimpleName(), t.getMessage(), t);
 
-        return paymentService.createFailedPayment(user,
+        return paymentService.upsertFailPayment(user,
                 command,
                 "결제 시스템 응답 지연으로 처리되지 않았습니다. 다시 시도해 주세요."
         );

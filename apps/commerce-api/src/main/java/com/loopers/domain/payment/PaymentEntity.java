@@ -6,7 +6,13 @@ import java.util.Objects;
 
 import com.loopers.application.payment.PaymentCommand;
 import com.loopers.domain.BaseEntity;
+import com.loopers.domain.payment.event.PaymentCompletedEvent;
+import com.loopers.domain.payment.event.PaymentDataPlatformEvent;
+import com.loopers.domain.payment.event.PaymentFailedEvent;
+import com.loopers.domain.payment.event.PaymentTimeoutEvent;
 import com.loopers.domain.user.UserEntity;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import com.loopers.util.MaskingUtil;
 
 import lombok.AccessLevel;
@@ -157,6 +163,30 @@ public class PaymentEntity extends BaseEntity {
     }
 
     /**
+     * 결제 완료 처리 (도메인 이벤트 + 데이터 플랫폼 이벤트 발행)
+     */
+    public void completeWithEvent() {
+        complete();
+        
+        // 주문 처리용 도메인 이벤트 발행
+        registerEvent(new PaymentCompletedEvent(
+                this.transactionKey,
+                this.orderNumber,
+                this.userId,
+                this.amount
+        ));
+        
+        // 데이터 플랫폼 전송용 이벤트 발행
+        registerEvent(PaymentDataPlatformEvent.completed(
+                this.transactionKey,
+                this.orderNumber,
+                this.userId,
+                this.amount,
+                this.cardType
+        ));
+    }
+
+    /**
      * 결제 실패 처리
      */
     public void fail(String reason) {
@@ -170,6 +200,31 @@ public class PaymentEntity extends BaseEntity {
     }
 
     /**
+     * 결제 실패 처리 (도메인 이벤트 + 데이터 플랫폼 이벤트 발행)
+     */
+    public void failWithEvent(String reason) {
+        fail(reason);
+        
+        // 주문 처리용 도메인 이벤트 발행
+        registerEvent(new PaymentFailedEvent(
+                this.transactionKey,
+                this.orderNumber,
+                this.userId,
+                reason
+        ));
+        
+        // 데이터 플랫폼 전송용 이벤트 발행
+        registerEvent(PaymentDataPlatformEvent.failed(
+                this.transactionKey,
+                this.orderNumber,
+                this.userId,
+                this.amount,
+                this.cardType,
+                reason
+        ));
+    }
+
+    /**
      * 결제 타임아웃 처리
      */
     public void timeout() {
@@ -180,6 +235,29 @@ public class PaymentEntity extends BaseEntity {
         }
         this.failureReason = "결제 콜백 타임아웃 (10분 초과)";
         this.paymentStatus = PaymentStatus.TIMEOUT;
+    }
+
+    /**
+     * 결제 타임아웃 처리 (도메인 이벤트 + 데이터 플랫폼 이벤트 발행)
+     */
+    public void timeoutWithEvent() {
+        timeout();
+        
+        // 주문 처리용 도메인 이벤트 발행
+        registerEvent(new PaymentTimeoutEvent(
+                this.transactionKey,
+                this.orderNumber,
+                this.userId
+        ));
+        
+        // 데이터 플랫폼 전송용 이벤트 발행
+        registerEvent(PaymentDataPlatformEvent.timeout(
+                this.transactionKey,
+                this.orderNumber,
+                this.userId,
+                this.amount,
+                this.cardType
+        ));
     }
 
     /**
@@ -204,6 +282,23 @@ public class PaymentEntity extends BaseEntity {
             );
         }
         this.paymentStatus = PaymentStatus.REFUNDED;
+    }
+
+    /**
+     * PG 콜백 결과 처리 (도메인 이벤트 발행)
+     *
+     * @param status PG로부터 받은 결제 상태 ("SUCCESS", "FAILED", "PENDING")
+     * @param reason 실패 사유 (실패인 경우에만)
+     */
+    public void processCallbackResult(String status, String reason) {
+        switch (status) {
+            case "SUCCESS" -> completeWithEvent();
+            case "FAILED" -> failWithEvent(reason);
+            case "PENDING" -> {
+                // PENDING 상태는 아직 처리 중이므로 아무 작업도 하지 않음
+            }
+            default -> throw new CoreException(ErrorType.INVALID_PAYMENT_STATUS);
+        }
     }
 
     @Override

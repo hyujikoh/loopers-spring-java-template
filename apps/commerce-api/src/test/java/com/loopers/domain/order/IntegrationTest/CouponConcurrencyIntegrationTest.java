@@ -17,10 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
-import com.loopers.application.order.OrderCreateCommand;
-import com.loopers.application.order.OrderFacade;
-import com.loopers.application.order.OrderInfo;
-import com.loopers.application.order.OrderItemCommand;
+import com.loopers.application.order.*;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
@@ -136,7 +133,7 @@ public class CouponConcurrencyIntegrationTest {
             AtomicInteger successCount = new AtomicInteger(0);
             AtomicInteger failureCount = new AtomicInteger(0);
             List<Exception> exceptions = Collections.synchronizedList(new ArrayList<>());
-            List<OrderInfo> successfulOrders = Collections.synchronizedList(new ArrayList<>());
+            List<OrderFacadeDtos.OrderInfo> successfulOrders = Collections.synchronizedList(new ArrayList<>());
 
             // When - 두 사용자가 동시에 같은 쿠폰으로 주문 시도
             ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -146,10 +143,10 @@ public class CouponConcurrencyIntegrationTest {
                 try {
                     startLatch.await(); // 동시 시작을 위한 대기
 
-                    OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                             .username(users.get(0).username())
                             .orderItems(List.of(
-                                    OrderItemCommand.builder()
+                                    OrderFacadeDtos.OrderItemCommand.builder()
                                             .productId(product.getId())
                                             .quantity(1)
                                             .couponId(sharedCoupon.getId())
@@ -157,7 +154,7 @@ public class CouponConcurrencyIntegrationTest {
                             ))
                             .build();
 
-                    OrderInfo result = orderFacade.createOrderByPoint(orderCommand);
+                    OrderFacadeDtos.OrderInfo result = orderFacade.createOrderByPoint(orderCommand);
                     successfulOrders.add(result);
                     successCount.incrementAndGet();
                 } catch (Exception e) {
@@ -173,10 +170,10 @@ public class CouponConcurrencyIntegrationTest {
                 try {
                     startLatch.await(); // 동시 시작을 위한 대기
 
-                    OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                    OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                             .username(users.get(0).username())
                             .orderItems(List.of(
-                                    OrderItemCommand.builder()
+                                    OrderFacadeDtos.OrderItemCommand.builder()
                                             .productId(product.getId())
                                             .quantity(1)
                                             .couponId(sharedCoupon.getId())
@@ -184,7 +181,7 @@ public class CouponConcurrencyIntegrationTest {
                             ))
                             .build();
 
-                    OrderInfo result = orderFacade.createOrderByPoint(orderCommand);
+                    OrderFacadeDtos.OrderInfo result = orderFacade.createOrderByPoint(orderCommand);
                     successfulOrders.add(result);
                     successCount.incrementAndGet();
                 } catch (Exception e) {
@@ -273,10 +270,10 @@ public class CouponConcurrencyIntegrationTest {
                     try {
                         startLatch.await();
 
-                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                        OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                                 .username(userInfo.username())
                                 .orderItems(List.of(
-                                        OrderItemCommand.builder()
+                                        OrderFacadeDtos.OrderItemCommand.builder()
                                                 .productId(product.getId())
                                                 .quantity(1)
                                                 .couponId(coupon.getId())
@@ -340,10 +337,10 @@ public class CouponConcurrencyIntegrationTest {
             CouponEntity coupon = couponService.createFixedAmountCoupon(user, new BigDecimal("3000"));
 
             // When - 정상적인 쿠폰 사용
-            OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+            OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                     .username(userInfo.username())
                     .orderItems(List.of(
-                            OrderItemCommand.builder()
+                            OrderFacadeDtos.OrderItemCommand.builder()
                                     .productId(product.getId())
                                     .quantity(1)
                                     .couponId(coupon.getId())
@@ -351,7 +348,7 @@ public class CouponConcurrencyIntegrationTest {
                     ))
                     .build();
 
-            OrderInfo result = orderFacade.createOrderByPoint(orderCommand);
+            OrderFacadeDtos.OrderInfo result = orderFacade.createOrderByPoint(orderCommand);
 
             // Then: 주문이 정상적으로 생성되어야 함
             assertThat(result).isNotNull();
@@ -406,10 +403,10 @@ public class CouponConcurrencyIntegrationTest {
                     try {
                         startLatch.await();
 
-                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                        OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                                 .username(userInfo.username())
                                 .orderItems(List.of(
-                                        OrderItemCommand.builder()
+                                        OrderFacadeDtos.OrderItemCommand.builder()
                                                 .productId(product.getId())
                                                 .quantity(1)
                                                 .couponId(coupon.getId())
@@ -498,10 +495,10 @@ public class CouponConcurrencyIntegrationTest {
                     try {
                         startLatch.await();
 
-                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                        OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                                 .username(userInfo.username())
                                 .orderItems(List.of(
-                                        OrderItemCommand.builder()
+                                        OrderFacadeDtos.OrderItemCommand.builder()
                                                 .productId(product.getId())
                                                 .quantity(1)
                                                 .couponId(coupon.getId())
@@ -603,7 +600,7 @@ public class CouponConcurrencyIntegrationTest {
             CountDownLatch endLatch = new CountDownLatch(userCount);
             AtomicInteger successCount = new AtomicInteger(0);
             List<Exception> exceptions = Collections.synchronizedList(new ArrayList<>());
-            List<OrderInfo> createdOrders = Collections.synchronizedList(new ArrayList<>());
+            List<OrderFacadeDtos.OrderInfo> createdOrders = Collections.synchronizedList(new ArrayList<>());
 
             ExecutorService executor = Executors.newFixedThreadPool(userCount);
 
@@ -614,10 +611,10 @@ public class CouponConcurrencyIntegrationTest {
                     try {
                         startLatch.await();
 
-                        OrderCreateCommand orderCommand = OrderCreateCommand.builder()
+                        OrderFacadeDtos.OrderCreateCommand orderCommand = OrderFacadeDtos.OrderCreateCommand.builder()
                                 .username(users.get(index).username())
                                 .orderItems(List.of(
-                                        OrderItemCommand.builder()
+                                        OrderFacadeDtos.OrderItemCommand.builder()
                                                 .productId(product.getId())
                                                 .quantity(1)
                                                 .couponId(coupons.get(index).getId())
@@ -625,7 +622,7 @@ public class CouponConcurrencyIntegrationTest {
                                 ))
                                 .build();
 
-                        OrderInfo result = orderFacade.createOrderByPoint(orderCommand);
+                        OrderFacadeDtos.OrderInfo result = orderFacade.createOrderByPoint(orderCommand);
                         createdOrders.add(result);
                         successCount.incrementAndGet();
                     } catch (Exception e) {

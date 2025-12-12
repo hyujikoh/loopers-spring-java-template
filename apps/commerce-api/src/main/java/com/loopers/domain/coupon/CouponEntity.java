@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.Objects;
 
 import com.loopers.domain.BaseEntity;
+import com.loopers.domain.coupon.event.CouponConsumeEvent;
 import com.loopers.domain.user.UserEntity;
 
 import lombok.AccessLevel;
@@ -135,6 +136,28 @@ public class CouponEntity extends BaseEntity {
             throw new IllegalStateException("이미 사용된 쿠폰입니다.");
         }
         this.status = CouponStatus.USED;
+    }
+
+    /**
+     * 주문에서 쿠폰 사용 처리 (도메인 이벤트 발행)
+     * <p>
+     * 쿠폰을 사용 상태로 변경하고 쿠폰 사용 이벤트를 발행합니다.
+     *
+     * @param orderId 주문 ID
+     * @throws IllegalStateException 이미 사용된 쿠폰인 경우
+     */
+    public void useForOrder(Long orderId) {
+        if (this.status == CouponStatus.USED) {
+            throw new IllegalStateException("이미 사용된 쿠폰입니다.");
+        }
+
+        this.status = CouponStatus.USED;
+
+        // 도메인 이벤트 발행
+        registerEvent(new CouponConsumeEvent(
+                this,
+                orderId
+        ));
     }
 
     /**

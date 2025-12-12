@@ -45,13 +45,13 @@ public class PaymentTimeoutProcessor {
                     payment.getOrderNumber(),
                     payment.getRequestedAt());
 
-            payment.timeout();
-
             eventPublisher.publishEvent(new PaymentTimeoutEvent(
                     payment.getTransactionKey(),
                     payment.getOrderNumber(),
                     payment.getUserId()
             ));
+
+            payment.timeoutWithEvent();
 
             return true;
         } catch (Exception e) {
