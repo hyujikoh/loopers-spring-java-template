@@ -57,38 +57,7 @@ public class UserBehaviorTracker {
                     userId, productId, e.getMessage());
         }
     }
-    
-    /**
-     * 상품 클릭 추적
-     */
-    public void trackProductClick(
-            Long userId, 
-            String sessionId, 
-            Long productId, 
-            String userAgent, 
-            String ipAddress,
-            String clickPosition,
-            String referrer
-    ) {
-        try {
-            Map<String, Object> properties = Map.of(
-                    "clickPosition", clickPosition != null ? clickPosition : "",
-                    "referrer", referrer != null ? referrer : ""
-            );
-            
-            UserBehaviorEvent event = UserBehaviorEvent.productClick(
-                    userId, sessionId, productId, userAgent, ipAddress, properties
-            );
-            
-            eventPublisher.publishEvent(event);
-            log.debug("상품 클릭 추적 - userId: {}, productId: {}", userId, productId);
-            
-        } catch (Exception e) {
-            log.warn("상품 클릭 추적 실패 - userId: {}, productId: {}, error: {}", 
-                    userId, productId, e.getMessage());
-        }
-    }
-    
+
     /**
      * 좋아요 액션 추적
      */
