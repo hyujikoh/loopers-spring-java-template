@@ -45,7 +45,7 @@ public class UserBehaviorTracker {
             );
             
             UserBehaviorEvent event = UserBehaviorEvent.productView(
-                    userId, sessionId, productId, userAgent, ipAddress, properties
+                    userId, productId, properties
             );
             
             eventPublisher.publishEvent(event);
@@ -62,16 +62,13 @@ public class UserBehaviorTracker {
      * 좋아요 액션 추적
      */
     public void trackLikeAction(
-            Long userId, 
-            String sessionId, 
+            Long userId,
             Long productId, 
-            String action,
-            String userAgent, 
-            String ipAddress
+            String action
     ) {
         try {
             UserBehaviorEvent event = UserBehaviorEvent.likeAction(
-                    userId, sessionId, productId, action, userAgent, ipAddress
+                    userId, productId, action
             );
             
             eventPublisher.publishEvent(event);

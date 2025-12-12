@@ -63,11 +63,8 @@ public class LikeFacade {
         if (result.changed()) {
             behaviorTracker.trackLikeAction(
                     user.getId(),
-                    null, // sessionId는 Controller에서 받아야 함
                     productId,
-                    "LIKE",
-                    null, // userAgent는 Controller에서 받아야 함
-                    null  // ipAddress는 Controller에서 받아야 함
+                    "LIKE"
             );
         }
 
@@ -101,11 +98,8 @@ public class LikeFacade {
         if (isChanged) {
             behaviorTracker.trackLikeAction(
                     user.getId(),
-                    null, // sessionId는 Controller에서 받아야 함
                     productId,
-                    "UNLIKE",
-                    null, // userAgent는 Controller에서 받아야 함
-                    null  // ipAddress는 Controller에서 받아야 함
+                    "UNLIKE"
             );
         }
     }
