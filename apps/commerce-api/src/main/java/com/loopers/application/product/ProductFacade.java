@@ -1,6 +1,5 @@
 package com.loopers.application.product;
 
-import net.datafaker.providers.base.Brand;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,6 +12,7 @@ import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.like.LikeService;
 import com.loopers.domain.product.*;
 import com.loopers.domain.product.dto.ProductSearchFilter;
+import com.loopers.domain.tracking.UserBehaviorTracker;
 import com.loopers.domain.user.UserService;
 import com.loopers.infrastructure.cache.CacheStrategy;
 
@@ -36,6 +36,7 @@ public class ProductFacade {
     private final LikeService likeService;
     private final UserService userService;
     private final BrandService brandService;
+    private final UserBehaviorTracker behaviorTracker;
 
     /**
      * 도메인 서비스에서 MV 엔티티를 조회하고, Facade에서 DTO로 변환합니다.
@@ -89,6 +90,20 @@ public class ProductFacade {
 
         // 3. 캐시 저장
         productCacheService.cacheProductDetail(productId, productDetail);
+
+        // 4. 유저 행동 추적 (상품 조회)
+        if (username != null) {
+            Long userId = userService.getUserByUsername(username).getId();
+            behaviorTracker.trackProductView(
+                    userId, 
+                    null, // sessionId는 Controller에서 받아야 함
+                    productId, 
+                    null, // userAgent는 Controller에서 받아야 함
+                    null, // ipAddress는 Controller에서 받아야 함
+                    null, // categoryName 정보가 필요하면 별도 조회
+                    null  // searchKeyword는 Controller에서 받아야 함
+            );
+        }
 
         // 5. 사용자 좋아요 상태 적용
         return productDetail;

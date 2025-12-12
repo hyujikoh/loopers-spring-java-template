@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentService {
-    private final PaymentJpaRepository paymentJpaRepository;
     private final PaymentRepository paymentRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -108,7 +107,7 @@ public class PaymentService {
                     request.transactionKey(), request.status());
         }
 
-        paymentJpaRepository.save(payment);
+        paymentRepository.save(payment);
     }
 
     @Transactional

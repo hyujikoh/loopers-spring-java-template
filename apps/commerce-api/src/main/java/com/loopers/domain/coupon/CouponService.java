@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.user.UserEntity;
-import com.loopers.infrastructure.coupon.CouponJpaRepository;
 
 import lombok.RequiredArgsConstructor;
 

@@ -81,7 +81,7 @@ public class PaymentProcessor {
             PgPaymentResponse pgData = pgGateway.getPayment(username, transactionKey);
 
             if (pgData.isApiFail()) {
-                throw new RuntimeException(
+                throw new CoreException(ErrorType.PG_API_FAIL,
                         String.format("PG 결제 조회 실패 - errorCode: %s, message: %s",
                                 pgData.meta().errorCode(), pgData.meta().message())
                 );

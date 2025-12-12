@@ -3,7 +3,6 @@ package com.loopers.application.order;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.IntStream;
 
 
@@ -26,6 +25,7 @@ import com.loopers.domain.order.dto.OrderCreationResult;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.ProductEntity;
 import com.loopers.domain.product.ProductService;
+import com.loopers.domain.tracking.UserBehaviorTracker;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserService;
 
@@ -50,6 +50,7 @@ public class OrderFacade {
     private final PointService pointService;
     private final CouponService couponService;
     private final PaymentFacade paymentFacade;
+    private final UserBehaviorTracker behaviorTracker;
 
 
     /**
@@ -118,6 +119,18 @@ public class OrderFacade {
 
         // 쿠폰 사용 처리 (도메인 로직)
         couponService.consumeCoupons(coupons, creationResult.order().getId());
+
+        // 7. 유저 행동 추적 (주문 생성)
+        behaviorTracker.trackOrderCreate(
+                user.getId(),
+                null, // sessionId는 Controller에서 받아야 함
+                creationResult.order().getId(),
+                null, // userAgent는 Controller에서 받아야 함
+                null, // ipAddress는 Controller에서 받아야 함
+                "POINT", // 포인트 결제
+                creationResult.order().getFinalTotalAmount().doubleValue(),
+                creationResult.orderItems().size()
+        );
 
         // 8. 주문 정보 반환
         return OrderFacadeDtos.OrderInfo.from(creationResult.order(), creationResult.orderItems());
