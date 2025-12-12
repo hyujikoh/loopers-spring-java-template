@@ -31,7 +31,7 @@ public class DataPlatformClient {
     public boolean sendOrderData(OrderDataDto orderData) {
         try {
             // Fake API 호출 시뮬레이션
-            log.info("📊 [DATA PLATFORM] 주문 데이터 전송 시작 - orderId: {}, eventType: {}",
+            log.info("[DATA PLATFORM] 주문 데이터 전송 시작 - orderId: {}, eventType: {}",
                     orderData.orderId(), orderData.eventType());
 
             // 실제로는 HTTP 요청을 보냄
@@ -62,7 +62,7 @@ public class DataPlatformClient {
     public boolean sendPaymentData(PaymentDataDto paymentData) {
         try {
             // Fake API 호출 시뮬레이션
-            log.info("📊 [DATA PLATFORM] 결제 데이터 전송 시작 - transactionKey: {}, eventType: {}",
+            log.info("[DATA PLATFORM] 결제 데이터 전송 시작 - transactionKey: {}, eventType: {}",
                     paymentData.transactionKey(), paymentData.eventType());
 
             // 실제로는 HTTP 요청을 보냄

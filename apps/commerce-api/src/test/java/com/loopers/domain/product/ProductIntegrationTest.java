@@ -116,7 +116,9 @@ public class ProductIntegrationTest {
         @DisplayName("상품 목록을 페이징하여 조회할 수 있다")
         void get_product_pagination() {
             // given
-            ProductTestFixture.createBrandsAndProducts(brandRepository, productRepository, mvRepository, 2, 5); // 2개 브랜드, 각 브랜드당 5개 상품 생성
+            // given
+            BrandEntity brand = BrandTestFixture.createAndSave(brandRepository, "Test Brand", "Test Description");
+            ProductEntity product = ProductTestFixture.createAndSave(productRepository, mvRepository, brand);
             productMVService.syncMaterializedView();
 
             Pageable pageable = PageRequest.of(0, 5);
@@ -436,7 +438,6 @@ public class ProductIntegrationTest {
             likeFacade.upsertLike(userInfo.username(), product.getId());
             likeFacade.unlikeProduct(userInfo.username(), product.getId());
 
-            Thread.sleep(500); // 비동기 이벤트 처리를 위한 대기 시간
             // When: 상품 상세 조회
             ProductDetailInfo result = productFacade.getProductDetail(
                     product.getId(),
