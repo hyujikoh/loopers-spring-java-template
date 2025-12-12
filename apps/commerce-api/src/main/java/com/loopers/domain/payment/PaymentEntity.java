@@ -11,6 +11,8 @@ import com.loopers.domain.payment.event.PaymentDataPlatformEvent;
 import com.loopers.domain.payment.event.PaymentFailedEvent;
 import com.loopers.domain.payment.event.PaymentTimeoutEvent;
 import com.loopers.domain.user.UserEntity;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import com.loopers.util.MaskingUtil;
 
 import lombok.AccessLevel;
@@ -280,6 +282,23 @@ public class PaymentEntity extends BaseEntity {
             );
         }
         this.paymentStatus = PaymentStatus.REFUNDED;
+    }
+
+    /**
+     * PG 콜백 결과 처리 (도메인 이벤트 발행)
+     *
+     * @param status PG로부터 받은 결제 상태 ("SUCCESS", "FAILED", "PENDING")
+     * @param reason 실패 사유 (실패인 경우에만)
+     */
+    public void processCallbackResult(String status, String reason) {
+        switch (status) {
+            case "SUCCESS" -> completeWithEvent();
+            case "FAILED" -> failWithEvent(reason);
+            case "PENDING" -> {
+                // PENDING 상태는 아직 처리 중이므로 아무 작업도 하지 않음
+            }
+            default -> throw new CoreException(ErrorType.INVALID_PAYMENT_STATUS);
+        }
     }
 
     @Override

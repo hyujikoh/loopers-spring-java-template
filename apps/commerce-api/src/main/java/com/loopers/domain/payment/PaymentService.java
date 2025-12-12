@@ -4,15 +4,11 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.application.payment.PaymentCommand;
-import com.loopers.domain.payment.event.PaymentCompletedEvent;
-import com.loopers.domain.payment.event.PaymentFailedEvent;
 import com.loopers.domain.user.UserEntity;
-import com.loopers.infrastructure.payment.PaymentJpaRepository;
 import com.loopers.interfaces.api.payment.PaymentV1Dtos;
 
 import lombok.RequiredArgsConstructor;
@@ -28,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PaymentService {
     private final PaymentRepository paymentRepository;
-    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PaymentEntity createPending(UserEntity user, PaymentCommand command) {
@@ -70,44 +65,35 @@ public class PaymentService {
      * - SUCCESS: 결제 완료 처리 + PaymentCompletedEvent 발행
      * - FAILED: 결제 실패 처리 + PaymentFailedEvent 발행
      * - PENDING: 무시 (아직 처리 중)
+     *
+     * 도메인 이벤트는 PaymentEntity.processCallbackResult()에서 발행됨
      */
     @Transactional
     public void processPaymentResult(PaymentEntity payment, PaymentV1Dtos.PgCallbackRequest request) {
+        // 엔티티에 콜백 결과 처리 위임 (도메인 이벤트 발행 포함)
+        payment.processCallbackResult(request.status(), request.reason());
+
+        // 변경사항 저장
+        paymentRepository.save(payment);
+
+        // 로그 기록
+        logPaymentResult(request);
+    }
+
+    /**
+     * 결제 결과 로깅
+     */
+    private void logPaymentResult(PaymentV1Dtos.PgCallbackRequest request) {
         switch (request.status()) {
-            case "SUCCESS" -> {
-
-                eventPublisher.publishEvent(new PaymentCompletedEvent(
-                        payment.getTransactionKey(),
-                        payment.getOrderNumber(),
-                        payment.getUserId(),
-                        payment.getAmount()
-                ));
-
-                payment.completeWithEvent();
-                log.info("결제 성공 처리 완료 - transactionKey: {}, orderNumber: {}",
-                        request.transactionKey(), request.orderId());
-
-
-            }
-            case "FAILED" -> {
-                eventPublisher.publishEvent(new PaymentFailedEvent(
-                        payment.getTransactionKey(),
-                        payment.getOrderNumber(),
-                        payment.getUserId(),
-                        request.reason()
-                ));
-
-                payment.failWithEvent(request.reason());
-                log.warn("결제 실패 처리 - transactionKey: {}, reason: {}",
-                        request.transactionKey(), request.reason());
-
-            }
-            case "PENDING" -> log.debug("결제 처리 중 상태 콜백 수신 - transactionKey: {}", request.transactionKey());
+            case "SUCCESS" -> log.info("결제 성공 처리 완료 - transactionKey: {}, orderNumber: {}",
+                    request.transactionKey(), request.orderId());
+            case "FAILED" -> log.warn("결제 실패 처리 - transactionKey: {}, reason: {}",
+                    request.transactionKey(), request.reason());
+            case "PENDING" -> log.debug("결제 처리 중 상태 콜백 수신 - transactionKey: {}",
+                    request.transactionKey());
             default -> log.error("알 수 없는 결제 상태 - transactionKey: {}, status: {}",
                     request.transactionKey(), request.status());
         }
-
-        paymentRepository.save(payment);
     }
 
     @Transactional
