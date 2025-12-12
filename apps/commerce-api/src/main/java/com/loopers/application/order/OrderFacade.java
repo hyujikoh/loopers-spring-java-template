@@ -123,10 +123,7 @@ public class OrderFacade {
         // 7. 유저 행동 추적 (주문 생성)
         behaviorTracker.trackOrderCreate(
                 user.getId(),
-                null, // sessionId는 Controller에서 받아야 함
                 creationResult.order().getId(),
-                null, // userAgent는 Controller에서 받아야 함
-                null, // ipAddress는 Controller에서 받아야 함
                 "POINT", // 포인트 결제
                 creationResult.order().getFinalTotalAmount().doubleValue(),
                 creationResult.orderItems().size()
@@ -200,6 +197,16 @@ public class OrderFacade {
 
         // 쿠폰 사용 처리 (도메인 로직)
         couponService.consumeCoupons(coupons, creationResult.order().getId());
+
+                // 유저 행동 추적 (주문 생성)
+                        behaviorTracker.trackOrderCreate(
+                                        user.getId(),
+                                       creationResult.order().getId(),
+                                        "CARD", // 카드 결제
+                                        creationResult.order().getFinalTotalAmount().doubleValue(),
+                                        creationResult.orderItems().size()
+                                        );
+
 
         // 8. 주문 정보 반환 (PENDING 상태)
         return OrderFacadeDtos.OrderInfo.from(creationResult.order(), creationResult.orderItems());

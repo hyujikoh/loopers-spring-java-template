@@ -58,10 +58,7 @@ public record UserBehaviorEvent(
     // 주문 생성 이벤트
     public static UserBehaviorEvent orderCreate(
             Long userId, 
-            String sessionId, 
-            Long orderId, 
-            String userAgent, 
-            String ipAddress,
+            Long orderId,
             Map<String, Object> properties
     ) {
         return new UserBehaviorEvent(

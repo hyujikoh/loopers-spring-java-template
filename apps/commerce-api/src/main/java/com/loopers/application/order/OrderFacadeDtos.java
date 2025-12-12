@@ -174,10 +174,8 @@ public class OrderFacadeDtos {
             @NotNull
             List<OrderItemCommand> orderItems,
 
-            @NotNull
             PaymentType paymentType,
 
-            @NotNull
             OrderFacadeDtos.OrderCreateCommand.CardPaymentInfo cardInfo  // 카드 결제 시 사용
     ) {
         /**

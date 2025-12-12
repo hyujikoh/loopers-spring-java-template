@@ -292,8 +292,15 @@ public class PaymentEntity extends BaseEntity {
      */
     public void processCallbackResult(String status, String reason) {
         switch (status) {
-            case "SUCCESS" -> completeWithEvent();
-            case "FAILED" -> failWithEvent(reason);
+            case "SUCCESS" -> {
+                if(this.paymentStatus == PaymentStatus.COMPLETED) return;
+                completeWithEvent();
+
+            }
+            case "FAILED" -> {
+                if(this.paymentStatus == PaymentStatus.FAILED) return;
+                failWithEvent(reason);
+            }
             case "PENDING" -> {
                 // PENDING 상태는 아직 처리 중이므로 아무 작업도 하지 않음
             }
