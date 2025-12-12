@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import com.loopers.application.payment.PaymentCommand;
 import com.loopers.application.payment.PaymentFacade;
@@ -42,6 +43,7 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Validated
 public class OrderFacade {
 
     private final OrderService orderService;
@@ -63,7 +65,7 @@ public class OrderFacade {
      * @throws IllegalArgumentException 재고 부족 또는 주문 불가능한 경우
      */
     @Transactional
-    public OrderFacadeDtos.OrderInfo createOrderByPoint(OrderFacadeDtos.OrderCreateCommand command) {
+    public OrderFacadeDtos.OrderInfo createOrderByPoint(@jakarta.validation.Valid OrderFacadeDtos.OrderCreateCommand command) {
         // 1. 주문자 정보 조회 (락 적용)
         UserEntity user = userService.findByUsernameWithLock(command.username());
 
@@ -134,6 +136,19 @@ public class OrderFacade {
     }
 
     /**
+     * 포인트 결제용 분리된 커맨드 오버로드
+     */
+    @Transactional
+    public OrderFacadeDtos.OrderInfo createOrderByPoint(@jakarta.validation.Valid OrderFacadeDtos.PointOrderCreateCommand command) {
+        OrderFacadeDtos.OrderCreateCommand legacy = OrderFacadeDtos.OrderCreateCommand.builder()
+                .username(command.username())
+                .orderItems(command.orderItems())
+                .paymentType(com.loopers.domain.payment.PaymentType.POINT)
+                .build();
+        return createOrderByPoint(legacy);
+    }
+
+    /**
      * 카드 결제용 주문 생성
      * <p>
      * 포인트 차감 없이 주문만 생성합니다.
@@ -144,7 +159,7 @@ public class OrderFacade {
      * @throws IllegalArgumentException 재고 부족 또는 주문 불가능한 경우
      */
     @Transactional
-    public OrderFacadeDtos.OrderInfo createOrderForCardPayment(OrderFacadeDtos.OrderCreateCommand command) {
+    public OrderFacadeDtos.OrderInfo createOrderForCardPayment(@jakarta.validation.Valid OrderFacadeDtos.OrderCreateCommand command) {
         // 1. 주문자 정보 조회 (락 적용)
         UserEntity user = userService.findByUsernameWithLock(command.username());
 
@@ -213,6 +228,25 @@ public class OrderFacade {
     }
 
     /**
+     * 카드 결제용 분리된 커맨드 오버로드
+     */
+    @Transactional
+    public OrderFacadeDtos.OrderInfo createOrderForCardPayment(@jakarta.validation.Valid OrderFacadeDtos.CardOrderCreateCommand command) {
+        OrderFacadeDtos.OrderCreateCommand.CardPaymentInfo legacyCard = new OrderFacadeDtos.OrderCreateCommand.CardPaymentInfo(
+                command.cardInfo().cardType(),
+                command.cardInfo().cardNo(),
+                command.cardInfo().callbackUrl()
+        );
+        OrderFacadeDtos.OrderCreateCommand legacy = OrderFacadeDtos.OrderCreateCommand.builder()
+                .username(command.username())
+                .orderItems(command.orderItems())
+                .paymentType(com.loopers.domain.payment.PaymentType.CARD)
+                .cardInfo(legacyCard)
+                .build();
+        return createOrderForCardPayment(legacy);
+    }
+
+    /**
      * 카드 결제와 함께 주문 생성 (통합 처리)
      * <p>
      * 주문 생성 + PG 결제 요청을 한 번에 처리합니다.
@@ -221,7 +255,7 @@ public class OrderFacade {
      * @return 주문 정보 + 결제 정보
      */
     @Transactional
-    public OrderFacadeDtos.OrderWithPaymentInfo createOrderWithCardPayment(OrderFacadeDtos.OrderCreateCommand command) {
+    public OrderFacadeDtos.OrderWithPaymentInfo createOrderWithCardPayment(@jakarta.validation.Valid OrderFacadeDtos.OrderCreateCommand command) {
         // 1. 주문 생성 (재고 차감, 쿠폰 사용, 포인트 차감 안 함)
         OrderFacadeDtos.OrderInfo orderInfo = createOrderForCardPayment(command);
 
@@ -241,6 +275,25 @@ public class OrderFacade {
 
         // 3. 주문 + 결제 정보 반환
         return new OrderFacadeDtos.OrderWithPaymentInfo(orderInfo, paymentInfo);
+    }
+
+    /**
+     * 카드 결제 통합 처리 분리된 커맨드 오버로드
+     */
+    @Transactional
+    public OrderFacadeDtos.OrderWithPaymentInfo createOrderWithCardPayment(@jakarta.validation.Valid OrderFacadeDtos.CardOrderCreateCommand command) {
+        OrderFacadeDtos.OrderCreateCommand.CardPaymentInfo legacyCard = new OrderFacadeDtos.OrderCreateCommand.CardPaymentInfo(
+                command.cardInfo().cardType(),
+                command.cardInfo().cardNo(),
+                command.cardInfo().callbackUrl()
+        );
+        OrderFacadeDtos.OrderCreateCommand legacy = OrderFacadeDtos.OrderCreateCommand.builder()
+                .username(command.username())
+                .orderItems(command.orderItems())
+                .paymentType(com.loopers.domain.payment.PaymentType.CARD)
+                .cardInfo(legacyCard)
+                .build();
+        return createOrderWithCardPayment(legacy);
     }
 
     /**

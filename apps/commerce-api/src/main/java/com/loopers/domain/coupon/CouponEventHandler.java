@@ -59,6 +59,7 @@ public class CouponEventHandler {
      * 실패해도 주문에 영향 없음
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async
     public void handleCouponUsageStatistics(CouponConsumeEvent event) {
         try {
             // 쿠폰 사용 통계, 알림 등 부가 기능

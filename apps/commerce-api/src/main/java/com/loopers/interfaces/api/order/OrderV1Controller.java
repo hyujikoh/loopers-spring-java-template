@@ -14,6 +14,8 @@ import com.loopers.support.Uris;
 
 import lombok.RequiredArgsConstructor;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequiredArgsConstructor
 public class OrderV1Controller implements OrderV1ApiSpec {
@@ -30,9 +32,9 @@ public class OrderV1Controller implements OrderV1ApiSpec {
     @PostMapping(Uris.Order.CREATE_POINT)
     public ApiResponse<OrderV1Dtos.OrderCreateResponse> createOrderWithPoint(
             @RequestHeader("X-USER-ID") String username,
-            @RequestBody OrderV1Dtos.PointOrderCreateRequest request
+            @RequestBody @Valid OrderV1Dtos.PointOrderCreateRequest request
     ) {
-        OrderFacadeDtos.OrderCreateCommand command = request.toCommand(username);
+        OrderFacadeDtos.PointOrderCreateCommand command = request.toCommand(username);
         OrderFacadeDtos.OrderInfo orderInfo = orderFacade.createOrderByPoint(command);
         OrderV1Dtos.OrderCreateResponse response = OrderV1Dtos.OrderCreateResponse.from(orderInfo);
         return ApiResponse.success(response);
@@ -47,9 +49,9 @@ public class OrderV1Controller implements OrderV1ApiSpec {
     @PostMapping(Uris.Order.CREATE_CARD)
     public ApiResponse<OrderV1Dtos.OrderCreateResponse> createOrderWithCard(
             @RequestHeader("X-USER-ID") String username,
-            @RequestBody OrderV1Dtos.CardOrderCreateRequest request
+            @RequestBody @Valid OrderV1Dtos.CardOrderCreateRequest request
     ) {
-        OrderFacadeDtos.OrderCreateCommand command = request.toCommand(username);
+        OrderFacadeDtos.CardOrderCreateCommand command = request.toCommand(username);
         OrderFacadeDtos.OrderWithPaymentInfo result = orderFacade.createOrderWithCardPayment(command);
         OrderV1Dtos.OrderCreateResponse response = OrderV1Dtos.OrderCreateResponse.from(
                 result.order(),

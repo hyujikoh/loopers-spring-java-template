@@ -167,6 +167,7 @@ public class OrderFacadeDtos {
      * @since 2025. 11. 14.
      */
     @Builder
+    @Deprecated
     public record OrderCreateCommand(
             @NotBlank
             String username,
@@ -177,6 +178,48 @@ public class OrderFacadeDtos {
             PaymentType paymentType,
 
             OrderFacadeDtos.OrderCreateCommand.CardPaymentInfo cardInfo  // 카드 결제 시 사용
+    ) {
+        /**
+         * 카드 결제 정보
+         */
+        public record CardPaymentInfo(
+                @NotBlank
+                String cardType,
+                @NotBlank
+                String cardNo,
+                @NotBlank
+                String callbackUrl
+        ) {
+        }
+    }
+
+    /**
+     * 포인트 결제용 주문 생성 커맨드
+     */
+    @Builder
+    public record PointOrderCreateCommand(
+            @NotBlank
+            String username,
+
+            @NotNull
+            List<OrderItemCommand> orderItems
+    ) {
+    }
+
+    /**
+     * 카드 결제용 주문 생성 커맨드
+     */
+    @Builder
+    public record CardOrderCreateCommand(
+            @NotBlank
+            String username,
+
+            @NotNull
+            List<OrderItemCommand> orderItems,
+
+            @NotNull
+            @jakarta.validation.Valid
+            CardPaymentInfo cardInfo
     ) {
         /**
          * 카드 결제 정보

@@ -37,6 +37,7 @@ public class LikeEventHandler {
      * @param event 좋아요 변경 이벤트
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async
     public void handleLikeChanged(LikeChangedEvent event) {
         try {
             log.debug("좋아요 집계 업데이트 시작 - productId: {}, action: {}, delta: {}", 

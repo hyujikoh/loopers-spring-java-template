@@ -213,7 +213,7 @@ public class OrderV1Dtos {
             @Schema(description = "주문 상품 목록", requiredMode = Schema.RequiredMode.REQUIRED)
             List<OrderItemRequest> items
     ) {
-        public OrderFacadeDtos.OrderCreateCommand toCommand(String username) {
+        public OrderFacadeDtos.PointOrderCreateCommand toCommand(String username) {
             List<OrderFacadeDtos.OrderItemCommand> orderItems = items.stream()
                     .map(item -> new OrderFacadeDtos.OrderItemCommand(
                             item.productId(),
@@ -221,7 +221,7 @@ public class OrderV1Dtos {
                             item.couponId()
                     ))
                     .toList();
-            return new OrderFacadeDtos.OrderCreateCommand(username, orderItems, PaymentType.POINT, null);
+            return new OrderFacadeDtos.PointOrderCreateCommand(username, orderItems);
         }
     }
 
@@ -233,7 +233,7 @@ public class OrderV1Dtos {
             @Schema(description = "카드 결제 정보", requiredMode = Schema.RequiredMode.REQUIRED)
             CardPaymentInfo cardInfo
     ) {
-        public OrderFacadeDtos.OrderCreateCommand toCommand(String username) {
+        public OrderFacadeDtos.CardOrderCreateCommand toCommand(String username) {
             List<OrderFacadeDtos.OrderItemCommand> orderItems = items.stream()
                     .map(item -> new OrderFacadeDtos.OrderItemCommand(
                             item.productId(),
@@ -242,13 +242,13 @@ public class OrderV1Dtos {
                     ))
                     .toList();
 
-            OrderFacadeDtos.OrderCreateCommand.CardPaymentInfo paymentInfo = new OrderFacadeDtos.OrderCreateCommand.CardPaymentInfo(
+            OrderFacadeDtos.CardOrderCreateCommand.CardPaymentInfo paymentInfo = new OrderFacadeDtos.CardOrderCreateCommand.CardPaymentInfo(
                     cardInfo.cardType(),
                     cardInfo.cardNo(),
                     cardInfo.callbackUrl()
             );
 
-            return new OrderFacadeDtos.OrderCreateCommand(username, orderItems, PaymentType.CARD, paymentInfo);
+            return new OrderFacadeDtos.CardOrderCreateCommand(username, orderItems, paymentInfo);
         }
     }
 
