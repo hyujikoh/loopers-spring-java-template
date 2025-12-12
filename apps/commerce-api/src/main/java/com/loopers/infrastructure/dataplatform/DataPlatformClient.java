@@ -4,6 +4,8 @@ import org.springframework.stereotype.Component;
 
 import com.loopers.infrastructure.dataplatform.dto.OrderDataDto;
 import com.loopers.infrastructure.dataplatform.dto.PaymentDataDto;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,16 +39,15 @@ public class DataPlatformClient {
             
             // 성공 시뮬레이션 (90% 성공률)
             if (Math.random() < 0.9) {
-                Thread.sleep(100); // 네트워크 지연 시뮬레이션
-                log.info("✅ [DATA PLATFORM] 주문 데이터 전송 성공 - orderId: {}, orderNumber: {}", 
+                log.info("[DATA PLATFORM] 주문 데이터 전송 성공 - orderId: {}, orderNumber: {}",
                         orderData.orderId(), orderData.orderNumber());
                 return true;
             } else {
-                throw new RuntimeException("데이터 플랫폼 API 호출 실패 (시뮬레이션)");
+                throw new CoreException(ErrorType.INTERNAL_ERROR,"데이터 플랫폼 API 호출 실패 (시뮬레이션)");
             }
             
         } catch (Exception e) {
-            log.error("❌ [DATA PLATFORM] 주문 데이터 전송 실패 - orderId: {}, error: {}", 
+            log.error(" [DATA PLATFORM] 주문 데이터 전송 실패 - orderId: {}, error: {}",
                     orderData.orderId(), e.getMessage());
             return false;
         }
@@ -69,16 +70,15 @@ public class DataPlatformClient {
             
             // 성공 시뮬레이션 (90% 성공률)
             if (Math.random() < 0.9) {
-                Thread.sleep(100); // 네트워크 지연 시뮬레이션
-                log.info("✅ [DATA PLATFORM] 결제 데이터 전송 성공 - transactionKey: {}, orderId: {}", 
+                log.info("[DATA PLATFORM] 결제 데이터 전송 성공 - transactionKey: {}, orderId: {}",
                         paymentData.transactionKey(), paymentData.orderId());
                 return true;
             } else {
-                throw new RuntimeException("데이터 플랫폼 API 호출 실패 (시뮬레이션)");
+                throw new CoreException(ErrorType.INTERNAL_ERROR, "데이터 플랫폼 API 호출 실패 (시뮬레이션)");
             }
             
         } catch (Exception e) {
-            log.error("❌ [DATA PLATFORM] 결제 데이터 전송 실패 - transactionKey: {}, error: {}", 
+            log.error(" [DATA PLATFORM] 결제 데이터 전송 실패 - transactionKey: {}, error: {}",
                     paymentData.transactionKey(), e.getMessage());
             return false;
         }
