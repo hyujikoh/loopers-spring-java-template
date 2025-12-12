@@ -96,11 +96,7 @@ public class ProductFacade {
             Long userId = userService.getUserByUsername(username).getId();
             behaviorTracker.trackProductView(
                     userId, 
-                    null, // sessionId는 Controller에서 받아야 함
-                    productId, 
-                    null, // userAgent는 Controller에서 받아야 함
-                    null, // ipAddress는 Controller에서 받아야 함
-                    null, // categoryName 정보가 필요하면 별도 조회
+                    productId,
                     null  // searchKeyword는 Controller에서 받아야 함
             );
         }

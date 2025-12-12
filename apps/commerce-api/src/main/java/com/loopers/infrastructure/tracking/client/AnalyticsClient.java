@@ -38,8 +38,7 @@ public class AnalyticsClient {
             
             // 성공 시뮬레이션 (95% 성공률)
             if (Math.random() < 0.95) {
-                Thread.sleep(50); // 네트워크 지연 시뮬레이션
-                
+
                 // 이벤트 타입별 로깅
                 switch (event.eventType()) {
                     case "PRODUCT_VIEW" -> log.info("[ANALYTICS] 상품 조회 추적 완료 - productId: {}, userId: {}",

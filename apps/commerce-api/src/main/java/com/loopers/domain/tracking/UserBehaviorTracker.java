@@ -31,16 +31,11 @@ public class UserBehaviorTracker {
      */
     public void trackProductView(
             Long userId, 
-            String sessionId, 
-            Long productId, 
-            String userAgent, 
-            String ipAddress,
-            String category,
+            Long productId,
             String searchKeyword
     ) {
         try {
             Map<String, Object> properties = Map.of(
-                    "category", category != null ? category : "",
                     "searchKeyword", searchKeyword != null ? searchKeyword : ""
             );
             
