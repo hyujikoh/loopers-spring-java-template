@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 결제 도메인 검증 로직
- * DDD 원칙에 따라 비즈니스 검증 로직을 도메인 계층
+ *  DDD 원칙에 따라 비즈니스 검증 로직을 도메인 계층에 위치시킵니다.
  *
  * @author hyunjikoh
  * @since 2025. 12. 05.

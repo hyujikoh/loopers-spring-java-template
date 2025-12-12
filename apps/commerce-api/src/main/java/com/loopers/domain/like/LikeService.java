@@ -57,6 +57,7 @@ public class LikeService {
             // 삭제된 좋아요인 경우만 복원 및 이벤트 발행
             if (like.getDeletedAt() != null) {
                 like.restoreWithEvent(); // 도메인 이벤트 발행
+                likeRepository.save(like);
                 return new LikeResult(like, true); // 복원됨 - 이벤트 발행됨
             }
             // 활성 좋아요인 경우: 이벤트 발행 없음 (중복 방지)
@@ -93,6 +94,7 @@ public class LikeService {
         }
 
         like.deleteWithEvent(); // 도메인 이벤트 발행
+        likeRepository.save(like);
         return true; // 삭제됨 - 이벤트 발행됨
     }
 

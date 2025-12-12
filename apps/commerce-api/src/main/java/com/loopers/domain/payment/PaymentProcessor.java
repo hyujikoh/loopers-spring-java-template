@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import com.loopers.application.payment.PaymentCommand;
 import com.loopers.domain.user.UserEntity;
-import com.loopers.domain.user.UserService;
 import com.loopers.infrastructure.payment.client.dto.PgPaymentRequest;
 import com.loopers.infrastructure.payment.client.dto.PgPaymentResponse;
 import com.loopers.support.error.CoreException;
@@ -60,7 +59,7 @@ public class PaymentProcessor {
         pendingPayment.updateTransactionKey(pgResponse.transactionKey());
 
         log.info("PG 결제 요청 완료 - orderNumber: {}, transactionKey: {}, status: {}, 콜백 대기 중",
-                command.orderId(), pgResponse.transactionKey(), pgResponse.status());
+                command.orderNumber(), pgResponse.transactionKey(), pgResponse.status());
 
         return pendingPayment;
     }
@@ -91,7 +90,8 @@ public class PaymentProcessor {
                     transactionKey, pgData.status());
 
             return pgData;
-
+        } catch (CoreException e) {
+            throw e;
         } catch (Exception e) {
             log.error("PG 결제 상태 조회 중 오류 발생 - transactionKey: {}", transactionKey, e);
             throw new CoreException(ErrorType.PG_API_FAIL, "PG 결제 상태 조회에 실패했습니다.");
