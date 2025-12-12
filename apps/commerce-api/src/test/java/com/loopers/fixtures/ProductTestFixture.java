@@ -1,18 +1,14 @@
 package com.loopers.fixtures;
 
-import java.time.ZonedDateTime;
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 import com.loopers.domain.brand.BrandEntity;
 import com.loopers.domain.brand.BrandRepository;
-import com.loopers.domain.product.ProductDomainCreateRequest;
-import com.loopers.domain.product.ProductEntity;
-import com.loopers.domain.product.ProductRepository;
-import com.loopers.domain.product.ProductMaterializedViewEntity;
-import com.loopers.domain.product.ProductMVRepository;
+import com.loopers.domain.product.*;
 
 /**
  * 상품 테스트 픽스처

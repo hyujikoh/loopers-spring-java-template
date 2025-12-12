@@ -9,7 +9,7 @@ import com.loopers.domain.payment.PaymentStatus;
  * 결제 데이터 플랫폼 전송 이벤트
  * <p>
  * 결제 완료/실패 시 데이터 플랫폼으로 전송할 이벤트
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 12. 12.
  */
@@ -24,7 +24,7 @@ public record PaymentDataPlatformEvent(
         String eventType, // "PAYMENT_COMPLETED", "PAYMENT_FAILED", "PAYMENT_TIMEOUT"
         String failureReason
 ) {
-    
+
     public static PaymentDataPlatformEvent completed(
             String transactionKey,
             Long orderId,
@@ -44,7 +44,7 @@ public record PaymentDataPlatformEvent(
                 null
         );
     }
-    
+
     public static PaymentDataPlatformEvent failed(
             String transactionKey,
             Long orderId,
@@ -65,7 +65,7 @@ public record PaymentDataPlatformEvent(
                 reason
         );
     }
-    
+
     public static PaymentDataPlatformEvent timeout(
             String transactionKey,
             Long orderId,

@@ -249,7 +249,7 @@ public class ProductMVService {
      * 이벤트 기반 좋아요 집계 업데이트를 위한 메서드입니다.
      * Week 7 요구사항: 좋아요 처리와 집계를 이벤트로 분리
      *
-     * @param productId 상품 ID
+     * @param productId  상품 ID
      * @param countDelta 카운트 변화량 (+1 또는 -1)
      * @throws CoreException 상품 MV를 찾을 수 없는 경우
      */
@@ -267,7 +267,7 @@ public class ProductMVService {
         mv.updateLikeCount(countDelta);
         mvRepository.save(mv);
 
-        log.debug("좋아요 카운트 업데이트 완료 - productId: {}, 현재 카운트: {}", 
+        log.debug("좋아요 카운트 업데이트 완료 - productId: {}, 현재 카운트: {}",
                 productId, mv.getLikeCount());
     }
 

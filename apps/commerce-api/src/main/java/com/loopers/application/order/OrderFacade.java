@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -17,7 +16,6 @@ import com.loopers.application.payment.PaymentFacade;
 import com.loopers.application.payment.PaymentInfo;
 import com.loopers.domain.coupon.CouponEntity;
 import com.loopers.domain.coupon.CouponService;
-
 import com.loopers.domain.order.OrderEntity;
 import com.loopers.domain.order.OrderItemEntity;
 import com.loopers.domain.order.OrderService;
@@ -139,7 +137,8 @@ public class OrderFacade {
      * 포인트 결제용 분리된 커맨드 오버로드
      */
     @Transactional
-    public OrderFacadeDtos.OrderInfo createOrderByPoint(@jakarta.validation.Valid OrderFacadeDtos.PointOrderCreateCommand command) {
+    public OrderFacadeDtos.OrderInfo createOrderByPoint(
+            @jakarta.validation.Valid OrderFacadeDtos.PointOrderCreateCommand command) {
         OrderFacadeDtos.OrderCreateCommand legacy = OrderFacadeDtos.OrderCreateCommand.builder()
                 .username(command.username())
                 .orderItems(command.orderItems())
@@ -159,7 +158,8 @@ public class OrderFacade {
      * @throws IllegalArgumentException 재고 부족 또는 주문 불가능한 경우
      */
     @Transactional
-    public OrderFacadeDtos.OrderInfo createOrderForCardPayment(@jakarta.validation.Valid OrderFacadeDtos.OrderCreateCommand command) {
+    public OrderFacadeDtos.OrderInfo createOrderForCardPayment(
+            @jakarta.validation.Valid OrderFacadeDtos.OrderCreateCommand command) {
         // 1. 주문자 정보 조회 (락 적용)
         UserEntity user = userService.findByUsernameWithLock(command.username());
 
@@ -213,20 +213,19 @@ public class OrderFacade {
         // 쿠폰 사용 처리 (도메인 로직)
         couponService.consumeCoupons(coupons, creationResult.order().getId());
 
-                // 유저 행동 추적 (주문 생성)
-                        behaviorTracker.trackOrderCreate(
-                                        user.getId(),
-                                       creationResult.order().getId(),
-                                        "CARD", // 카드 결제
-                                        creationResult.order().getFinalTotalAmount().doubleValue(),
-                                        creationResult.orderItems().size()
-                                        );
+        // 유저 행동 추적 (주문 생성)
+        behaviorTracker.trackOrderCreate(
+                user.getId(),
+                creationResult.order().getId(),
+                "CARD", // 카드 결제
+                creationResult.order().getFinalTotalAmount().doubleValue(),
+                creationResult.orderItems().size()
+        );
 
 
         // 8. 주문 정보 반환 (PENDING 상태)
         return OrderFacadeDtos.OrderInfo.from(creationResult.order(), creationResult.orderItems());
     }
-
 
 
     /**
@@ -238,7 +237,8 @@ public class OrderFacade {
      * @return 주문 정보 + 결제 정보
      */
     @Transactional
-    public OrderFacadeDtos.OrderWithPaymentInfo createOrderWithCardPayment(@jakarta.validation.Valid OrderFacadeDtos.OrderCreateCommand command) {
+    public OrderFacadeDtos.OrderWithPaymentInfo createOrderWithCardPayment(
+            @jakarta.validation.Valid OrderFacadeDtos.OrderCreateCommand command) {
         // 1. 주문 생성 (재고 차감, 쿠폰 사용, 포인트 차감 안 함)
         OrderFacadeDtos.OrderInfo orderInfo = createOrderForCardPayment(command);
 
@@ -264,7 +264,8 @@ public class OrderFacade {
      * 카드 결제 통합 처리 분리된 커맨드 오버로드
      */
     @Transactional
-    public OrderFacadeDtos.OrderWithPaymentInfo createOrderWithCardPayment(@jakarta.validation.Valid OrderFacadeDtos.CardOrderCreateCommand command) {
+    public OrderFacadeDtos.OrderWithPaymentInfo createOrderWithCardPayment(
+            @jakarta.validation.Valid OrderFacadeDtos.CardOrderCreateCommand command) {
         OrderFacadeDtos.OrderCreateCommand.CardPaymentInfo legacyCard = new OrderFacadeDtos.OrderCreateCommand.CardPaymentInfo(
                 command.cardInfo().cardType(),
                 command.cardInfo().cardNo(),

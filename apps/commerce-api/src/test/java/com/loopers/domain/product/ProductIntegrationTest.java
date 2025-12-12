@@ -29,7 +29,6 @@ import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.like.LikeEntity;
 import com.loopers.domain.like.LikeRepository;
 import com.loopers.domain.product.dto.ProductSearchFilter;
-import com.loopers.domain.product.ProductMVRepository;
 import com.loopers.fixtures.BrandTestFixture;
 import com.loopers.fixtures.ProductTestFixture;
 import com.loopers.fixtures.UserTestFixture;

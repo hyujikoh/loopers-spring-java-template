@@ -24,7 +24,6 @@ import com.loopers.application.like.LikeInfo;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.application.user.UserRegisterCommand;
-import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.product.*;
 import com.loopers.domain.user.UserEntity;
 import com.loopers.domain.user.UserRepository;

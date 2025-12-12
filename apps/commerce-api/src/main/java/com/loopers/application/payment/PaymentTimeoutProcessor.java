@@ -1,12 +1,10 @@
 package com.loopers.application.payment;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.loopers.domain.payment.PaymentEntity;
-import com.loopers.domain.payment.event.PaymentTimeoutEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -8,7 +8,7 @@ import com.loopers.domain.order.event.OrderDataPlatformEvent;
 
 /**
  * 데이터 플랫폼 전송용 주문 데이터 DTO
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 12. 12.
  */
@@ -23,7 +23,7 @@ public record OrderDataDto(
         ZonedDateTime eventTime,
         String eventType
 ) {
-    
+
     public static OrderDataDto from(OrderDataPlatformEvent event) {
         return new OrderDataDto(
                 event.orderId(),

@@ -2,7 +2,6 @@ package com.loopers.infrastructure.like;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -40,18 +39,18 @@ public class LikeEventHandler {
     @Async
     public void handleLikeChanged(LikeChangedEvent event) {
         try {
-            log.debug("좋아요 집계 업데이트 시작 - productId: {}, action: {}, delta: {}", 
+            log.debug("좋아요 집계 업데이트 시작 - productId: {}, action: {}, delta: {}",
                     event.productId(), event.action(), event.countDelta());
 
             // MV 테이블의 좋아요 카운트 업데이트
             productMVService.updateLikeCount(event.productId(), event.countDelta());
 
-            log.debug("좋아요 집계 업데이트 완료 - productId: {}, delta: {}", 
+            log.debug("좋아요 집계 업데이트 완료 - productId: {}, delta: {}",
                     event.productId(), event.countDelta());
 
         } catch (Exception e) {
             // 집계 업데이트 실패해도 좋아요 처리에는 영향 없음
-            log.error("좋아요 집계 업데이트 실패 - productId: {}, action: {}, delta: {}", 
+            log.error("좋아요 집계 업데이트 실패 - productId: {}, action: {}, delta: {}",
                     event.productId(), event.action(), event.countDelta(), e);
         }
     }

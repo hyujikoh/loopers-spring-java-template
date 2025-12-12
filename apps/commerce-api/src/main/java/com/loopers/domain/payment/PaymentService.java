@@ -65,7 +65,7 @@ public class PaymentService {
      * - SUCCESS: 결제 완료 처리 + PaymentCompletedEvent 발행
      * - FAILED: 결제 실패 처리 + PaymentFailedEvent 발행
      * - PENDING: 무시 (아직 처리 중)
-     *
+     * <p>
      * 도메인 이벤트는 PaymentEntity.processCallbackResult()에서 발행됨
      */
     @Transactional

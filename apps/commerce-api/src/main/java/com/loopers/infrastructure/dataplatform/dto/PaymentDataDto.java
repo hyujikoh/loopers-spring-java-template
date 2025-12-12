@@ -8,7 +8,7 @@ import com.loopers.domain.payment.event.PaymentDataPlatformEvent;
 
 /**
  * 데이터 플랫폼 전송용 결제 데이터 DTO
- * 
+ *
  * @author hyunjikoh
  * @since 2025. 12. 12.
  */
@@ -23,7 +23,7 @@ public record PaymentDataDto(
         String eventType,
         String failureReason
 ) {
-    
+
     public static PaymentDataDto from(PaymentDataPlatformEvent event) {
         return new PaymentDataDto(
                 event.transactionKey(),

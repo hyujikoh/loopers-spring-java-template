@@ -132,7 +132,7 @@ public class OrderEntity extends BaseEntity {
      */
     public void confirmWithEvent() {
         confirmOrder();
-        
+
         // 주문 처리용 도메인 이벤트 발행
         registerEvent(new OrderConfirmedEvent(
                 this.getId(),
@@ -140,7 +140,7 @@ public class OrderEntity extends BaseEntity {
                 this.userId,
                 this.finalTotalAmount
         ));
-        
+
         // 데이터 플랫폼 전송용 이벤트 발행
         registerEvent(OrderDataPlatformEvent.confirmed(
                 this.getId(),
@@ -196,7 +196,7 @@ public class OrderEntity extends BaseEntity {
      */
     public void cancelWithEvent(String reason) {
         cancelOrder();
-        
+
         // 주문 처리용 도메인 이벤트 발행
         registerEvent(new OrderCancelledEvent(
                 this.getId(),
@@ -205,7 +205,7 @@ public class OrderEntity extends BaseEntity {
                 this.finalTotalAmount,
                 reason
         ));
-        
+
         // 데이터 플랫폼 전송용 이벤트 발행
         registerEvent(OrderDataPlatformEvent.cancelled(
                 this.getId(),

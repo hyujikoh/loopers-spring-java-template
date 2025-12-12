@@ -309,18 +309,18 @@ public class ProductMaterializedViewEntity extends BaseEntity {
      */
     public void updateLikeCount(int countDelta) {
         long newCount = this.likeCount + countDelta;
-        
+
         if (newCount < 0) {
-            log.warn("좋아요 카운트가 음수가 될 수 없습니다. 현재: {}, 변화량: {}, 0으로 설정합니다.", 
+            log.warn("좋아요 카운트가 음수가 될 수 없습니다. 현재: {}, 변화량: {}, 0으로 설정합니다.",
                     this.likeCount, countDelta);
             newCount = 0;
         }
-        
+
         this.likeCount = newCount;
         this.likeUpdatedAt = ZonedDateTime.now();
         this.lastUpdatedAt = ZonedDateTime.now();
-        
-        log.debug("좋아요 카운트 업데이트 - productId: {}, 이전: {}, 변화량: {}, 현재: {}", 
+
+        log.debug("좋아요 카운트 업데이트 - productId: {}, 이전: {}, 변화량: {}, 현재: {}",
                 this.productId, this.likeCount - countDelta, countDelta, this.likeCount);
     }
 

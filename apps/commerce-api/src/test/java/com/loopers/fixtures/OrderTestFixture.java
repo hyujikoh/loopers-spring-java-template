@@ -50,7 +50,8 @@ public class OrderTestFixture {
      * @param couponId  쿠폰 ID
      * @return OrderCreateCommand
      */
-    public static OrderFacadeDtos.OrderCreateCommand createOrderCommandWithCoupon(String username, Long productId, Long couponId) {
+    public static OrderFacadeDtos.OrderCreateCommand createOrderCommandWithCoupon(String username, Long productId,
+                                                                                  Long couponId) {
         return createOrderCommand(username, List.of(
                 createOrderItem(productId, DEFAULT_QUANTITY, couponId)
         ));
@@ -63,7 +64,8 @@ public class OrderTestFixture {
      * @param orderItems 주문 항목 리스트
      * @return OrderCreateCommand
      */
-    public static OrderFacadeDtos.OrderCreateCommand createOrderCommand(String username, List<OrderFacadeDtos.OrderItemCommand> orderItems) {
+    public static OrderFacadeDtos.OrderCreateCommand createOrderCommand(String username,
+                                                                        List<OrderFacadeDtos.OrderItemCommand> orderItems) {
         return OrderFacadeDtos.OrderCreateCommand.builder()
                 .username(username)
                 .orderItems(orderItems)

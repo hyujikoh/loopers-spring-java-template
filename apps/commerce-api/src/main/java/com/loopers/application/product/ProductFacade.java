@@ -95,7 +95,7 @@ public class ProductFacade {
         if (username != null) {
             Long userId = userService.getUserByUsername(username).getId();
             behaviorTracker.trackProductView(
-                    userId, 
+                    userId,
                     productId,
                     null  // searchKeyword는 Controller에서 받아야 함
             );

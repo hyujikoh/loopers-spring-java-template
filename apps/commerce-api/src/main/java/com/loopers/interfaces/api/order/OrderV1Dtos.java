@@ -7,7 +7,6 @@ import java.util.List;
 
 import com.loopers.application.order.OrderFacadeDtos;
 import com.loopers.domain.order.OrderStatus;
-import com.loopers.domain.payment.PaymentType;
 
 public class OrderV1Dtos {
 
@@ -63,7 +62,8 @@ public class OrderV1Dtos {
             );
         }
 
-        public static OrderCreateResponse from(OrderFacadeDtos.OrderInfo orderInfo, com.loopers.application.payment.PaymentInfo paymentInfo) {
+        public static OrderCreateResponse from(OrderFacadeDtos.OrderInfo orderInfo,
+                                               com.loopers.application.payment.PaymentInfo paymentInfo) {
             return new OrderCreateResponse(
                     orderInfo.id(),
                     orderInfo.orderNumber(),
@@ -242,11 +242,12 @@ public class OrderV1Dtos {
                     ))
                     .toList();
 
-            OrderFacadeDtos.CardOrderCreateCommand.CardPaymentInfo paymentInfo = new OrderFacadeDtos.CardOrderCreateCommand.CardPaymentInfo(
-                    cardInfo.cardType(),
-                    cardInfo.cardNo(),
-                    cardInfo.callbackUrl()
-            );
+            OrderFacadeDtos.CardOrderCreateCommand.CardPaymentInfo paymentInfo =
+                    new OrderFacadeDtos.CardOrderCreateCommand.CardPaymentInfo(
+                            cardInfo.cardType(),
+                            cardInfo.cardNo(),
+                            cardInfo.callbackUrl()
+                    );
 
             return new OrderFacadeDtos.CardOrderCreateCommand(username, orderItems, paymentInfo);
         }
