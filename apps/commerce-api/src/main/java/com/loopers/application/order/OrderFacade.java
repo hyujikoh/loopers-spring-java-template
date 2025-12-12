@@ -116,10 +116,8 @@ public class OrderFacade {
         IntStream.range(0, orderableProducts.size())
                 .forEach(i -> productService.deductStock(orderableProducts.get(i), quantities.get(i)));
 
-        // 쿠폰 사용 처리 (도메인 엔티티에서 이벤트 발행)
-        coupons.stream()
-                .filter(Objects::nonNull)
-                .forEach(coupon -> coupon.useForOrder(creationResult.order().getId()));
+        // 쿠폰 사용 처리 (도메인 로직)
+        couponService.consumeCoupons(coupons, creationResult.order().getId());
 
         // 8. 주문 정보 반환
         return OrderFacadeDtos.OrderInfo.from(creationResult.order(), creationResult.orderItems());
@@ -187,12 +185,9 @@ public class OrderFacade {
         IntStream.range(0, orderableProducts.size())
                 .forEach(i -> productService.deductStock(orderableProducts.get(i), quantities.get(i)));
 
-        // 쿠폰 사용 처리 (도메인 엔티티에서 이벤트 발행)
-        coupons.stream()
-                .filter(Objects::nonNull)
-                .forEach(coupon -> coupon.useForOrder(creationResult.order().getId()));
+        // 쿠폰 사용 처리 (도메인 로직)
+        couponService.consumeCoupons(coupons, creationResult.order().getId());
 
-        
         // 8. 주문 정보 반환 (PENDING 상태)
         return OrderFacadeDtos.OrderInfo.from(creationResult.order(), creationResult.orderItems());
     }
@@ -262,9 +257,9 @@ public class OrderFacade {
      */
     @Transactional
     public OrderFacadeDtos.OrderInfo confirmOrderByPayment(Long orderId, Long userId) {
-        // 1. 주문 확정
+        // 1. 주문 확정 (도메인 이벤트 + 데이터 플랫폼 이벤트 발행)
         OrderEntity order = orderService.getOrderByOrderNumberAndUserId(orderId, userId);
-        order.confirmOrder();
+        order.confirmWithEvent();
 
         // 2. 주문 항목 조회
         List<OrderItemEntity> orderItems = orderService.getOrderItemsByOrderId(order);
@@ -283,9 +278,9 @@ public class OrderFacade {
      */
     @Transactional
     public OrderFacadeDtos.OrderInfo cancelOrderByPaymentFailure(Long orderId, Long userId) {
-        // 1. 주문 조회 및 취소
+        // 1. 주문 조회 및 취소 (도메인 이벤트 + 데이터 플랫폼 이벤트 발행)
         OrderEntity order = orderService.getOrderByOrderNumberAndUserId(orderId, userId);
-        List<OrderItemEntity> orderItems = orderService.cancelOrderDomain(order);
+        List<OrderItemEntity> orderItems = orderService.cancelOrderDomainWithEvent(order, "결제 실패");
 
         // 2. 재고 원복
         for (OrderItemEntity orderItem : orderItems) {
@@ -328,8 +323,8 @@ public class OrderFacade {
         // 2. 주문 조회
         OrderEntity order = orderService.getOrderByIdAndUserId(orderId, user.getId());
 
-        // 3. 도메인 서비스: 주문 취소 처리 (도메인 로직)
-        List<OrderItemEntity> orderItems = orderService.cancelOrderDomain(order);
+        // 3. 도메인 서비스: 주문 취소 처리 (도메인 로직, 도메인 이벤트 + 데이터 플랫폼 이벤트 발행)
+        List<OrderItemEntity> orderItems = orderService.cancelOrderDomainWithEvent(order, "사용자 요청");
 
         // 4. 재고 원복
         for (OrderItemEntity orderItem : orderItems) {
